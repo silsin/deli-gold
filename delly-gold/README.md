@@ -10,8 +10,20 @@
 - Docker + Docker Compose
 
 ### اجرای سریع — یک دستور
+
+**اگر Docker Compose v2 دارید (جدید):**
 ```bash
 docker compose up -d
+```
+
+**اگر Docker Compose v1 دارید (قدیمی‌تر):**
+```bash
+docker-compose up -d
+```
+
+**یا از Makefile استفاده کنید (هر دو نسخه را پشتیبانی می‌کند):**
+```bash
+make up
 ```
 
 این دستور:
@@ -19,24 +31,22 @@ docker compose up -d
 2. پایگاه داده را می‌سازد و seed می‌کند
 3. سرور را روی پورت 3000 اجرا می‌کند
 
-### متوقف کردن
+### دستورات مفید
 ```bash
-docker compose down
-```
-
-### مشاهده لاگ‌ها
-```bash
-docker compose logs -f
+make up       # build + start در پس‌زمینه
+make down     # متوقف کردن
+make logs     # مشاهده لاگ‌ها
+make restart  # ری‌استارت
+make rebuild  # rebuild کامل (بعد از تغییر کد)
+make shell    # ورود به shell کانتینر
+make status   # وضعیت کانتینر
 ```
 
 ### تنظیمات محیط (اختیاری)
 ```bash
-# کپی فایل نمونه
 cp .env.production.example .env
-
-# ویرایش و تنظیم JWT_SECRET و سایر مقادیر
-# سپس اجرا با فایل env
-docker compose --env-file .env up -d
+# ویرایش .env و تنظیم JWT_SECRET
+make up
 ```
 
 ---
