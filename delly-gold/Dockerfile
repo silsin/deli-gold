@@ -9,8 +9,6 @@ WORKDIR /app
 
 COPY package.json package-lock.json* ./
 
-# Install with npm ci for reproducible builds
-# --ignore-scripts prevents native postinstall scripts from failing at this stage
 RUN npm ci --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -27,7 +25,6 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-# Dummy values for build time only — real values come from docker-compose
 ENV DATABASE_URL="file:/app/data/delly-gold.db"
 ENV JWT_SECRET="build-time-placeholder"
 
@@ -52,24 +49,22 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
-# ── Next.js standalone output ──
+# Next.js standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static     ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public           ./public
 
-# ── DB seed script & schema ──
+# DB seed script and schema
 COPY --from=builder --chown=nextjs:nodejs /app/scripts  ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/prisma   ./prisma
 
-# ── Runtime deps needed by seed script (bcryptjs) ──
-# standalone doesn't bundle them, so we copy from deps stage
-COPY --from=deps    --chown=nextjs:nodejs /app/node_modules/bcryptjs            ./node_modules/bcryptjs
-COPY --from=deps    --chown=nextjs:nodejs /app/node_modules/@types/bcryptjs     ./node_modules/@types/bcryptjs 2>/dev/null || true
+# bcryptjs is used by the seed script at runtime — copy from deps stage
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
-# ── Persistent data volume ──
+# Persistent SQLite data directory
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-# ── Entrypoint ──
+# Entrypoint script
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
