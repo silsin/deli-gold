@@ -26,7 +26,8 @@ export default function AdminLoginPage() {
         await fetch("/api/auth/logout", { method: "POST" });
         return;
       }
-      router.push("/admin");
+      // Hard redirect so browser sends the new cookie to the proxy
+      window.location.href = "/admin";
     } catch {
       setErr("خطای شبکه");
     } finally {

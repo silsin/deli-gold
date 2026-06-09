@@ -41,8 +41,9 @@ export function requireAdmin(
 export const COOKIE_CONFIG = {
   name: "auth_token",
   httpOnly: true,
-  sameSite: "strict" as const,
-  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  // Only use secure flag if explicitly on HTTPS (not plain HTTP Docker deployments)
+  secure: process.env.NEXT_PUBLIC_APP_URL?.startsWith("https") ?? false,
   path: "/",
   maxAge: 60 * 60 * 24 * 7, // 7 days
 };
