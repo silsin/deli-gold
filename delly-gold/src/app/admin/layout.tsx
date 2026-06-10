@@ -1,35 +1,43 @@
 "use client";
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
-  LayoutDashboard, Package, ShoppingBag, Users, Tag,
+  LayoutDashboard, Package, ShoppingBag, Users, Tag, Settings,
   LogOut, Menu, X, ChevronLeft,
 } from "lucide-react";
 
 const navItems = [
-  { label: "داشبورد", href: "/admin", icon: LayoutDashboard },
-  { label: "محصولات", href: "/admin/products", icon: Package },
-  { label: "سفارش‌ها", href: "/admin/orders", icon: ShoppingBag },
-  { label: "کاربران", href: "/admin/users", icon: Users },
-  { label: "دسته‌بندی‌ها", href: "/admin/categories", icon: Tag },
+  { label: "داشبورد",        href: "/admin",             icon: LayoutDashboard },
+  { label: "محصولات",        href: "/admin/products",    icon: Package },
+  { label: "سفارش‌ها",       href: "/admin/orders",      icon: ShoppingBag },
+  { label: "کاربران",        href: "/admin/users",       icon: Users },
+  { label: "دسته‌بندی‌ها",   href: "/admin/categories",  icon: Tag },
+  { label: "تنظیمات",        href: "/admin/settings",    icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Don't render sidebar on login page
+  // Login page — render without sidebar
   if (pathname === "/admin/login") return <>{children}</>;
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/admin/login");
+    // Hard redirect to clear all client state
+    window.location.href = "/admin/login";
   }
+
+  const currentLabel =
+    navItems.find(
+      n => pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href))
+    )?.label || "پنل مدیریت";
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#0e0e0e", direction: "rtl" }}>
-      {/* Sidebar */}
+
+      {/* ── Sidebar ── */}
       <aside style={{
         width: sidebarOpen ? "240px" : "64px",
         backgroundColor: "#111",
@@ -43,26 +51,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         height: "100vh",
         overflow: "hidden",
       }}>
-        {/* Sidebar header */}
+        {/* Logo */}
         <div style={{ padding: "16px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "64px" }}>
           {sidebarOpen && (
-            <div>
+            <Link href="/admin" style={{ textDecoration: "none" }}>
               <div style={{ color: "#d4af37", fontSize: "18px", fontWeight: "900", letterSpacing: "-1px" }}>DG</div>
               <div style={{ color: "#d4af37", fontSize: "9px", letterSpacing: "2px" }}>ADMIN</div>
-            </div>
+            </Link>
           )}
-          <button onClick={() => setSidebarOpen(o => !o)} style={{ color: "#888", background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            style={{ color: "#888", background: "none", border: "none", cursor: "pointer", padding: "4px", flexShrink: 0 }}>
             {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
 
-        {/* Nav */}
+        {/* Nav links — use Next.js Link for client-side navigation */}
         <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto" }}>
           {navItems.map(item => {
             const Icon = item.icon;
-            const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+            const active =
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.href);
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 style={{
@@ -75,14 +88,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   fontSize: "13px",
                   fontWeight: active ? "600" : "400",
                   backgroundColor: active ? "rgba(212,175,55,0.1)" : "transparent",
-                  borderRight: active ? "3px solid #d4af37" : "3px solid transparent",
+                  borderRight: `3px solid ${active ? "#d4af37" : "transparent"}`,
                   whiteSpace: "nowrap",
-                  transition: "all 0.2s",
+                  transition: "color 0.2s, background-color 0.2s",
                 }}
+                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
+                onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "#888"; }}
               >
                 <Icon size={18} style={{ flexShrink: 0 }} />
                 {sidebarOpen && item.label}
-              </a>
+              </Link>
             );
           })}
         </nav>
@@ -104,7 +119,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               width: "100%",
               fontFamily: "inherit",
               whiteSpace: "nowrap",
+              transition: "color 0.2s",
             }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#ef4444"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#888"}
           >
             <LogOut size={18} />
             {sidebarOpen && "خروج"}
@@ -112,22 +130,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main content */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto" }}>
+      {/* ── Main ── */}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "auto", minWidth: 0 }}>
         {/* Top bar */}
-        <header style={{ backgroundColor: "#111", borderBottom: "1px solid #2a2a2a", padding: "0 24px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 10 }}>
-          <div style={{ color: "#888", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <a href="/" target="_blank" style={{ color: "#d4af37", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
-              <ChevronLeft size={12} />
-              مشاهده سایت
-            </a>
-          </div>
+        <header style={{
+          backgroundColor: "#111",
+          borderBottom: "1px solid #2a2a2a",
+          padding: "0 24px",
+          height: "64px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          flexShrink: 0,
+        }}>
+          <Link
+            href="/"
+            target="_blank"
+            style={{ color: "#d4af37", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px", fontSize: "12px" }}>
+            <ChevronLeft size={12} />
+            مشاهده سایت
+          </Link>
           <h1 style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>
-            {navItems.find(n => pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href)))?.label || "پنل مدیریت"}
+            {currentLabel}
           </h1>
         </header>
 
-        <div style={{ flex: 1, padding: "24px" }}>
+        <div style={{ flex: 1, padding: "24px", overflow: "auto" }}>
           {children}
         </div>
       </main>

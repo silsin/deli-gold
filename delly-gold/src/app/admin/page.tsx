@@ -1,6 +1,8 @@
 "use client";
+export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { Users, Package, ShoppingBag, TrendingUp, Clock, CheckCircle } from "lucide-react";
+import AdminGuard from "./AdminGuard";
 
 interface Stats {
   totalUsers: number;
@@ -60,12 +62,15 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "300px" }}>
-      <div style={{ color: "#d4af37", fontSize: "16px" }}>در حال بارگذاری...</div>
-    </div>
+    <AdminGuard>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "300px" }}>
+        <div style={{ color: "#d4af37", fontSize: "16px" }}>در حال بارگذاری...</div>
+      </div>
+    </AdminGuard>
   );
 
   return (
+    <AdminGuard>
     <div>
       <h2 style={{ color: "#fff", fontSize: "22px", fontWeight: "700", marginBottom: "24px" }}>داشبورد</h2>
 
@@ -125,6 +130,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-    </div>
+    </AdminGuard>
   );
 }

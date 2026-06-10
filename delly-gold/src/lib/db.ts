@@ -16,7 +16,7 @@ function resolveDbPath(): string {
   return path.resolve(process.cwd(), filePart);
 }
 
-function getDb(): DatabaseSync {
+export function getDb(): DatabaseSync {
   if (!_db) {
     const dbPath = resolveDbPath();
     mkdirSync(path.dirname(dbPath), { recursive: true });
