@@ -9,15 +9,25 @@
 COMPOSE_V2 := $(shell docker compose version > /dev/null 2>&1 && echo yes)
 COMPOSE := $(if $(filter yes,$(COMPOSE_V2)),docker compose,docker-compose)
 
-.PHONY: up down logs restart rebuild shell status clean fix-compose help
+.PHONY: up down logs restart rebuild shell status clean fix-compose up-plain install-compose help
 
 ## Start containers in background (build if needed)
 up:
 	@if [ "$(COMPOSE_V2)" != "yes" ]; then \
-		echo "⚠️  docker compose v2 not found — install: apt install docker-compose-plugin"; \
-		echo "   Legacy docker-compose v1 often fails with KeyError: ContainerConfig"; \
+		echo "⚠️  docker compose v2 not found."; \
+		echo "   Install: sudo ./scripts/install-compose-v2.sh"; \
+		echo "   Or run without Compose: make up-plain"; \
+		exit 1; \
 	fi
 	$(COMPOSE) up -d --build
+
+## Start with plain Docker (no Compose plugin required)
+up-plain:
+	sh scripts/docker-up.sh
+
+## Install Docker Compose v2 plugin on Linux
+install-compose:
+	sh scripts/install-compose-v2.sh
 
 ## Fix ContainerConfig / stale-container errors, then start fresh
 fix-compose:
