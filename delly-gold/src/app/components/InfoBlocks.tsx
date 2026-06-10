@@ -63,6 +63,7 @@ function GoldLineChart({
 
   const prevHistory = useRef<number[]>([]);
   const [animated, setAnimated] = useState(false);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (
@@ -139,9 +140,6 @@ function GoldLineChart({
     dates.length > 0
       ? [0, Math.floor((history.length - 1) / 2), history.length - 1]
       : [];
-
-  // Tooltip state
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   return (
     <div
