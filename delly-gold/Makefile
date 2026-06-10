@@ -4,13 +4,25 @@
 # Usage: make up | make down | make logs | make rebuild
 # ─────────────────────────────────────────────────────────────
 
-# Detect compose command
-COMPOSE := $(shell docker compose version > /dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+# Prefer Docker Compose v2 plugin (required on Docker Engine 24+).
+# Legacy `docker-compose` v1 hits KeyError: 'ContainerConfig' when recreating containers.
+COMPOSE_V2 := $(shell docker compose version > /dev/null 2>&1 && echo yes)
+COMPOSE := $(if $(filter yes,$(COMPOSE_V2)),docker compose,docker-compose)
 
-.PHONY: up down logs restart rebuild shell status clean help
+.PHONY: up down logs restart rebuild shell status clean fix-compose help
 
 ## Start containers in background (build if needed)
 up:
+	@if [ "$(COMPOSE_V2)" != "yes" ]; then \
+		echo "⚠️  docker compose v2 not found — install: apt install docker-compose-plugin"; \
+		echo "   Legacy docker-compose v1 often fails with KeyError: ContainerConfig"; \
+	fi
+	$(COMPOSE) up -d --build
+
+## Fix ContainerConfig / stale-container errors, then start fresh
+fix-compose:
+	-docker rm -f delly-gold 2>/dev/null
+	$(COMPOSE) down --remove-orphans 2>/dev/null || true
 	$(COMPOSE) up -d --build
 
 ## Stop and remove containers
