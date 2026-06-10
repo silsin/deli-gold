@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
-import AdminGuard from "../../AdminGuard";
+import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; }
 interface Product {

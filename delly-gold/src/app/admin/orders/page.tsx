@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
-import AdminGuard from "../../AdminGuard";
+import AdminGuard from "../AdminGuard";
 
 interface Order {
   id: string; total: number; status: string; address: string; createdAt: string;

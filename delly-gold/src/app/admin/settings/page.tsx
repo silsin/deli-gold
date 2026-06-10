@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { Save, RefreshCw, TrendingUp } from "lucide-react";
-import AdminGuard from "../../AdminGuard";
+import AdminGuard from "../AdminGuard";
 
 interface GoldData {
   price: number;
