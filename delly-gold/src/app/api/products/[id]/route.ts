@@ -29,6 +29,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (body.categoryId !== undefined) data.category_id = body.categoryId;
     if (body.featured !== undefined) data.featured = body.featured ? 1 : 0;
     if (body.published !== undefined) data.published = body.published ? 1 : 0;
+    if (body.ajrat_override !== undefined) data.ajrat_override = body.ajrat_override ? 1 : 0;
+    if (body.ajrat_percent !== undefined) data.ajrat_percent = body.ajrat_percent !== null && body.ajrat_percent !== "" ? parseFloat(body.ajrat_percent) : null;
+    if (body.ajrat_fixed !== undefined) data.ajrat_fixed = body.ajrat_fixed !== null && body.ajrat_fixed !== "" ? parseFloat(body.ajrat_fixed) : null;
     return ok(products.update(id, data));
   } catch (e) { console.error(e); return serverError(); }
 }

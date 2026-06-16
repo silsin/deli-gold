@@ -1,15 +1,19 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { Heart, Search, SlidersHorizontal, X, ChevronLeft } from "lucide-react";
+import { Heart, Search, SlidersHorizontal, X, ShoppingCart, Check } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
+import { useCart } from "../components/CartContext";
+import { calcFinalPrice } from "@/lib/pricing";
 
 interface Category { id: string; name: string; slug: string; }
 interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
   karat: number; stock: number; images: string; featured: number;
   category_name: string;
+  ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
 }
+interface Settings { gold_markup_percent: string; gold_fixed_fee: string; }
 
 const sortOptions = [
   { value: "newest", label: "جدیدترین" },
@@ -20,14 +24,17 @@ const sortOptions = [
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [settings, setSettings] = useState<Settings>({ gold_markup_percent: "5", gold_fixed_fee: "0" });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [sort, setSort] = useState("newest");
   const [liked, setLiked] = useState<string[]>([]);
+  const [addedId, setAddedId] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage] = useState(1);
+  const { add, items } = useCart();
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -49,6 +56,7 @@ export default function ProductsPage() {
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => {
     fetch("/api/categories").then(r => r.json()).then(d => { if (d.success) setCategories(d.data); });
+    fetch("/api/admin/settings").then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });
   }, []);
 
   function toggleLike(id: string) {
@@ -67,6 +75,16 @@ export default function ProductsPage() {
     "https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=400&q=80",
     "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&q=80",
   ];
+
+  function handleAddToCart(p: Product, image: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (p.stock === 0) return;
+    const { finalPrice } = calcFinalPrice(p, settings);
+    add({ productId: p.id, name: p.name, price: finalPrice, weight: p.weight, karat: p.karat, image, stock: p.stock });
+    setAddedId(p.id);
+    setTimeout(() => setAddedId(cur => cur === p.id ? null : cur), 1800);
+  }
 
   return (
     <PageLayout>
@@ -174,9 +192,28 @@ export default function ProductsPage() {
                         </button>
                       </div>
                       <p style={{ color: "#666", fontSize: 11, marginBottom: 8 }}>{p.category_name} · {p.karat} عیار · {p.weight}گ</p>
-                      <p style={{ color: "#d4af37", fontSize: 13, fontWeight: 700 }}>
-                        {p.price.toLocaleString("fa-IR")} <span style={{ color: "#888", fontSize: 11, fontWeight: 400 }}>تومان</span>
-                      </p>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                        <div>
+                          <p style={{ color: "#d4af37", fontSize: 13, fontWeight: 700 }}>
+                            {calcFinalPrice(p, settings).finalPrice.toLocaleString("fa-IR")} <span style={{ color: "#888", fontSize: 11, fontWeight: 400 }}>تومان</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={e => handleAddToCart(p, image, e)}
+                          disabled={p.stock === 0}
+                          title={p.stock === 0 ? "ناموجود" : "افزودن به سبد"}
+                          style={{
+                            width: 30, height: 30, flexShrink: 0,
+                            backgroundColor: addedId === p.id ? "rgba(16,185,129,0.2)" : items.some(i => i.productId === p.id) ? "rgba(212,175,55,0.15)" : "rgba(212,175,55,0.1)",
+                            border: `1px solid ${addedId === p.id ? "rgba(16,185,129,0.4)" : "rgba(212,175,55,0.3)"}`,
+                            borderRadius: 6, cursor: p.stock === 0 ? "not-allowed" : "pointer",
+                            color: addedId === p.id ? "#10b981" : "#d4af37",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            transition: "all 0.2s",
+                          }}>
+                          {addedId === p.id ? <Check size={13} /> : <ShoppingCart size={13} />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

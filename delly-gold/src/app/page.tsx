@@ -11,12 +11,12 @@ export default function Home() {
   return (
     <main style={{ backgroundColor: "#0e0e0e", minHeight: "100vh" }}>
       <Navbar />
+      <InfoBlocks />
       <HeroSlider />
       <FeaturesBar />
       <CategoryShowcase />
       <FavoriteProducts />
       <CollectionsGrid />
-      <InfoBlocks />
       <Footer />
     </main>
   );

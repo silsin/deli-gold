@@ -141,6 +141,18 @@ const migrations = [
       );
     `,
   },
+  {
+    name: "006_user_address",
+    sql: `ALTER TABLE users ADD COLUMN address TEXT;`,
+  },
+  {
+    name: "007_product_ajrat",
+    sql: `
+      ALTER TABLE products ADD COLUMN ajrat_percent REAL;
+      ALTER TABLE products ADD COLUMN ajrat_fixed REAL;
+      ALTER TABLE products ADD COLUMN ajrat_override INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];
 
 let appliedCount = 0;

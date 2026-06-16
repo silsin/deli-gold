@@ -39,6 +39,7 @@ export interface User {
   password: string;
   name: string;
   phone: string | null;
+  address: string | null;
   role: "ADMIN" | "CUSTOMER";
   created_at: string;
   updated_at: string;
@@ -50,8 +51,16 @@ export const users = {
   },
   findById(id: string): Omit<User, "password"> | undefined {
     return getDb()
-      .prepare("SELECT id, email, name, phone, role, created_at, updated_at FROM users WHERE id = ?")
+      .prepare("SELECT id, email, name, phone, address, role, created_at, updated_at FROM users WHERE id = ?")
       .get(id) as Omit<User, "password"> | undefined;
+  },
+  update(id: string, data: { name?: string; phone?: string; address?: string }) {
+    const fields = Object.entries(data)
+      .filter(([, v]) => v !== undefined)
+      .map(([k]) => `${k} = ?`).join(", ");
+    const values = Object.values(data).filter(v => v !== undefined);
+    if (!fields) return;
+    getDb().prepare(`UPDATE users SET ${fields}, updated_at = datetime('now') WHERE id = ?`).run(...values, id);
   },
   create(data: { name: string; email: string; password: string; role?: string }): User {
     const id = generateId();
@@ -123,6 +132,9 @@ export interface Product {
   id: string; name: string; slug: string; description: string | null;
   price: number; weight: number; karat: number; stock: number;
   images: string; featured: number; published: number;
+  ajrat_percent: number | null;  // per-product اجرت % override
+  ajrat_fixed: number | null;    // per-product اجرت fixed (Toman) override
+  ajrat_override: number;        // 1 = use per-product values, 0 = use global
   category_id: string; created_at: string; updated_at: string;
 }
 
@@ -151,8 +163,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, featured, published, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.featured, data.published, data.category_id);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, featured, published, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.featured, data.published, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {

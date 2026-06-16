@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
       featured: searchParams.get("featured") === "true" ? true : undefined,
       search: searchParams.get("search") || undefined,
       limit, offset: (page - 1) * limit,
+      adminMode: searchParams.get("adminMode") === "true",
     });
     return ok({ products: result.rows, pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) } });
   } catch (e) { console.error(e); return serverError(); }
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, categoryId, featured, published } = body;
+    const { name, slug, description, price, weight, karat, stock, images, categoryId, featured, published, ajrat_override, ajrat_percent, ajrat_fixed } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -36,6 +37,9 @@ export async function POST(req: NextRequest) {
       stock: parseInt(stock ?? 0), images: JSON.stringify(images ?? []),
       featured: featured ? 1 : 0, published: published !== false ? 1 : 0,
       category_id: categoryId,
+      ajrat_override: ajrat_override ? 1 : 0,
+      ajrat_percent: ajrat_override && ajrat_percent !== undefined ? parseFloat(ajrat_percent) : null,
+      ajrat_fixed: ajrat_override && ajrat_fixed !== undefined ? parseFloat(ajrat_fixed) : null,
     }));
   } catch (e) { console.error(e); return serverError(); }
 }

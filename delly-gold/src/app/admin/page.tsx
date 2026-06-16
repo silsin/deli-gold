@@ -71,7 +71,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminGuard>
-    <div>
+      <div>
       <h2 style={{ color: "#fff", fontSize: "22px", fontWeight: "700", marginBottom: "24px" }}>داشبورد</h2>
 
       {/* Stats grid */}
@@ -130,7 +130,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-    </div>
     </AdminGuard>
   );
 }

@@ -1,8 +1,16 @@
 "use client";
-import { useState, useRef } from "react";
-import { Search, User, Heart, ShoppingCart, Menu, X, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  Search, User, ShoppingCart, Menu, X, ChevronDown,
+  LogOut, Package, LogIn,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useCart } from "./CartContext";
+
+interface AuthUser {
+  id: string; name: string; email: string; role: string;
+}
 
 const navLinks = [
   { label: "صفحه اصلی", href: "/" },
@@ -37,9 +45,30 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
   const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const { count } = useCart();
+
+  const checkAuth = useCallback(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => {
+        setAuthUser(d.success ? d.data : null);
+        setAuthChecked(true);
+      })
+      .catch(() => { setAuthUser(null); setAuthChecked(true); });
+  }, []);
+
+  useEffect(() => { checkAuth(); }, [checkAuth]);
+
+  // Re-check auth whenever pathname changes (handles login/logout redirects)
+  useEffect(() => { checkAuth(); }, [pathname, checkAuth]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -54,9 +83,23 @@ export default function Navbar() {
     if (dropdownTimer.current) clearTimeout(dropdownTimer.current);
     setOpenDropdown(label);
   }
-
   function scheduleClose() {
     dropdownTimer.current = setTimeout(() => setOpenDropdown(null), 150);
+  }
+  function openUserMenu() {
+    if (userMenuTimer.current) clearTimeout(userMenuTimer.current);
+    setUserMenuOpen(true);
+  }
+  function scheduleCloseUser() {
+    userMenuTimer.current = setTimeout(() => setUserMenuOpen(false), 180);
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAuthUser(null);
+    setUserMenuOpen(false);
+    router.push("/");
+    router.refresh();
   }
 
   const isActive = (href: string) =>
@@ -68,6 +111,8 @@ export default function Navbar() {
 
         {/* ── Left: icons ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+
+          {/* Search */}
           <button
             aria-label="جستجو"
             onClick={() => { setSearchOpen(o => !o); setSearchVal(""); }}
@@ -75,29 +120,86 @@ export default function Navbar() {
             {searchOpen ? <X size={20} /> : <Search size={20} />}
           </button>
 
-          <Link href="/contact" aria-label="تماس"
-            style={{ color: "#ccc", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#d4af37"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#ccc"}>
-            <User size={20} />
-          </Link>
-
-          <Link href="/products" aria-label="علاقه‌مندی‌ها"
-            style={{ color: "#ccc", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#d4af37"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#ccc"}>
-            <Heart size={20} />
-          </Link>
-
-          <Link href="/products" aria-label="سبد خرید"
+          {/* Cart */}
+          <Link href="/cart" aria-label="سبد خرید"
             style={{ position: "relative", color: "#ccc", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#d4af37"}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#ccc"}>
             <ShoppingCart size={20} />
-            <span style={{ position: "absolute", top: "-6px", left: "-6px", backgroundColor: "#d4af37", color: "#000", fontSize: "10px", fontWeight: "bold", borderRadius: "50%", width: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              ۰
-            </span>
+            {count > 0 && (
+              <span style={{ position: "absolute", top: "-7px", left: "-7px", backgroundColor: "#d4af37", color: "#000", fontSize: "10px", fontWeight: "800", borderRadius: "50%", width: "17px", height: "17px", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+                {count > 9 ? "9+" : count}
+              </span>
+            )}
           </Link>
+
+          {/* User menu / Login */}
+          {authChecked && (
+            authUser ? (
+              <div style={{ position: "relative" }}
+                onMouseEnter={openUserMenu}
+                onMouseLeave={scheduleCloseUser}>
+                <button
+                  aria-label="حساب کاربری"
+                  style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "20px", padding: "5px 10px 5px 6px", color: "#d4af37", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
+                  <User size={15} />
+                  <span style={{ maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {authUser.name.split(" ")[0]}
+                  </span>
+                  <ChevronDown size={11} style={{ transition: "transform 0.2s", transform: userMenuOpen ? "rotate(180deg)" : "rotate(0)" }} />
+                </button>
+
+                {userMenuOpen && (
+                  <div
+                    onMouseEnter={openUserMenu}
+                    onMouseLeave={scheduleCloseUser}
+                    style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, minWidth: 180, backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: 10, padding: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
+                    {/* User info */}
+                    <div style={{ padding: "8px 10px 10px", borderBottom: "1px solid #222", marginBottom: 4 }}>
+                      <p style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{authUser.name}</p>
+                      <p style={{ color: "#555", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis" }}>{authUser.email}</p>
+                    </div>
+                    <Link href="/account"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ccc", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#ccc"; }}>
+                      <User size={14} /> حساب کاربری
+                    </Link>
+                    <Link href="/account?tab=orders"
+                      onClick={() => setUserMenuOpen(false)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ccc", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#ccc"; }}>
+                      <Package size={14} /> سفارش‌های من
+                    </Link>
+                    {authUser.role === "ADMIN" && (
+                      <Link href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#d4af37", textDecoration: "none", fontSize: 13, borderRadius: 6, borderTop: "1px solid #222", marginTop: 4, transition: "background-color 0.15s" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
+                        پنل مدیریت ←
+                      </Link>
+                    )}
+                    <button onClick={handleLogout}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ef4444", background: "none", border: "none", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right", borderTop: "1px solid #222", marginTop: 4, transition: "background-color 0.15s" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.1)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
+                      <LogOut size={14} /> خروج
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login"
+                style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: "#d4af37", color: "#000", textDecoration: "none", borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "700" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#f0d060"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#d4af37"}>
+                <LogIn size={14} /> ورود
+              </Link>
+            )
+          )}
         </div>
 
         {/* ── Center: nav links ── */}
@@ -129,38 +231,15 @@ export default function Navbar() {
                 )}
               </Link>
 
-              {/* Dropdown panel */}
               {link.dropdown && openDropdown === link.label && (
                 <div
                   onMouseEnter={() => openMenu(link.label)}
                   onMouseLeave={scheduleClose}
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 4px)",
-                    right: 0,
-                    minWidth: "180px",
-                    backgroundColor: "#161616",
-                    border: "1px solid #2a2a2a",
-                    borderRadius: "10px",
-                    padding: "6px",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-                    zIndex: 200,
-                    animation: "fadeIn 0.15s ease",
-                  }}>
+                  style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, minWidth: "180px", backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: "10px", padding: "6px", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
                   {link.dropdown.map((item, i) => (
                     <Link key={i} href={item.href}
                       onClick={() => setOpenDropdown(null)}
-                      style={{
-                        display: "block",
-                        padding: "9px 14px",
-                        color: i === 0 ? "#d4af37" : "#ccc",
-                        textDecoration: "none",
-                        fontSize: "13px",
-                        borderRadius: "6px",
-                        transition: "background-color 0.15s, color 0.15s",
-                        borderBottom: i === 0 ? "1px solid #2a2a2a" : "none",
-                        fontWeight: i === 0 ? "600" : "400",
-                      }}
+                      style={{ display: "block", padding: "9px 14px", color: i === 0 ? "#d4af37" : "#ccc", textDecoration: "none", fontSize: "13px", borderRadius: "6px", transition: "background-color 0.15s, color 0.15s", borderBottom: i === 0 ? "1px solid #2a2a2a" : "none", fontWeight: i === 0 ? "600" : "400" }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = i === 0 ? "#d4af37" : "#ccc"; }}>
                       {item.label}
@@ -172,7 +251,7 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* ── Right: logo ── */}
+        {/* ── Right: logo + mobile menu ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <button aria-label="منو" onClick={() => setMenuOpen(!menuOpen)}
             style={{ display: "none", color: "#d4af37", background: "none", border: "none", cursor: "pointer" }}
@@ -227,21 +306,37 @@ export default function Navbar() {
                   style={{ display: "block", padding: "13px 20px", color: isActive(link.href) ? "#d4af37" : "#ccc", textDecoration: "none", fontSize: "14px", fontWeight: isActive(link.href) ? "700" : "400" }}>
                   {link.label}
                 </Link>
-                {/* Mobile sub-items */}
-                {link.dropdown && (
-                  <div style={{ backgroundColor: "#111", paddingRight: "20px" }}>
-                    {link.dropdown.slice(1).map((item, i) => (
-                      <Link key={i} href={item.href} onClick={() => setMenuOpen(false)}
-                        style={{ display: "block", padding: "9px 20px", color: "#666", textDecoration: "none", fontSize: "12px", borderTop: "1px solid #1a1a1a" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#d4af37"}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#666"}>
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
               </li>
             ))}
+            <li style={{ borderBottom: "1px solid #1f1f1f" }}>
+              <Link href="/cart" onClick={() => setMenuOpen(false)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                <ShoppingCart size={16} /> سبد خرید {count > 0 && `(${count})`}
+              </Link>
+            </li>
+            {authUser ? (
+              <>
+                <li style={{ borderBottom: "1px solid #1f1f1f" }}>
+                  <Link href="/account" onClick={() => setMenuOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#d4af37", textDecoration: "none", fontSize: "14px" }}>
+                    <User size={16} /> {authUser.name}
+                  </Link>
+                </li>
+                <li>
+                  <button onClick={() => { handleLogout(); setMenuOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#ef4444", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
+                    <LogOut size={16} /> خروج
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li>
+                <Link href="/login" onClick={() => setMenuOpen(false)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#d4af37", textDecoration: "none", fontSize: "14px" }}>
+                  <LogIn size={16} /> ورود / ثبت‌نام
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       )}
