@@ -1,11 +1,15 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   output: "standalone",
   reactCompiler: true,
-  turbopack: {
-    root: path.resolve(__dirname),
+  // Exclude SQLite DB files from NFT tracing to prevent over-bundling
+  outputFileTracingExcludes: {
+    "*": [
+      "./prisma/*.db",
+      "./prisma/*.db-shm",
+      "./prisma/*.db-wal",
+    ],
   },
   images: {
     remotePatterns: [

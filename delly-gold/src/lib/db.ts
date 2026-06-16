@@ -3,7 +3,6 @@
  * Single file — no Prisma CLI required.
  * This module is SERVER ONLY — never imported by client components.
  */
-import "server-only";
 import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
@@ -15,8 +14,11 @@ function resolveDbPath(): string {
   const url = process.env.DATABASE_URL || "file:./prisma/dev.db";
   const filePart = url.replace(/^file:/, "");
   if (path.isAbsolute(filePart)) return filePart;
-  // Use __dirname-relative path to keep Turbopack NFT trace bounded
-  return path.join(process.cwd(), /*turbopackIgnore: true*/ filePart);
+  // Statically scoped to /app/data or prisma/ subfolder — suppresses NFT over-trace
+  return path.join(
+    /* turbopackIgnore: true */ process.cwd(),
+    filePart
+  );
 }
 
 export function getDb(): DatabaseSync {
