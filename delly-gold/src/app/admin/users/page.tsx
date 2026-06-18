@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { Search } from "lucide-react";
-import AdminGuard from "../AdminGuard";
 
 interface User {
   id: string; name: string; email: string; phone: string | null;
@@ -27,7 +26,6 @@ export default function AdminUsersPage() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   return (
-    <AdminGuard>
     <div>
       <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700", marginBottom: "24px" }}>مدیریت کاربران</h2>
 
@@ -73,6 +71,5 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </div>
-    </AdminGuard>
   );
 }

@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { categories } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { serializeCategory } from "@/lib/serialize";
 import { ok, created, error, serverError } from "@/lib/response";
 
 export async function GET() {
   try {
-    return ok(categories.list());
+    return ok(categories.list().map(serializeCategory));
   } catch (e) { console.error(e); return serverError(); }
 }
 

@@ -36,5 +36,5 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   // Only run on /admin paths — exclude static assets and API routes
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*"],
 };

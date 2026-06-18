@@ -1,7 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
-import AdminGuard from "../AdminGuard";
 
 interface Order {
   id: string; total: number; status: string; address: string; createdAt: string;
@@ -49,7 +48,6 @@ export default function AdminOrdersPage() {
   const getStatus = (s: string) => statusOptions.find(o => o.value === s);
 
   return (
-    <AdminGuard>
     <div>
       <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700", marginBottom: "24px" }}>مدیریت سفارش‌ها</h2>
 
@@ -141,6 +139,5 @@ export default function AdminOrdersPage() {
         </div>
       )}
     </div>
-    </AdminGuard>
   );
 }

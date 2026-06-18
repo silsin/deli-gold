@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { products } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { serializeProduct } from "@/lib/serialize";
 import { ok, created, error, serverError } from "@/lib/response";
 
 export async function GET(req: NextRequest) {
@@ -8,14 +9,18 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(50, parseInt(searchParams.get("limit") || "12"));
+    const adminMode = searchParams.get("adminMode") === "true";
     const result = products.list({
       categoryId: searchParams.get("category") || undefined,
       featured: searchParams.get("featured") === "true" ? true : undefined,
       search: searchParams.get("search") || undefined,
       limit, offset: (page - 1) * limit,
-      adminMode: searchParams.get("adminMode") === "true",
+      adminMode,
     });
-    return ok({ products: result.rows, pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) } });
+    return ok({
+      products: adminMode ? result.rows.map(serializeProduct) : result.rows,
+      pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) },
+    });
   } catch (e) { console.error(e); return serverError(); }
 }
 

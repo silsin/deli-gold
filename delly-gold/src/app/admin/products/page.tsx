@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, Search, X, Info } from "lucide-react";
-import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; }
 interface Product {
@@ -136,7 +135,6 @@ export default function AdminProductsPage() {
   };
 
   return (
-    <AdminGuard>
       <div>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
@@ -419,6 +417,5 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
-    </AdminGuard>
   );
 }

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import AdminGuard from "./AdminGuard";
 import {
   LayoutDashboard, Package, ShoppingBag, Users, Tag, Settings,
   LogOut, Menu, X, ChevronLeft,
@@ -35,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )?.label || "پنل مدیریت";
 
   return (
+    <AdminGuard>
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#0e0e0e", direction: "rtl" }}>
 
       {/* ── Sidebar ── */}
@@ -163,5 +165,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </main>
     </div>
+    </AdminGuard>
   );
 }

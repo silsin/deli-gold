@@ -42,8 +42,8 @@ export default function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: "#111",
-        borderTop: "1px solid #2a2a2a",
+        backgroundColor: "var(--theme-bg-secondary)",
+        borderTop: "1px solid var(--theme-border)",
         marginTop: "60px",
       }}
     >

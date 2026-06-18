@@ -3,7 +3,7 @@ import Footer from "./Footer";
 
 export default function PageLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ backgroundColor: "#0e0e0e", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="page-shell">
       <Navbar />
       <main style={{ flex: 1 }}>{children}</main>
       <Footer />

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { orders, products as productsDb } from "@/lib/db";
 import { requireAuth, requireAdmin } from "@/lib/auth";
+import { serializeOrder, serializeOrderDetail } from "@/lib/serialize";
 import { ok, created, error, serverError } from "@/lib/response";
 
 export async function GET(req: NextRequest) {
@@ -13,7 +14,10 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
     const result = orders.list({ userId: isAdmin ? undefined : authResult.user.userId, limit, offset: (page - 1) * limit });
-    return ok({ orders: result.rows, pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) } });
+    return ok({
+      orders: result.rows.map(serializeOrder),
+      pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) },
+    });
   } catch (e) { console.error(e); return serverError(); }
 }
 
@@ -35,6 +39,6 @@ export async function POST(req: NextRequest) {
       orderItems.push({ productId: item.productId, quantity: item.quantity, price: product.price });
     }
     const order = orders.create({ userId: result.user.userId, total, address: address.trim(), note, items: orderItems });
-    return created(order);
+    return created(serializeOrderDetail(order));
   } catch (e) { console.error(e); return serverError(); }
 }

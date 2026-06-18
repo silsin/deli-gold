@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; slug: string; description: string | null; _count: { products: number }; }
 const emptyForm = { name: "", slug: "", description: "" };
@@ -57,7 +56,6 @@ export default function AdminCategoriesPage() {
   }
 
   return (
-    <AdminGuard>
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
         <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700" }}>مدیریت دسته‌بندی‌ها</h2>
@@ -128,6 +126,5 @@ export default function AdminCategoriesPage() {
         </div>
       )}
     </div>
-    </AdminGuard>
   );
 }

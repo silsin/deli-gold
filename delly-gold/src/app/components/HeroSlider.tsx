@@ -111,25 +111,22 @@ function PricePanel() {
   const trendColor = isUp ? "#10b981" : "#ef4444";
 
   return (
-    <div style={{
-      position: "absolute",
-      left: "40px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      width: "300px",
-      zIndex: 20,
-      // Glassmorphism card
-      backgroundColor: "rgba(10,10,10,0.72)",
-      backdropFilter: "blur(20px)",
-      WebkitBackdropFilter: "blur(20px)",
-      border: "1px solid rgba(212,175,55,0.2)",
-      borderRadius: "16px",
+    <div className="hero-price-panel" style={{
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      // Solid panel — no bleed-through from slider
+      backgroundColor: "#0c0c0c",
+      borderInlineStart: "1px solid rgba(212,175,55,0.15)",
+      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
       overflow: "hidden",
     }}>
       {/* Top accent line */}
-      <div style={{ height: "2px", background: "linear-gradient(to right, #d4af37, transparent)" }} />
+      <div style={{ height: "2px", background: "linear-gradient(to left, #d4af37, transparent)", flexShrink: 0 }} />
 
-      <div style={{ padding: "18px 20px" }}>
+      <div style={{ padding: "18px 20px", overflowY: "auto", flex: 1 }}>
 
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
@@ -299,11 +296,26 @@ export default function HeroSlider() {
 
   return (
     <section
-      style={{ position: "relative", height: "560px", overflow: "hidden", backgroundColor: "#0e0e0e" }}
+      className="hero-section"
+      style={{
+        position: "relative",
+        height: "560px",
+        overflow: "hidden",
+        backgroundColor: "#0e0e0e",
+        display: "grid",
+        gridTemplateColumns: "320px minmax(0, 1fr)",
+        direction: "rtl",
+      }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* ── Slides ── */}
+      {/* ── Price column (RTL: right side) ── */}
+      <aside className="hero-price-aside" style={{ position: "relative", zIndex: 30, minHeight: 0 }}>
+        <PricePanel />
+      </aside>
+
+      {/* ── Slider column ── */}
+      <div className="hero-slider-area" style={{ position: "relative", overflow: "hidden", minHeight: 0 }}>
       {slides.map((slide, idx) => {
         const isActive = idx === current;
         return (
@@ -324,22 +336,20 @@ export default function HeroSlider() {
               transition: "transform 6s ease-out",
             }} />
 
-            {/* Gradient — stronger on right where price panel sits */}
+            {/* Gradient over slider only */}
             <div style={{
               position: "absolute", inset: 0,
-              background: "linear-gradient(to left, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.75) 30%, rgba(10,10,10,0.5) 55%, rgba(10,10,10,0.1) 100%)",
+              background: "linear-gradient(to right, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 45%, rgba(10,10,10,0.15) 100%)",
             }} />
 
-            {/* Slide text content — shifted right to give panel space */}
-            <div style={{
-              position: "relative", maxWidth: "1280px",
-              margin: "0 auto", padding: "0 40px",
+            {/* Slide text content */}
+            <div className="hero-slide-text" style={{
+              position: "relative", maxWidth: "720px",
+              margin: "0 auto", padding: "0 48px 0 72px",
               width: "100%", height: "100%",
               display: "flex", alignItems: "center",
             }}>
               <div style={{
-                // Text lives in right ~55% of the hero, panel takes left ~25%
-                marginRight: "360px",
                 opacity: isActive ? 1 : 0,
                 transform: isActive ? "translateY(0)" : "translateY(20px)",
                 transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s",
@@ -382,10 +392,7 @@ export default function HeroSlider() {
         );
       })}
 
-      {/* ── Price Panel ── */}
-      <PricePanel />
-
-      {/* ── Arrows ── */}
+      {/* ── Arrows (inside slider area only) ── */}
       {[
         { onClick: prev, side: "right", label: "قبلی", icon: <ChevronRight size={20} /> },
         { onClick: next, side: "left",  label: "بعدی", icon: <ChevronLeft size={20} /> },
@@ -436,12 +443,13 @@ export default function HeroSlider() {
 
       {/* ── Slide counter ── */}
       <div style={{
-        position: "absolute", top: "18px", right: "18px",
+        position: "absolute", top: "18px", left: "18px",
         color: "rgba(212,175,55,0.5)", fontSize: "11px",
         fontWeight: "600", letterSpacing: "1px", zIndex: 10,
       }}>
         {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
       </div>
+      </div>{/* /hero-slider-area */}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -450,7 +458,16 @@ export default function HeroSlider() {
           50%       { opacity: 0.4; transform: scale(0.7); }
         }
         @media (max-width: 900px) {
-          .hero-price-panel { display: none !important; }
+          .hero-section {
+            grid-template-columns: 1fr !important;
+            height: 480px !important;
+          }
+          .hero-price-aside {
+            display: none !important;
+          }
+          .hero-slider-area .hero-slide-text {
+            padding: 0 24px !important;
+          }
         }
       `}</style>
     </section>

@@ -106,7 +106,7 @@ export default function Navbar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav style={{ backgroundColor: "#0e0e0e", borderBottom: "1px solid #2a2a2a", position: "sticky", top: 0, zIndex: 100 }}>
+    <nav style={{ backgroundColor: "var(--theme-bg)", borderBottom: "1px solid var(--theme-border)", position: "sticky", top: 0, zIndex: 100 }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
 
         {/* ── Left: icons ── */}

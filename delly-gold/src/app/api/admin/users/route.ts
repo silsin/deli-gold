@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { users } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { serializeUser } from "@/lib/serialize";
 import { ok, error, serverError } from "@/lib/response";
 
 export async function GET(req: NextRequest) {
@@ -12,6 +13,9 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
     const search = searchParams.get("search") || undefined;
     const { rows, total } = users.list({ search, limit, offset: (page - 1) * limit });
-    return ok({ users: rows, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+    return ok({
+      users: rows.map(serializeUser),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (e) { console.error(e); return serverError(); }
 }
