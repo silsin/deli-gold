@@ -65,7 +65,7 @@ export default function Footer() {
         >
           {/* Social + Newsletter */}
           <div>
-            <h4 style={{ color: "#d4af37", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
+            <h4 style={{ color: "var(--theme-accent)", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
               ما را دنبال کنید
             </h4>
             <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
@@ -77,24 +77,24 @@ export default function Footer() {
                   style={{
                     width: "36px",
                     height: "36px",
-                    backgroundColor: "rgba(212,175,55,0.1)",
-                    border: "1px solid rgba(212,175,55,0.25)",
+                    backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent)",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#d4af37",
+                    color: "var(--theme-accent)",
                     textDecoration: "none",
                     transition: "background-color 0.2s",
                     flexShrink: 0,
                   }}
                   onMouseEnter={(e) =>
                     ((e.currentTarget as HTMLElement).style.backgroundColor =
-                      "rgba(212,175,55,0.25)")
+                      "color-mix(in srgb, var(--theme-accent) 25%, transparent)")
                   }
                   onMouseLeave={(e) =>
                     ((e.currentTarget as HTMLElement).style.backgroundColor =
-                      "rgba(212,175,55,0.1)")
+                      "color-mix(in srgb, var(--theme-accent) 10%, transparent)")
                   }
                 >
                   {s.icon}
@@ -102,7 +102,7 @@ export default function Footer() {
               ))}
             </div>
 
-            <p style={{ color: "#666", fontSize: "12px", lineHeight: "1.7", marginBottom: "12px" }}>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: "12px", lineHeight: "1.7", marginBottom: "12px" }}>
               از جدیدترین محصولات و تخفیف‌ها با خبر شوید
             </p>
 
@@ -110,7 +110,7 @@ export default function Footer() {
             <div style={{ display: "flex", gap: "6px" }}>
               <button
                 style={{
-                  backgroundColor: "#d4af37",
+                  backgroundColor: "var(--theme-accent)",
                   color: "#000",
                   border: "none",
                   borderRadius: "6px",
@@ -132,11 +132,11 @@ export default function Footer() {
                 placeholder="ایمیل شما"
                 style={{
                   flex: 1,
-                  backgroundColor: "#1a1a1a",
-                  border: "1px solid #333",
+                  backgroundColor: "var(--theme-card)",
+                  border: "1px solid var(--theme-border)",
                   borderRadius: "6px",
                   padding: "8px 10px",
-                  color: "#fff",
+                  color: "var(--theme-text)",
                   fontSize: "12px",
                   outline: "none",
                   direction: "ltr",
@@ -148,7 +148,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 style={{ color: "#d4af37", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
+            <h4 style={{ color: "var(--theme-accent)", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
               دسترسی سریع
             </h4>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -157,7 +157,7 @@ export default function Footer() {
                   <a
                     href="#"
                     style={{
-                      color: "#888",
+                      color: "var(--theme-text-muted)",
                       textDecoration: "none",
                       fontSize: "13px",
                       display: "flex",
@@ -166,13 +166,13 @@ export default function Footer() {
                       transition: "color 0.2s",
                     }}
                     onMouseEnter={(e) =>
-                      ((e.currentTarget as HTMLElement).style.color = "#d4af37")
+                      ((e.currentTarget as HTMLElement).style.color = "var(--theme-accent)")
                     }
                     onMouseLeave={(e) =>
-                      ((e.currentTarget as HTMLElement).style.color = "#888")
+                      ((e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)")
                     }
                   >
-                    <span style={{ color: "#d4af37", fontSize: "10px" }}>◆</span>
+                    <span style={{ color: "var(--theme-accent)", fontSize: "10px" }}>◆</span>
                     {link}
                   </a>
                 </li>
@@ -188,7 +188,7 @@ export default function Footer() {
                 style={{
                   width: "36px",
                   height: "36px",
-                  border: "2px solid #d4af37",
+                  border: "2px solid var(--theme-accent)",
                   transform: "rotate(45deg)",
                   margin: "0 auto 10px",
                   display: "flex",
@@ -196,16 +196,16 @@ export default function Footer() {
                   justifyContent: "center",
                 }}
               >
-                <div style={{ width: "12px", height: "12px", backgroundColor: "#d4af37", transform: "rotate(0deg)" }} />
+                <div style={{ width: "12px", height: "12px", backgroundColor: "var(--theme-accent)", transform: "rotate(0deg)" }} />
               </div>
-              <div style={{ color: "#d4af37", fontSize: "28px", fontWeight: "900", letterSpacing: "-1px" }}>
+              <div style={{ color: "var(--theme-accent)", fontSize: "28px", fontWeight: "900", letterSpacing: "-1px" }}>
                 DG
               </div>
-              <div style={{ color: "#d4af37", fontSize: "11px", fontWeight: "600", letterSpacing: "3px" }}>
+              <div style={{ color: "var(--theme-accent)", fontSize: "11px", fontWeight: "600", letterSpacing: "3px" }}>
                 DELLY GOLD
               </div>
             </div>
-            <p style={{ color: "#666", fontSize: "12px", lineHeight: "1.8" }}>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: "12px", lineHeight: "1.8" }}>
               دلی گلد؛ ارائه‌دهنده بهترین
               <br />
               طلاها با تضمین کیفیت و اعتماد
@@ -214,7 +214,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 style={{ color: "#d4af37", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
+            <h4 style={{ color: "var(--theme-accent)", fontSize: "14px", fontWeight: "700", marginBottom: "16px" }}>
               اطلاعات تماس
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -225,12 +225,12 @@ export default function Footer() {
                     display: "flex",
                     alignItems: "flex-start",
                     gap: "8px",
-                    color: "#888",
+                    color: "var(--theme-text-muted)",
                     fontSize: "12px",
                     lineHeight: "1.5",
                   }}
                 >
-                  <span style={{ color: "#d4af37", flexShrink: 0, marginTop: "2px" }}>{c.icon}</span>
+                  <span style={{ color: "var(--theme-accent)", flexShrink: 0, marginTop: "2px" }}>{c.icon}</span>
                   {c.text}
                 </div>
               ))}
@@ -241,14 +241,14 @@ export default function Footer() {
         {/* Bottom bar */}
         <div
           style={{
-            borderTop: "1px solid #2a2a2a",
+            borderTop: "1px solid var(--theme-border)",
             paddingTop: "20px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <p style={{ color: "#555", fontSize: "12px", textAlign: "center" }}>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: "12px", textAlign: "center" }}>
             تمامی حقوق این سایت متعلق به دلی گلد است. ۱۴۰۴
           </p>
         </div>

@@ -3,6 +3,7 @@ export interface ThemePalette {
   name: string;
   bg: string;
   bgSecondary: string;
+  surface: string;
   card: string;
   border: string;
   accent: string;
@@ -17,6 +18,7 @@ export const THEME_PALETTES: ThemePalette[] = [
     name: "طلایی کلاسیک",
     bg: "#0e0e0e",
     bgSecondary: "#111111",
+    surface: "#161616",
     card: "#1a1a1a",
     border: "#2a2a2a",
     accent: "#d4af37",
@@ -29,6 +31,7 @@ export const THEME_PALETTES: ThemePalette[] = [
     name: "رز گلد",
     bg: "#120c0e",
     bgSecondary: "#1a1215",
+    surface: "#1e1518",
     card: "#221820",
     border: "#3d2830",
     accent: "#e8a598",
@@ -41,6 +44,7 @@ export const THEME_PALETTES: ThemePalette[] = [
     name: "نیمه‌شب",
     bg: "#0a0e14",
     bgSecondary: "#0f1419",
+    surface: "#121820",
     card: "#151c24",
     border: "#243040",
     accent: "#5b9fd4",
@@ -53,6 +57,7 @@ export const THEME_PALETTES: ThemePalette[] = [
     name: "زمرد",
     bg: "#0a100e",
     bgSecondary: "#0f1612",
+    surface: "#121a15",
     card: "#152019",
     border: "#243830",
     accent: "#4ade80",
@@ -65,6 +70,7 @@ export const THEME_PALETTES: ThemePalette[] = [
     name: "کرم روشن",
     bg: "#f5f0e8",
     bgSecondary: "#ebe4d8",
+    surface: "#e8e0d4",
     card: "#ffffff",
     border: "#d4cbb8",
     accent: "#b8860b",
@@ -109,6 +115,7 @@ export function applyTheme(settings: Partial<ThemeSettings>) {
 
   root.style.setProperty("--theme-bg", palette.bg);
   root.style.setProperty("--theme-bg-secondary", palette.bgSecondary);
+  root.style.setProperty("--theme-surface", palette.surface);
   root.style.setProperty("--theme-card", palette.card);
   root.style.setProperty("--theme-border", palette.border);
   root.style.setProperty("--theme-accent", palette.accent);

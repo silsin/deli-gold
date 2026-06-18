@@ -27,12 +27,12 @@ export default function AboutPage() {
       {/* Hero */}
       <div style={{ position: "relative", height: 320, overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1400&q=80)`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25)" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(212,175,55,0.15), transparent)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 15%, transparent), transparent)" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
-          <div style={{ color: "#d4af37", fontSize: 36, fontWeight: 900, letterSpacing: -2, marginBottom: 8 }}>DG</div>
-          <div style={{ color: "#d4af37", fontSize: 12, letterSpacing: 4, marginBottom: 16 }}>DELLY GOLD</div>
-          <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>درباره دلی گلد</h1>
-          <p style={{ color: "#aaa", fontSize: 15, maxWidth: 500 }}>زیبایی ماندگار در هر لحظه از زندگی شما</p>
+          <div style={{ color: "var(--theme-accent)", fontSize: 36, fontWeight: 900, letterSpacing: -2, marginBottom: 8 }}>DG</div>
+          <div style={{ color: "var(--theme-accent)", fontSize: 12, letterSpacing: 4, marginBottom: 16 }}>DELLY GOLD</div>
+          <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>درباره دلی گلد</h1>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 15, maxWidth: 500 }}>زیبایی ماندگار در هر لحظه از زندگی شما</p>
         </div>
       </div>
 
@@ -41,16 +41,16 @@ export default function AboutPage() {
         {/* Story */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, marginBottom: 72, alignItems: "center" }} className="story-grid">
           <div>
-            <div style={{ width: 40, height: 3, backgroundColor: "#d4af37", marginBottom: 16 }} />
-            <h2 style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginBottom: 16 }}>داستان ما</h2>
-            <p style={{ color: "#888", fontSize: 14, lineHeight: 2, marginBottom: 16 }}>
+            <div style={{ width: 40, height: 3, backgroundColor: "var(--theme-accent)", marginBottom: 16 }} />
+            <h2 style={{ color: "var(--theme-text)", fontSize: 28, fontWeight: 700, marginBottom: 16 }}>داستان ما</h2>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 14, lineHeight: 2, marginBottom: 16 }}>
               دلی گلد در سال ۱۳۹۴ با یک رویا آغاز شد — رویایی که طلا را به همه دسترس‌پذیر کند. از یک فروشگاه کوچک در تهران، به یک برند معتبر آنلاین تبدیل شدیم.
             </p>
-            <p style={{ color: "#888", fontSize: 14, lineHeight: 2 }}>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 14, lineHeight: 2 }}>
               امروز با بیش از ۵ هزار مشتری وفادار و صدها طرح منحصربه‌فرد، افتخار می‌کنیم که یکی از معتمدترین فروشگاه‌های طلا آنلاین ایران هستیم.
             </p>
           </div>
-          <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #2a2a2a" }}>
+          <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--theme-border)" }}>
             <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=700&q=80" alt="درباره دلی گلد" style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
           </div>
         </div>
@@ -58,25 +58,25 @@ export default function AboutPage() {
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 72 }} className="stats-grid">
           {stats.map((s, i) => (
-            <div key={i} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: "28px 20px", textAlign: "center" }}>
-              <p style={{ color: "#d4af37", fontSize: 32, fontWeight: 900, marginBottom: 6 }}>{s.value}</p>
-              <p style={{ color: "#888", fontSize: 13 }}>{s.label}</p>
+            <div key={i} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: "28px 20px", textAlign: "center" }}>
+              <p style={{ color: "var(--theme-accent)", fontSize: 32, fontWeight: 900, marginBottom: 6 }}>{s.value}</p>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 13 }}>{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Values */}
         <div style={{ marginBottom: 72 }}>
-          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>ارزش‌های ما</h2>
-          <p style={{ color: "#666", fontSize: 14, textAlign: "center", marginBottom: 36 }}>آنچه ما را متمایز می‌کند</p>
+          <h2 style={{ color: "var(--theme-text)", fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>ارزش‌های ما</h2>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 14, textAlign: "center", marginBottom: 36 }}>آنچه ما را متمایز می‌کند</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="values-grid">
             {values.map((v, i) => (
-              <div key={i} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 24, textAlign: "center" }}>
-                <div style={{ width: 56, height: 56, backgroundColor: "rgba(212,175,55,0.1)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "#d4af37" }}>
+              <div key={i} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 24, textAlign: "center" }}>
+                <div style={{ width: 56, height: 56, backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "var(--theme-accent)" }}>
                   {v.icon}
                 </div>
-                <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{v.title}</h3>
-                <p style={{ color: "#888", fontSize: 12, lineHeight: 1.7 }}>{v.desc}</p>
+                <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, marginBottom: 8 }}>{v.title}</h3>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 12, lineHeight: 1.7 }}>{v.desc}</p>
               </div>
             ))}
           </div>
@@ -84,16 +84,16 @@ export default function AboutPage() {
 
         {/* Team */}
         <div>
-          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>تیم ما</h2>
-          <p style={{ color: "#666", fontSize: 14, textAlign: "center", marginBottom: 36 }}>افراد پشت دلی گلد</p>
+          <h2 style={{ color: "var(--theme-text)", fontSize: 24, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>تیم ما</h2>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 14, textAlign: "center", marginBottom: 36 }}>افراد پشت دلی گلد</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, maxWidth: 700, margin: "0 auto" }} className="team-grid">
             {team.map((m, i) => (
               <div key={i} style={{ textAlign: "center" }}>
-                <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", margin: "0 auto 12px", border: "3px solid #d4af37" }}>
+                <div style={{ width: 100, height: 100, borderRadius: "50%", overflow: "hidden", margin: "0 auto 12px", border: "3px solid var(--theme-accent)" }}>
                   <img src={m.image} alt={m.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
-                <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>{m.name}</h3>
-                <p style={{ color: "#d4af37", fontSize: 12 }}>{m.role}</p>
+                <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700 }}>{m.name}</h3>
+                <p style={{ color: "var(--theme-accent)", fontSize: 12 }}>{m.role}</p>
               </div>
             ))}
           </div>

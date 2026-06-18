@@ -51,14 +51,14 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
   const st = STATUS[order.status] ?? STATUS.PENDING;
   return (
     <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 16 }}>
-      <div style={{ backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
+      <div style={{ backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto" }}>
         {/* Header */}
-        <div style={{ padding: "18px 22px", borderBottom: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--theme-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <p style={{ color: "#888", fontSize: 11, marginBottom: 2 }}>فاکتور سفارش</p>
-            <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, fontFamily: "monospace" }}>#{order.id.slice(0, 12)}</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 2 }}>فاکتور سفارش</p>
+            <p style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, fontFamily: "monospace" }}>#{order.id.slice(0, 12)}</p>
           </div>
-          <button onClick={onClose} style={{ color: "#666", background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ color: "var(--theme-text-muted)", background: "none", border: "none", cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ padding: "20px 22px" }}>
@@ -68,22 +68,22 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
               <span style={{ color: st.color }}>{st.icon}</span>
               <span style={{ color: st.color, fontSize: 12, fontWeight: 600 }}>{st.label}</span>
             </div>
-            <span style={{ color: "#666", fontSize: 12 }}>{formatDate(order.created_at)}</span>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{formatDate(order.created_at)}</span>
           </div>
 
           {/* Items */}
-          <div style={{ backgroundColor: "#121212", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
-            <div style={{ padding: "10px 14px", borderBottom: "1px solid #222" }}>
-              <p style={{ color: "#888", fontSize: 11, fontWeight: 600, letterSpacing: "0.5px" }}>اقلام سفارش</p>
+          <div style={{ backgroundColor: "var(--theme-surface)", borderRadius: 10, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--theme-border)" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 11, fontWeight: 600, letterSpacing: "0.5px" }}>اقلام سفارش</p>
             </div>
             {order.items.map(item => (
-              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderBottom: "1px solid #1a1a1a" }}>
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderBottom: "1px solid var(--theme-card)" }}>
                 <img src={getImg(item.product_images)} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</p>
-                  <p style={{ color: "#666", fontSize: 11 }}>{item.quantity} عدد × {item.price.toLocaleString("fa-IR")} تومان</p>
+                  <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</p>
+                  <p style={{ color: "var(--theme-text-muted)", fontSize: 11 }}>{item.quantity} عدد × {item.price.toLocaleString("fa-IR")} تومان</p>
                 </div>
-                <p style={{ color: "#d4af37", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                <p style={{ color: "var(--theme-accent)", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                   {(item.price * item.quantity).toLocaleString("fa-IR")}
                 </p>
               </div>
@@ -92,29 +92,29 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
 
           {/* Address */}
           {order.address && (
-            <div style={{ backgroundColor: "#121212", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 8 }}>
-              <MapPin size={14} color="#d4af37" style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ backgroundColor: "var(--theme-surface)", borderRadius: 10, padding: "12px 14px", marginBottom: 16, display: "flex", gap: 8 }}>
+              <MapPin size={14} color="var(--theme-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <p style={{ color: "#888", fontSize: 11, marginBottom: 3 }}>آدرس تحویل</p>
-                <p style={{ color: "#ccc", fontSize: 13, lineHeight: 1.6 }}>{order.address}</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 3 }}>آدرس تحویل</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 13, lineHeight: 1.6 }}>{order.address}</p>
               </div>
             </div>
           )}
 
           {/* Note */}
           {order.note && (
-            <div style={{ backgroundColor: "#121212", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
-              <p style={{ color: "#888", fontSize: 11, marginBottom: 3 }}>یادداشت</p>
-              <p style={{ color: "#ccc", fontSize: 13 }}>{order.note}</p>
+            <div style={{ backgroundColor: "var(--theme-surface)", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 3 }}>یادداشت</p>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 13 }}>{order.note}</p>
             </div>
           )}
 
           {/* Total */}
-          <div style={{ backgroundColor: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: 10, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#888", fontSize: 14 }}>جمع کل</span>
+          <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent)", borderRadius: 10, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: 14 }}>جمع کل</span>
             <div style={{ textAlign: "left" }}>
-              <span style={{ color: "#d4af37", fontSize: 22, fontWeight: 900 }}>{order.total.toLocaleString("fa-IR")}</span>
-              <span style={{ color: "#888", fontSize: 12, marginRight: 6 }}>تومان</span>
+              <span style={{ color: "var(--theme-accent)", fontSize: 22, fontWeight: 900 }}>{order.total.toLocaleString("fa-IR")}</span>
+              <span style={{ color: "var(--theme-text-muted)", fontSize: 12, marginRight: 6 }}>تومان</span>
             </div>
           </div>
 
@@ -214,7 +214,7 @@ export default function AccountPage() {
   if (loading) return (
     <PageLayout>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 400 }}>
-        <div style={{ color: "#d4af37", fontSize: 15 }}>در حال بارگذاری...</div>
+        <div style={{ color: "var(--theme-accent)", fontSize: 15 }}>در حال بارگذاری...</div>
       </div>
     </PageLayout>
   );
@@ -222,8 +222,8 @@ export default function AccountPage() {
   if (!profile) return null;
 
   const inputStyle: React.CSSProperties = {
-    width: "100%", backgroundColor: "#121212", border: "1px solid #333",
-    borderRadius: 8, padding: "10px 14px", color: "#fff", fontSize: 14,
+    width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)",
+    borderRadius: 8, padding: "10px 14px", color: "var(--theme-text)", fontSize: 14,
     outline: "none", fontFamily: "inherit",
   };
 
@@ -232,14 +232,14 @@ export default function AccountPage() {
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px" }}>
 
         {/* Profile header */}
-        <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 14, padding: "22px 24px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: "22px 24px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 52, height: 52, backgroundColor: "rgba(212,175,55,0.15)", border: "2px solid rgba(212,175,55,0.3)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <User size={24} color="#d4af37" />
+            <div style={{ width: 52, height: 52, backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)", border: "2px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <User size={24} color="var(--theme-accent)" />
             </div>
             <div>
-              <h1 style={{ color: "#fff", fontSize: 18, fontWeight: 800, marginBottom: 2 }}>{profile.name}</h1>
-              <p style={{ color: "#666", fontSize: 13 }}>{profile.email}</p>
+              <h1 style={{ color: "var(--theme-text)", fontSize: 18, fontWeight: 800, marginBottom: 2 }}>{profile.name}</h1>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 13 }}>{profile.email}</p>
             </div>
           </div>
           <button onClick={handleLogout}
@@ -249,13 +249,13 @@ export default function AccountPage() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: 10, padding: 4, marginBottom: 24 }}>
+        <div style={{ display: "flex", gap: 4, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 10, padding: 4, marginBottom: 24 }}>
           {([
             { key: "profile", label: "اطلاعات حساب", icon: <User size={15} /> },
             { key: "orders",  label: "سفارش‌های من",  icon: <Package size={15} /> },
           ] as { key: Tab; label: string; icon: React.ReactNode }[]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: tab === t.key ? "#1a1a1a" : "transparent", color: tab === t.key ? "#d4af37" : "#666", border: tab === t.key ? "1px solid #2a2a2a" : "1px solid transparent", borderRadius: 7, padding: "10px", fontWeight: tab === t.key ? 700 : 400, fontSize: 14, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
+              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: tab === t.key ? "var(--theme-card)" : "transparent", color: tab === t.key ? "var(--theme-accent)" : "var(--theme-text-muted)", border: tab === t.key ? "1px solid var(--theme-border)" : "1px solid transparent", borderRadius: 7, padding: "10px", fontWeight: tab === t.key ? 700 : 400, fontSize: 14, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
               {t.icon} {t.label}
             </button>
           ))}
@@ -264,47 +264,47 @@ export default function AccountPage() {
         {/* ── Profile Tab ── */}
         {tab === "profile" && (
           <form onSubmit={handleSaveProfile}>
-            <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 14, padding: 24 }}>
-              <h2 style={{ color: "#fff", fontSize: 16, fontWeight: 700, marginBottom: 22 }}>ویرایش اطلاعات شخصی</h2>
+            <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 24 }}>
+              <h2 style={{ color: "var(--theme-text)", fontSize: 16, fontWeight: 700, marginBottom: 22 }}>ویرایش اطلاعات شخصی</h2>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }} className="profile-grid">
                 <div>
-                  <label style={{ color: "#888", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                    <User size={12} color="#d4af37" /> نام کامل
+                  <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                    <User size={12} color="var(--theme-accent)" /> نام کامل
                   </label>
                   <input value={name} onChange={e => setName(e.target.value)} required style={inputStyle}
-                    onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                    onBlur={e => (e.target.style.borderColor = "#333")} />
+                    onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                    onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
                 </div>
                 <div>
-                  <label style={{ color: "#888", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                    <Mail size={12} color="#d4af37" /> ایمیل
+                  <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                    <Mail size={12} color="var(--theme-accent)" /> ایمیل
                   </label>
-                  <input value={profile.email} readOnly style={{ ...inputStyle, color: "#555", cursor: "not-allowed" }} />
+                  <input value={profile.email} readOnly style={{ ...inputStyle, color: "var(--theme-text-muted)", cursor: "not-allowed" }} />
                 </div>
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ color: "#888", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                  <Phone size={12} color="#d4af37" /> شماره تماس
+                <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                  <Phone size={12} color="var(--theme-accent)" /> شماره تماس
                 </label>
                 <input value={phone} onChange={e => setPhone(e.target.value)}
                   placeholder="09xxxxxxxxx"
                   style={{ ...inputStyle, direction: "ltr", maxWidth: 240 }}
-                  onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                  onBlur={e => (e.target.style.borderColor = "#333")} />
+                  onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                  onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <label style={{ color: "#888", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                  <MapPin size={12} color="#d4af37" /> آدرس پیش‌فرض
+                <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                  <MapPin size={12} color="var(--theme-accent)" /> آدرس پیش‌فرض
                 </label>
                 <textarea value={address} onChange={e => setAddress(e.target.value)}
                   placeholder="آدرس پیش‌فرض برای سفارش‌ها..."
                   rows={3}
                   style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
-                  onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                  onBlur={e => (e.target.style.borderColor = "#333")} />
+                  onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                  onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
               </div>
 
               {saveMsg && (
@@ -319,7 +319,7 @@ export default function AccountPage() {
               )}
 
               <button type="submit" disabled={saving}
-                style={{ display: "flex", alignItems: "center", gap: 8, backgroundColor: saving ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 800, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                style={{ display: "flex", alignItems: "center", gap: 8, backgroundColor: saving ? "var(--theme-accent)" : "var(--theme-accent)", color: "#000", border: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 800, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
                 <Save size={15} /> {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
               </button>
             </div>
@@ -330,12 +330,12 @@ export default function AccountPage() {
         {tab === "orders" && (
           <div>
             {ordersLoading ? (
-              <div style={{ textAlign: "center", padding: 60, color: "#555" }}>در حال بارگذاری...</div>
+              <div style={{ textAlign: "center", padding: 60, color: "var(--theme-text-muted)" }}>در حال بارگذاری...</div>
             ) : orders.length === 0 ? (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
-                <ShoppingBag size={52} color="#2a2a2a" style={{ margin: "0 auto 16px" }} />
-                <p style={{ color: "#555", fontSize: 15, marginBottom: 20 }}>هنوز سفارشی ندارید</p>
-                <Link href="/products" style={{ backgroundColor: "#d4af37", color: "#000", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 700, fontSize: 14 }}>
+                <ShoppingBag size={52} color="var(--theme-border)" style={{ margin: "0 auto 16px" }} />
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 15, marginBottom: 20 }}>هنوز سفارشی ندارید</p>
+                <Link href="/products" style={{ backgroundColor: "var(--theme-accent)", color: "#000", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 700, fontSize: 14 }}>
                   شروع خرید
                 </Link>
               </div>
@@ -345,30 +345,30 @@ export default function AccountPage() {
                   const st = STATUS[order.status] ?? STATUS.PENDING;
                   const isExpanded = expandedOrder === order.id;
                   return (
-                    <div key={order.id} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, overflow: "hidden", transition: "border-color 0.2s" }}>
+                    <div key={order.id} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, overflow: "hidden", transition: "border-color 0.2s" }}>
                       {/* Order row */}
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-                          <Package size={15} color="#d4af37" style={{ flexShrink: 0 }} />
-                          <span style={{ color: "#888", fontSize: 12, fontFamily: "monospace" }}>#{order.id.slice(0, 10)}</span>
+                          <Package size={15} color="var(--theme-accent)" style={{ flexShrink: 0 }} />
+                          <span style={{ color: "var(--theme-text-muted)", fontSize: 12, fontFamily: "monospace" }}>#{order.id.slice(0, 10)}</span>
                         </div>
-                        <span style={{ color: "#666", fontSize: 12 }}>{formatDate(order.created_at)}</span>
+                        <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{formatDate(order.created_at)}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: `${st.color}18`, border: `1px solid ${st.color}40`, borderRadius: 20, padding: "3px 10px" }}>
                           <span style={{ color: st.color }}>{st.icon}</span>
                           <span style={{ color: st.color, fontSize: 11, fontWeight: 600 }}>{st.label}</span>
                         </div>
-                        <span style={{ color: "#d4af37", fontSize: 14, fontWeight: 700 }}>
+                        <span style={{ color: "var(--theme-accent)", fontSize: 14, fontWeight: 700 }}>
                           {order.total.toLocaleString("fa-IR")} ت
                         </span>
                         <div style={{ display: "flex", gap: 6 }}>
                           <button
                             onClick={() => fetchOrderDetail(order.id)}
-                            style={{ display: "flex", alignItems: "center", gap: 4, backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.25)", borderRadius: 6, padding: "5px 10px", color: "#d4af37", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
+                            style={{ display: "flex", alignItems: "center", gap: 4, backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent)", borderRadius: 6, padding: "5px 10px", color: "var(--theme-accent)", cursor: "pointer", fontSize: 11, fontFamily: "inherit" }}>
                             فاکتور
                           </button>
                           <button
                             onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                            style={{ width: 28, height: 28, backgroundColor: "#121212", border: "1px solid #333", borderRadius: 6, color: "#666", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            style={{ width: 28, height: 28, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
                         </div>
@@ -376,27 +376,27 @@ export default function AccountPage() {
 
                       {/* Expanded items */}
                       {isExpanded && (
-                        <div style={{ borderTop: "1px solid #222", padding: "12px 18px", backgroundColor: "#161616" }}>
+                        <div style={{ borderTop: "1px solid var(--theme-border)", padding: "12px 18px", backgroundColor: "var(--theme-surface)" }}>
                           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {(order as Order & { items?: OrderItem[] }).items?.length ? (
                               (order as Order & { items: OrderItem[] }).items.map(item => (
                                 <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                   <img src={getImg(item.product_images)} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
-                                  <span style={{ color: "#ccc", fontSize: 13, flex: 1 }}>{item.product_name}</span>
-                                  <span style={{ color: "#888", fontSize: 12 }}>× {item.quantity}</span>
-                                  <span style={{ color: "#d4af37", fontSize: 12, fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
+                                  <span style={{ color: "var(--theme-text-muted)", fontSize: 13, flex: 1 }}>{item.product_name}</span>
+                                  <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>× {item.quantity}</span>
+                                  <span style={{ color: "var(--theme-accent)", fontSize: 12, fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
                                 </div>
                               ))
                             ) : (
                               <button onClick={() => fetchOrderDetail(order.id)}
-                                style={{ background: "none", border: "none", color: "#d4af37", cursor: "pointer", fontSize: 12, textAlign: "right", fontFamily: "inherit" }}>
+                                style={{ background: "none", border: "none", color: "var(--theme-accent)", cursor: "pointer", fontSize: 12, textAlign: "right", fontFamily: "inherit" }}>
                                 بارگذاری جزئیات...
                               </button>
                             )}
                           </div>
                           {order.address && (
-                            <div style={{ marginTop: 10, display: "flex", gap: 6, color: "#666", fontSize: 12 }}>
-                              <MapPin size={12} color="#d4af37" style={{ flexShrink: 0, marginTop: 1 }} />
+                            <div style={{ marginTop: 10, display: "flex", gap: 6, color: "var(--theme-text-muted)", fontSize: 12 }}>
+                              <MapPin size={12} color="var(--theme-accent)" style={{ flexShrink: 0, marginTop: 1 }} />
                               <span>{order.address}</span>
                             </div>
                           )}

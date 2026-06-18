@@ -36,6 +36,7 @@
 :root {
   --theme-bg: #0e0e0e;
   --theme-bg-secondary: #111111;
+  --theme-surface: #161616;
   --theme-card: #1a1a1a;
   --theme-border: #2a2a2a;
   --theme-accent: #d4af37;

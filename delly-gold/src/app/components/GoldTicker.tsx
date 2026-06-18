@@ -56,9 +56,9 @@ export default function GoldTicker() {
 
   return (
     <div style={{
-      backgroundColor: "#111",
-      borderBottom: "1px solid #2a2a2a",
-      borderTop: "1px solid #1a1a1a",
+      backgroundColor: "var(--theme-bg-secondary)",
+      borderBottom: "1px solid var(--theme-border)",
+      borderTop: "1px solid var(--theme-card)",
       position: "relative",
     }}>
       <div style={{
@@ -79,27 +79,27 @@ export default function GoldTicker() {
           alignItems: "center",
           gap: "6px",
           paddingLeft: "16px",
-          borderLeft: "1px solid #2a2a2a",
+          borderLeft: "1px solid var(--theme-border)",
           flexShrink: 0,
         }}>
           <div style={{
             width: "6px", height: "6px", borderRadius: "50%",
-            backgroundColor: loading ? "#555" : color,
+            backgroundColor: loading ? "var(--theme-text-muted)" : color,
             animation: !loading ? "pulse-dot 2s ease-in-out infinite" : "none",
           }} />
-          <span style={{ color: "#888", fontSize: "11px", fontWeight: "600", letterSpacing: "0.5px" }}>
+          <span style={{ color: "var(--theme-text-muted)", fontSize: "11px", fontWeight: "600", letterSpacing: "0.5px" }}>
             طلای ۱۸ عیار
           </span>
         </div>
 
         {/* Price */}
-        <div style={{ padding: "0 16px", borderLeft: "1px solid #2a2a2a", flexShrink: 0 }}>
+        <div style={{ padding: "0 16px", borderLeft: "1px solid var(--theme-border)", flexShrink: 0 }}>
           {loading ? (
-            <span style={{ color: "#444", fontSize: "13px" }}>در حال دریافت...</span>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "13px" }}>در حال دریافت...</span>
           ) : (
-            <span style={{ color: "#d4af37", fontSize: "15px", fontWeight: "800", letterSpacing: "-0.5px" }}>
+            <span style={{ color: "var(--theme-accent)", fontSize: "15px", fontWeight: "800", letterSpacing: "-0.5px" }}>
               {price.toLocaleString("fa-IR")}
-              <span style={{ color: "#666", fontSize: "11px", fontWeight: "400", marginRight: "4px" }}>تومان/گرم</span>
+              <span style={{ color: "var(--theme-text-muted)", fontSize: "11px", fontWeight: "400", marginRight: "4px" }}>تومان/گرم</span>
             </span>
           )}
         </div>
@@ -108,7 +108,7 @@ export default function GoldTicker() {
         {!loading && data && (
           <div style={{
             padding: "0 16px",
-            borderLeft: "1px solid #2a2a2a",
+            borderLeft: "1px solid var(--theme-border)",
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
@@ -125,17 +125,17 @@ export default function GoldTicker() {
         {!loading && data && (
           <div style={{
             padding: "0 16px",
-            borderLeft: "1px solid #2a2a2a",
+            borderLeft: "1px solid var(--theme-border)",
             flexShrink: 0,
             display: "flex",
             gap: "12px",
           }}>
             <span style={{ fontSize: "11px" }}>
-              <span style={{ color: "#555" }}>بالا: </span>
+              <span style={{ color: "var(--theme-text-muted)" }}>بالا: </span>
               <span style={{ color: "#10b981" }}>{data.high.toLocaleString("fa-IR")}</span>
             </span>
             <span style={{ fontSize: "11px" }}>
-              <span style={{ color: "#555" }}>پایین: </span>
+              <span style={{ color: "var(--theme-text-muted)" }}>پایین: </span>
               <span style={{ color: "#ef4444" }}>{data.low.toLocaleString("fa-IR")}</span>
             </span>
           </div>
@@ -149,11 +149,11 @@ export default function GoldTicker() {
             display: "flex",
             alignItems: "center",
             gap: "5px",
-            backgroundColor: calcOpen ? "rgba(212,175,55,0.12)" : "transparent",
-            border: calcOpen ? "1px solid rgba(212,175,55,0.3)" : "1px solid transparent",
+            backgroundColor: calcOpen ? "color-mix(in srgb, var(--theme-accent) 12%, transparent)" : "transparent",
+            border: calcOpen ? "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)" : "1px solid transparent",
             borderRadius: "6px",
             padding: "4px 10px",
-            color: calcOpen ? "#d4af37" : "#666",
+            color: calcOpen ? "var(--theme-accent)" : "var(--theme-text-muted)",
             cursor: "pointer",
             fontSize: "12px",
             fontFamily: "inherit",
@@ -170,12 +170,12 @@ export default function GoldTicker() {
           <button
             onClick={() => fetch_(true)}
             title="بروزرسانی"
-            style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "#d4af37" : "#444", padding: "2px", display: "flex" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)", padding: "2px", display: "flex" }}
           >
             <RefreshCw size={12} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
           </button>
           {!loading && (
-            <span style={{ color: "#333", fontSize: "9px" }}>{countdown}s</span>
+            <span style={{ color: "var(--theme-border)", fontSize: "9px" }}>{countdown}s</span>
           )}
         </div>
       </div>
@@ -187,8 +187,8 @@ export default function GoldTicker() {
           top: "100%",
           left: "50%",
           transform: "translateX(-50%)",
-          backgroundColor: "#161616",
-          border: "1px solid #2a2a2a",
+          backgroundColor: "var(--theme-surface)",
+          border: "1px solid var(--theme-border)",
           borderRadius: "10px",
           padding: "16px",
           width: "280px",
@@ -196,8 +196,8 @@ export default function GoldTicker() {
           boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
           animation: "fadeDown 0.15s ease",
         }}>
-          <p style={{ color: "#888", fontSize: "11px", marginBottom: "10px" }}>
-            قیمت هر گرم (با اجرت {markup}%): <strong style={{ color: "#d4af37" }}>{priceWithMarkup.toLocaleString("fa-IR")} ت</strong>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: "11px", marginBottom: "10px" }}>
+            قیمت هر گرم (با اجرت {markup}%): <strong style={{ color: "var(--theme-accent)" }}>{priceWithMarkup.toLocaleString("fa-IR")} ت</strong>
           </p>
           <div style={{ position: "relative", marginBottom: "10px" }}>
             <input
@@ -210,36 +210,36 @@ export default function GoldTicker() {
               step="0.01"
               style={{
                 width: "100%",
-                backgroundColor: "#121212",
-                border: "1px solid #333",
+                backgroundColor: "var(--theme-surface)",
+                border: "1px solid var(--theme-border)",
                 borderRadius: "6px",
                 padding: "8px 12px",
-                color: "#fff",
+                color: "var(--theme-text)",
                 fontSize: "13px",
                 outline: "none",
                 direction: "ltr",
                 fontFamily: "inherit",
               }}
-              onFocus={e => (e.target.style.borderColor = "#d4af37")}
-              onBlur={e => (e.target.style.borderColor = "#333")}
+              onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+              onBlur={e => (e.target.style.borderColor = "var(--theme-border)")}
             />
           </div>
           {calcResult !== null ? (
             <div style={{
-              backgroundColor: "rgba(212,175,55,0.1)",
-              border: "1px solid rgba(212,175,55,0.25)",
+              backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent)",
               borderRadius: "6px",
               padding: "10px 12px",
               textAlign: "center",
             }}>
-              <p style={{ color: "#888", fontSize: "10px", marginBottom: "3px" }}>قیمت تخمینی</p>
-              <p style={{ color: "#d4af37", fontSize: "18px", fontWeight: "800" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginBottom: "3px" }}>قیمت تخمینی</p>
+              <p style={{ color: "var(--theme-accent)", fontSize: "18px", fontWeight: "800" }}>
                 {calcResult.toLocaleString("fa-IR")}
-                <span style={{ color: "#666", fontSize: "11px", fontWeight: "400", marginRight: "4px" }}>تومان</span>
+                <span style={{ color: "var(--theme-text-muted)", fontSize: "11px", fontWeight: "400", marginRight: "4px" }}>تومان</span>
               </p>
             </div>
           ) : (
-            <p style={{ color: "#555", fontSize: "11px", textAlign: "center" }}>وزن را وارد کنید</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: "11px", textAlign: "center" }}>وزن را وارد کنید</p>
           )}
         </div>
       )}

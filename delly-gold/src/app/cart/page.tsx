@@ -69,20 +69,20 @@ export default function CartPage() {
           <div style={{ width: 72, height: 72, backgroundColor: "rgba(16,185,129,0.15)", border: "2px solid #10b981", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
             <CheckCircle size={36} color="#10b981" />
           </div>
-          <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 800, marginBottom: 12 }}>سفارش ثبت شد!</h1>
-          <p style={{ color: "#888", fontSize: 14, marginBottom: 8 }}>شماره سفارش شما:</p>
-          <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "10px 20px", display: "inline-block", marginBottom: 24 }}>
-            <span style={{ color: "#d4af37", fontFamily: "monospace", fontSize: 14, letterSpacing: 1 }}>{orderSuccess}</span>
+          <h1 style={{ color: "var(--theme-text)", fontSize: 24, fontWeight: 800, marginBottom: 12 }}>سفارش ثبت شد!</h1>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 14, marginBottom: 8 }}>شماره سفارش شما:</p>
+          <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "10px 20px", display: "inline-block", marginBottom: 24 }}>
+            <span style={{ color: "var(--theme-accent)", fontFamily: "monospace", fontSize: 14, letterSpacing: 1 }}>{orderSuccess}</span>
           </div>
-          <p style={{ color: "#666", fontSize: 13, marginBottom: 32, lineHeight: 1.8 }}>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 13, marginBottom: 32, lineHeight: 1.8 }}>
             سفارش شما با موفقیت ثبت شد و در حال پردازش است.<br />
             می‌توانید وضعیت سفارش را در حساب کاربری خود پیگیری کنید.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/account" style={{ backgroundColor: "#d4af37", color: "#000", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 700, fontSize: 14 }}>
+            <Link href="/account" style={{ backgroundColor: "var(--theme-accent)", color: "#000", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 700, fontSize: 14 }}>
               مشاهده سفارش‌ها
             </Link>
-            <Link href="/products" style={{ backgroundColor: "transparent", color: "#888", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 600, fontSize: 14, border: "1px solid #333" }}>
+            <Link href="/products" style={{ backgroundColor: "transparent", color: "var(--theme-text-muted)", textDecoration: "none", borderRadius: 8, padding: "11px 24px", fontWeight: 600, fontSize: 14, border: "1px solid var(--theme-border)" }}>
               ادامه خرید
             </Link>
           </div>
@@ -96,10 +96,10 @@ export default function CartPage() {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
-          <ShoppingCart size={22} color="#d4af37" />
-          <h1 style={{ color: "#fff", fontSize: 22, fontWeight: 800 }}>سبد خرید</h1>
+          <ShoppingCart size={22} color="var(--theme-accent)" />
+          <h1 style={{ color: "var(--theme-text)", fontSize: 22, fontWeight: 800 }}>سبد خرید</h1>
           {count > 0 && (
-            <span style={{ backgroundColor: "rgba(212,175,55,0.15)", color: "#d4af37", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 20, padding: "2px 10px", fontSize: 13, fontWeight: 700 }}>
+            <span style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)", color: "var(--theme-accent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)", borderRadius: 20, padding: "2px 10px", fontSize: 13, fontWeight: 700 }}>
               {count} کالا
             </span>
           )}
@@ -107,9 +107,9 @@ export default function CartPage() {
 
         {items.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <ShoppingCart size={56} color="#2a2a2a" style={{ margin: "0 auto 16px" }} />
-            <p style={{ color: "#555", fontSize: 16, marginBottom: 20 }}>سبد خرید شما خالی است</p>
-            <Link href="/products" style={{ backgroundColor: "#d4af37", color: "#000", textDecoration: "none", borderRadius: 8, padding: "12px 28px", fontWeight: 700, fontSize: 14 }}>
+            <ShoppingCart size={56} color="var(--theme-border)" style={{ margin: "0 auto 16px" }} />
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 16, marginBottom: 20 }}>سبد خرید شما خالی است</p>
+            <Link href="/products" style={{ backgroundColor: "var(--theme-accent)", color: "#000", textDecoration: "none", borderRadius: 8, padding: "12px 28px", fontWeight: 700, fontSize: 14 }}>
               مشاهده محصولات
             </Link>
           </div>
@@ -121,30 +121,30 @@ export default function CartPage() {
               {step === "cart" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(item => (
-                    <div key={item.productId} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
+                    <div key={item.productId} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
                       {/* Image */}
-                      <div style={{ width: 80, height: 80, borderRadius: 8, overflow: "hidden", flexShrink: 0, border: "1px solid #2a2a2a" }}>
+                      <div style={{ width: 80, height: 80, borderRadius: 8, overflow: "hidden", flexShrink: 0, border: "1px solid var(--theme-border)" }}>
                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                       {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ color: "#fff", fontSize: 14, fontWeight: 600, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h3>
-                        <p style={{ color: "#666", fontSize: 12, marginBottom: 8 }}>{item.karat} عیار · {item.weight} گرم</p>
-                        <p style={{ color: "#d4af37", fontSize: 14, fontWeight: 700 }}>
+                        <h3 style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 600, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h3>
+                        <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: 8 }}>{item.karat} عیار · {item.weight} گرم</p>
+                        <p style={{ color: "var(--theme-accent)", fontSize: 14, fontWeight: 700 }}>
                           {(item.price * item.quantity).toLocaleString("fa-IR")}
-                          <span style={{ color: "#666", fontWeight: 400, fontSize: 12, marginRight: 4 }}>تومان</span>
+                          <span style={{ color: "var(--theme-text-muted)", fontWeight: 400, fontSize: 12, marginRight: 4 }}>تومان</span>
                         </p>
                       </div>
                       {/* Quantity */}
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                         <button onClick={() => update(item.productId, item.quantity - 1)}
-                          style={{ width: 28, height: 28, backgroundColor: "#121212", border: "1px solid #333", borderRadius: 6, color: "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          style={{ width: 28, height: 28, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Minus size={12} />
                         </button>
-                        <span style={{ color: "#fff", fontSize: 14, fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.quantity}</span>
+                        <span style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.quantity}</span>
                         <button onClick={() => update(item.productId, item.quantity + 1)}
                           disabled={item.quantity >= item.stock}
-                          style={{ width: 28, height: 28, backgroundColor: item.quantity >= item.stock ? "#1a1a1a" : "#121212", border: "1px solid #333", borderRadius: 6, color: item.quantity >= item.stock ? "#444" : "#888", cursor: item.quantity >= item.stock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          style={{ width: 28, height: 28, backgroundColor: item.quantity >= item.stock ? "var(--theme-card)" : "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 6, color: item.quantity >= item.stock ? "var(--theme-text-muted)" : "var(--theme-text-muted)", cursor: item.quantity >= item.stock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Plus size={12} />
                         </button>
                         <button onClick={() => remove(item.productId)}
@@ -159,44 +159,44 @@ export default function CartPage() {
 
               {step === "checkout" && (
                 <form onSubmit={handleCheckout} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 20 }}>
-                    <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                      <MapPin size={16} color="#d4af37" /> اطلاعات تحویل
+                  <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 20 }}>
+                    <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                      <MapPin size={16} color="var(--theme-accent)" /> اطلاعات تحویل
                     </h3>
 
                     {!user && (
-                      <div style={{ backgroundColor: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-                        <p style={{ color: "#d4af37", fontSize: 13 }}>
+                      <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+                        <p style={{ color: "var(--theme-accent)", fontSize: 13 }}>
                           برای ثبت سفارش باید{" "}
-                          <Link href="/login?redirect=/cart" style={{ color: "#d4af37", fontWeight: 700 }}>وارد شوید</Link>
+                          <Link href="/login?redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>وارد شوید</Link>
                           {" "}یا{" "}
-                          <Link href="/login?tab=register&redirect=/cart" style={{ color: "#d4af37", fontWeight: 700 }}>ثبت‌نام کنید</Link>
+                          <Link href="/login?tab=register&redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>ثبت‌نام کنید</Link>
                         </p>
                       </div>
                     )}
 
                     {user && (
-                      <p style={{ color: "#888", fontSize: 13, marginBottom: 14 }}>
-                        خوش آمدید، <span style={{ color: "#fff", fontWeight: 600 }}>{user.name}</span>
+                      <p style={{ color: "var(--theme-text-muted)", fontSize: 13, marginBottom: 14 }}>
+                        خوش آمدید، <span style={{ color: "var(--theme-text)", fontWeight: 600 }}>{user.name}</span>
                       </p>
                     )}
 
                     <div style={{ marginBottom: 14 }}>
-                      <label style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 6 }}>آدرس کامل تحویل *</label>
+                      <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "block", marginBottom: 6 }}>آدرس کامل تحویل *</label>
                       <textarea
                         value={address}
                         onChange={e => setAddress(e.target.value)}
                         placeholder="استان، شهر، خیابان، پلاک، واحد..."
                         rows={3}
                         required
-                        style={{ width: "100%", backgroundColor: "#121212", border: "1px solid #333", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical", lineHeight: 1.6 }}
-                        onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                        onBlur={e => (e.target.style.borderColor = "#333")}
+                        style={{ width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "10px 12px", color: "var(--theme-text)", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical", lineHeight: 1.6 }}
+                        onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                        onBlur={e => (e.target.style.borderColor = "var(--theme-border)")}
                       />
                     </div>
 
                     <div>
-                      <label style={{ color: "#888", fontSize: 12, display: "block", marginBottom: 6 }}>
+                      <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "block", marginBottom: 6 }}>
                         <FileText size={12} style={{ display: "inline", marginLeft: 4 }} />
                         یادداشت سفارش (اختیاری)
                       </label>
@@ -205,20 +205,20 @@ export default function CartPage() {
                         onChange={e => setNote(e.target.value)}
                         placeholder="توضیحات اضافی برای سفارش..."
                         rows={2}
-                        style={{ width: "100%", backgroundColor: "#121212", border: "1px solid #333", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
-                        onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                        onBlur={e => (e.target.style.borderColor = "#333")}
+                        style={{ width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "10px 12px", color: "var(--theme-text)", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
+                        onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                        onBlur={e => (e.target.style.borderColor = "var(--theme-border)")}
                       />
                     </div>
                   </div>
 
                   {/* Order summary in checkout step */}
-                  <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 16 }}>
-                    <h4 style={{ color: "#888", fontSize: 12, marginBottom: 10 }}>خلاصه سفارش</h4>
+                  <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16 }}>
+                    <h4 style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: 10 }}>خلاصه سفارش</h4>
                     {items.map(item => (
-                      <div key={item.productId} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #222", fontSize: 13 }}>
-                        <span style={{ color: "#ccc" }}>{item.name} × {item.quantity}</span>
-                        <span style={{ color: "#d4af37" }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
+                      <div key={item.productId} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--theme-border)", fontSize: 13 }}>
+                        <span style={{ color: "var(--theme-text-muted)" }}>{item.name} × {item.quantity}</span>
+                        <span style={{ color: "var(--theme-accent)" }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
                       </div>
                     ))}
                   </div>
@@ -231,11 +231,11 @@ export default function CartPage() {
 
                   <div style={{ display: "flex", gap: 10 }}>
                     <button type="button" onClick={() => { setStep("cart"); setError(""); }}
-                      style={{ flex: 1, backgroundColor: "transparent", color: "#888", border: "1px solid #333", borderRadius: 8, padding: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
+                      style={{ flex: 1, backgroundColor: "transparent", color: "var(--theme-text-muted)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
                       ← ویرایش سبد
                     </button>
                     <button type="submit" disabled={submitting || !user}
-                      style={{ flex: 2, backgroundColor: submitting || !user ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontWeight: 800, fontSize: 15, cursor: submitting || !user ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+                      style={{ flex: 2, backgroundColor: submitting || !user ? "var(--theme-accent)" : "var(--theme-accent)", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontWeight: 800, fontSize: 15, cursor: submitting || !user ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
                       {submitting ? "در حال ثبت..." : "ثبت سفارش نهایی"}
                     </button>
                   </div>
@@ -245,24 +245,24 @@ export default function CartPage() {
 
             {/* Summary sidebar */}
             {step === "cart" && (
-              <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: 20, position: "sticky", top: 80 }}>
-                <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 16 }}>خلاصه سفارش</h3>
+              <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 20, position: "sticky", top: 80 }}>
+                <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, marginBottom: 16 }}>خلاصه سفارش</h3>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
                   {items.map(item => (
                     <div key={item.productId} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                      <span style={{ color: "#888" }}>{item.name} × {item.quantity}</span>
-                      <span style={{ color: "#ccc" }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
+                      <span style={{ color: "var(--theme-text-muted)" }}>{item.name} × {item.quantity}</span>
+                      <span style={{ color: "var(--theme-text-muted)" }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ borderTop: "1px solid #2a2a2a", paddingTop: 14, marginBottom: 20 }}>
+                <div style={{ borderTop: "1px solid var(--theme-border)", paddingTop: 14, marginBottom: 20 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ color: "#888", fontSize: 13 }}>جمع کل</span>
+                    <span style={{ color: "var(--theme-text-muted)", fontSize: 13 }}>جمع کل</span>
                     <div style={{ textAlign: "left" }}>
-                      <p style={{ color: "#d4af37", fontSize: 20, fontWeight: 800 }}>{total.toLocaleString("fa-IR")}</p>
-                      <p style={{ color: "#666", fontSize: 11 }}>تومان</p>
+                      <p style={{ color: "var(--theme-accent)", fontSize: 20, fontWeight: 800 }}>{total.toLocaleString("fa-IR")}</p>
+                      <p style={{ color: "var(--theme-text-muted)", fontSize: 11 }}>تومان</p>
                     </div>
                   </div>
                 </div>
@@ -273,17 +273,17 @@ export default function CartPage() {
                     setStep("checkout");
                     setError("");
                   }}
-                  style={{ width: "100%", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: 8, padding: "13px", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ width: "100%", backgroundColor: "var(--theme-accent)", color: "#000", border: "none", borderRadius: 8, padding: "13px", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
                   ادامه خرید
                 </button>
 
                 {!user && (
-                  <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginTop: 10 }}>
-                    برای ادامه باید <Link href="/login?redirect=/cart" style={{ color: "#d4af37" }}>وارد شوید</Link>
+                  <p style={{ color: "var(--theme-text-muted)", fontSize: 12, textAlign: "center", marginTop: 10 }}>
+                    برای ادامه باید <Link href="/login?redirect=/cart" style={{ color: "var(--theme-accent)" }}>وارد شوید</Link>
                   </p>
                 )}
 
-                <Link href="/products" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, color: "#555", textDecoration: "none", fontSize: 12, marginTop: 12 }}>
+                <Link href="/products" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, color: "var(--theme-text-muted)", textDecoration: "none", fontSize: 12, marginTop: 12 }}>
                   <ChevronLeft size={12} /> ادامه خرید
                 </Link>
               </div>

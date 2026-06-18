@@ -36,7 +36,7 @@ const showcases = [
     desc: "بهترین پیشنهادهای دلی گلد با تخفیف‌های اختصاصی. محدود و با کیفیت استثنایی.",
     icon: "🎁",
     badge: "ویژه",
-    color: "#d4af37",
+    color: "var(--theme-accent)",
     image: "https://images.unsplash.com/photo-1629134073875-6c8f6b2c7e71?w=800&q=80",
     maxPrice: 5000000,
   },
@@ -73,9 +73,9 @@ export default function ShowcasePage() {
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${activeShowcase.image})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3)", transition: "all 0.5s" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, transparent, rgba(14,14,14,0.8))" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <p style={{ color: "#d4af37", fontSize: 13, marginBottom: 8 }}>دلی گلد</p>
-          <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>ویترین‌ها</h1>
-          <p style={{ color: "#aaa", fontSize: 14 }}>مجموعه‌های ویژه برای هر بودجه و سلیقه</p>
+          <p style={{ color: "var(--theme-accent)", fontSize: 13, marginBottom: 8 }}>دلی گلد</p>
+          <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>ویترین‌ها</h1>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 14 }}>مجموعه‌های ویژه برای هر بودجه و سلیقه</p>
         </div>
       </div>
 
@@ -85,60 +85,60 @@ export default function ShowcasePage() {
         <div style={{ display: "flex", gap: 12, marginBottom: 40, flexWrap: "wrap" }}>
           {showcases.map(s => (
             <button key={s.id} onClick={() => setActive(s.id)}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 10, border: `2px solid ${active === s.id ? s.color : "#2a2a2a"}`, backgroundColor: active === s.id ? `${s.color}18` : "#1a1a1a", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 10, border: `2px solid ${active === s.id ? s.color : "var(--theme-border)"}`, backgroundColor: active === s.id ? `${s.color}18` : "var(--theme-card)", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
               <span style={{ fontSize: 22 }}>{s.icon}</span>
               <div style={{ textAlign: "right" }}>
-                <p style={{ color: active === s.id ? s.color : "#fff", fontSize: 15, fontWeight: 700 }}>{s.title}</p>
-                <p style={{ color: "#666", fontSize: 11 }}>تا {(s.maxPrice / 1000000).toLocaleString("fa-IR")} میلیون</p>
+                <p style={{ color: active === s.id ? s.color : "var(--theme-text)", fontSize: 15, fontWeight: 700 }}>{s.title}</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 11 }}>تا {(s.maxPrice / 1000000).toLocaleString("fa-IR")} میلیون</p>
               </div>
             </button>
           ))}
         </div>
 
         {/* Active showcase info */}
-        <div style={{ backgroundColor: "#1a1a1a", border: `1px solid ${activeShowcase.color}40`, borderRadius: 12, padding: "24px 28px", marginBottom: 36, display: "flex", alignItems: "center", gap: 20 }} className="showcase-info">
+        <div style={{ backgroundColor: "var(--theme-card)", border: `1px solid ${activeShowcase.color}40`, borderRadius: 12, padding: "24px 28px", marginBottom: 36, display: "flex", alignItems: "center", gap: 20 }} className="showcase-info">
           <span style={{ fontSize: 40 }}>{activeShowcase.icon}</span>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 700 }}>{activeShowcase.title}</h2>
+              <h2 style={{ color: "var(--theme-text)", fontSize: 20, fontWeight: 700 }}>{activeShowcase.title}</h2>
               <span style={{ backgroundColor: `${activeShowcase.color}20`, color: activeShowcase.color, fontSize: 11, padding: "2px 10px", borderRadius: 20, fontWeight: 700 }}>{activeShowcase.badge}</span>
             </div>
-            <p style={{ color: "#888", fontSize: 14, lineHeight: 1.7 }}>{activeShowcase.desc}</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 14, lineHeight: 1.7 }}>{activeShowcase.desc}</p>
           </div>
         </div>
 
         {/* Products */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <Link href="/products" style={{ color: "#d4af37", fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+          <Link href="/products" style={{ color: "var(--theme-accent)", fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
             مشاهده همه <ChevronLeft size={14} />
           </Link>
-          <h3 style={{ color: "#fff", fontSize: 18, fontWeight: 700 }}>محصولات این ویترین</h3>
+          <h3 style={{ color: "var(--theme-text)", fontSize: 18, fontWeight: 700 }}>محصولات این ویترین</h3>
         </div>
 
         {loading ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ backgroundColor: "#1a1a1a", borderRadius: 10, height: 260, opacity: 0.5, border: "1px solid #2a2a2a" }} />
+              <div key={i} style={{ backgroundColor: "var(--theme-card)", borderRadius: 10, height: 260, opacity: 0.5, border: "1px solid var(--theme-border)" }} />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: "#555" }}>
+          <div style={{ textAlign: "center", padding: "60px 0", color: "var(--theme-text-muted)" }}>
             <p>محصولی در این ویترین موجود نیست</p>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
             {filteredProducts.map((p, i) => (
-              <Link key={p.id} href={`/products/${p.slug}`} style={{ textDecoration: "none", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, overflow: "hidden", display: "block", transition: "border-color 0.2s, transform 0.2s" }}
+              <Link key={p.id} href={`/products/${p.slug}`} style={{ textDecoration: "none", backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 10, overflow: "hidden", display: "block", transition: "border-color 0.2s, transform 0.2s" }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = activeShowcase.color; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
                 <div style={{ paddingBottom: "100%", position: "relative", overflow: "hidden" }}>
                   <img src={goldImages[i % goldImages.length]} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
                 <div style={{ padding: 12 }}>
-                  <p style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{p.name}</p>
-                  <p style={{ color: "#666", fontSize: 11, marginBottom: 6 }}>{p.karat} عیار · {p.weight} گرم</p>
-                  <p style={{ color: "#d4af37", fontSize: 13, fontWeight: 700 }}>
-                    {p.price.toLocaleString("fa-IR")} <span style={{ color: "#888", fontSize: 11, fontWeight: 400 }}>تومان</span>
+                  <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{p.name}</p>
+                  <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 6 }}>{p.karat} عیار · {p.weight} گرم</p>
+                  <p style={{ color: "var(--theme-accent)", fontSize: 13, fontWeight: 700 }}>
+                    {p.price.toLocaleString("fa-IR")} <span style={{ color: "var(--theme-text-muted)", fontSize: 11, fontWeight: 400 }}>تومان</span>
                   </p>
                 </div>
               </Link>
@@ -148,19 +148,19 @@ export default function ShowcasePage() {
 
         {/* Testimonials */}
         <div style={{ marginTop: 64 }}>
-          <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginBottom: 24, textAlign: "center" }}>نظرات مشتریان</h2>
+          <h2 style={{ color: "var(--theme-text)", fontSize: 22, fontWeight: 700, marginBottom: 24, textAlign: "center" }}>نظرات مشتریان</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="reviews-grid">
             {[
               { name: "سارا محمدی", text: "کیفیت طلاها فوق‌العاده‌ست. گردنبندم بعد از ۶ ماه هنوز مثل روز اول درخشنده.", stars: 5 },
               { name: "علی رضایی", text: "قیمت‌گذاری منصفانه و ارسال سریع. قطعاً دوباره خرید می‌کنم.", stars: 5 },
               { name: "مریم احمدی", text: "بسته‌بندی شیک و ارزان‌قیمت. هدیه‌ای که همه دوستم داشتن.", stars: 4 },
             ].map((r, i) => (
-              <div key={i} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: 20 }}>
+              <div key={i} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 10, padding: 20 }}>
                 <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>
-                  {Array.from({ length: r.stars }).map((_, s) => <Star key={s} size={14} fill="#d4af37" color="#d4af37" />)}
+                  {Array.from({ length: r.stars }).map((_, s) => <Star key={s} size={14} fill="var(--theme-accent)" color="var(--theme-accent)" />)}
                 </div>
-                <p style={{ color: "#ccc", fontSize: 13, lineHeight: 1.8, marginBottom: 12 }}>"{r.text}"</p>
-                <p style={{ color: "#d4af37", fontSize: 12, fontWeight: 700 }}>{r.name}</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 13, lineHeight: 1.8, marginBottom: 12 }}>"{r.text}"</p>
+                <p style={{ color: "var(--theme-accent)", fontSize: 12, fontWeight: 700 }}>{r.name}</p>
               </div>
             ))}
           </div>

@@ -116,18 +116,18 @@ export default function Navbar() {
           <button
             aria-label="جستجو"
             onClick={() => { setSearchOpen(o => !o); setSearchVal(""); }}
-            style={{ color: searchOpen ? "#d4af37" : "#ccc", background: "none", border: "none", cursor: "pointer", padding: "4px", transition: "color 0.2s", display: "flex" }}>
+            style={{ color: searchOpen ? "var(--theme-accent)" : "var(--theme-text-muted)", background: "none", border: "none", cursor: "pointer", padding: "4px", transition: "color 0.2s", display: "flex" }}>
             {searchOpen ? <X size={20} /> : <Search size={20} />}
           </button>
 
           {/* Cart */}
           <Link href="/cart" aria-label="سبد خرید"
-            style={{ position: "relative", color: "#ccc", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#d4af37"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#ccc"}>
+            style={{ position: "relative", color: "var(--theme-text-muted)", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"}>
             <ShoppingCart size={20} />
             {count > 0 && (
-              <span style={{ position: "absolute", top: "-7px", left: "-7px", backgroundColor: "#d4af37", color: "#000", fontSize: "10px", fontWeight: "800", borderRadius: "50%", width: "17px", height: "17px", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
+              <span style={{ position: "absolute", top: "-7px", left: "-7px", backgroundColor: "var(--theme-accent)", color: "#000", fontSize: "10px", fontWeight: "800", borderRadius: "50%", width: "17px", height: "17px", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
                 {count > 9 ? "9+" : count}
               </span>
             )}
@@ -141,7 +141,7 @@ export default function Navbar() {
                 onMouseLeave={scheduleCloseUser}>
                 <button
                   aria-label="حساب کاربری"
-                  style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "20px", padding: "5px 10px 5px 6px", color: "#d4af37", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
+                  style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)", borderRadius: "20px", padding: "5px 10px 5px 6px", color: "var(--theme-accent)", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
                   <User size={15} />
                   <span style={{ maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {authUser.name.split(" ")[0]}
@@ -153,37 +153,37 @@ export default function Navbar() {
                   <div
                     onMouseEnter={openUserMenu}
                     onMouseLeave={scheduleCloseUser}
-                    style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, minWidth: 180, backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: 10, padding: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
+                    style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, minWidth: 180, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 10, padding: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
                     {/* User info */}
-                    <div style={{ padding: "8px 10px 10px", borderBottom: "1px solid #222", marginBottom: 4 }}>
-                      <p style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{authUser.name}</p>
-                      <p style={{ color: "#555", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis" }}>{authUser.email}</p>
+                    <div style={{ padding: "8px 10px 10px", borderBottom: "1px solid var(--theme-border)", marginBottom: 4 }}>
+                      <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600 }}>{authUser.name}</p>
+                      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis" }}>{authUser.email}</p>
                     </div>
                     <Link href="/account"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ccc", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#ccc"; }}>
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
                       <User size={14} /> حساب کاربری
                     </Link>
                     <Link href="/account?tab=orders"
                       onClick={() => setUserMenuOpen(false)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ccc", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#ccc"; }}>
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
                       <Package size={14} /> سفارش‌های من
                     </Link>
                     {authUser.role === "ADMIN" && (
                       <Link href="/admin"
                         onClick={() => setUserMenuOpen(false)}
-                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#d4af37", textDecoration: "none", fontSize: 13, borderRadius: 6, borderTop: "1px solid #222", marginTop: 4, transition: "background-color 0.15s" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-accent)", textDecoration: "none", fontSize: 13, borderRadius: 6, borderTop: "1px solid var(--theme-border)", marginTop: 4, transition: "background-color 0.15s" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
                         پنل مدیریت ←
                       </Link>
                     )}
                     <button onClick={handleLogout}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ef4444", background: "none", border: "none", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right", borderTop: "1px solid #222", marginTop: 4, transition: "background-color 0.15s" }}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ef4444", background: "none", border: "none", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right", borderTop: "1px solid var(--theme-border)", marginTop: 4, transition: "background-color 0.15s" }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.1)"}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
                       <LogOut size={14} /> خروج
@@ -193,9 +193,9 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/login"
-                style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: "#d4af37", color: "#000", textDecoration: "none", borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "700" }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#f0d060"}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#d4af37"}>
+                style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: "var(--theme-accent)", color: "#000", textDecoration: "none", borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "700" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "var(--theme-accent-light)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "var(--theme-accent)"}>
                 <LogIn size={14} /> ورود
               </Link>
             )
@@ -211,7 +211,7 @@ export default function Navbar() {
               <Link
                 href={link.href}
                 style={{
-                  color: isActive(link.href) ? "#d4af37" : "#ccc",
+                  color: isActive(link.href) ? "var(--theme-accent)" : "var(--theme-text-muted)",
                   textDecoration: "none",
                   fontSize: "14px",
                   fontWeight: isActive(link.href) ? "700" : "500",
@@ -221,10 +221,10 @@ export default function Navbar() {
                   padding: "6px 10px",
                   borderRadius: "6px",
                   transition: "color 0.2s, background-color 0.2s",
-                  backgroundColor: isActive(link.href) ? "rgba(212,175,55,0.08)" : "transparent",
+                  backgroundColor: isActive(link.href) ? "color-mix(in srgb, var(--theme-accent) 8%, transparent)" : "transparent",
                 }}
-                onMouseEnter={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
-                onMouseLeave={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "#ccc"; }}>
+                onMouseEnter={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
+                onMouseLeave={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
                 {link.label}
                 {link.dropdown && (
                   <ChevronDown size={12} style={{ transition: "transform 0.2s", transform: openDropdown === link.label ? "rotate(180deg)" : "rotate(0)" }} />
@@ -235,13 +235,13 @@ export default function Navbar() {
                 <div
                   onMouseEnter={() => openMenu(link.label)}
                   onMouseLeave={scheduleClose}
-                  style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, minWidth: "180px", backgroundColor: "#161616", border: "1px solid #2a2a2a", borderRadius: "10px", padding: "6px", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
+                  style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, minWidth: "180px", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: "10px", padding: "6px", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
                   {link.dropdown.map((item, i) => (
                     <Link key={i} href={item.href}
                       onClick={() => setOpenDropdown(null)}
-                      style={{ display: "block", padding: "9px 14px", color: i === 0 ? "#d4af37" : "#ccc", textDecoration: "none", fontSize: "13px", borderRadius: "6px", transition: "background-color 0.15s, color 0.15s", borderBottom: i === 0 ? "1px solid #2a2a2a" : "none", fontWeight: i === 0 ? "600" : "400" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(212,175,55,0.1)"; (e.currentTarget as HTMLElement).style.color = "#d4af37"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = i === 0 ? "#d4af37" : "#ccc"; }}>
+                      style={{ display: "block", padding: "9px 14px", color: i === 0 ? "var(--theme-accent)" : "var(--theme-text-muted)", textDecoration: "none", fontSize: "13px", borderRadius: "6px", transition: "background-color 0.15s, color 0.15s", borderBottom: i === 0 ? "1px solid var(--theme-border)" : "none", fontWeight: i === 0 ? "600" : "400" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = i === 0 ? "var(--theme-accent)" : "var(--theme-text-muted)"; }}>
                       {item.label}
                     </Link>
                   ))}
@@ -254,7 +254,7 @@ export default function Navbar() {
         {/* ── Right: logo + mobile menu ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <button aria-label="منو" onClick={() => setMenuOpen(!menuOpen)}
-            style={{ display: "none", color: "#d4af37", background: "none", border: "none", cursor: "pointer" }}
+            style={{ display: "none", color: "var(--theme-accent)", background: "none", border: "none", cursor: "pointer" }}
             className="mobile-menu-btn">
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -262,16 +262,16 @@ export default function Navbar() {
           <Link href="/" style={{ textDecoration: "none" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div>
-                <div style={{ color: "#d4af37", fontSize: "22px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>DG</div>
-                <div style={{ color: "#d4af37", fontSize: "11px", fontWeight: "600", letterSpacing: "2px" }}>DELLY GOLD</div>
+                <div style={{ color: "var(--theme-accent)", fontSize: "22px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>DG</div>
+                <div style={{ color: "var(--theme-accent)", fontSize: "11px", fontWeight: "600", letterSpacing: "2px" }}>DELLY GOLD</div>
               </div>
-              <div style={{ width: "28px", height: "28px", border: "2px solid #d4af37", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "10px", height: "10px", backgroundColor: "#d4af37" }} />
+              <div style={{ width: "28px", height: "28px", border: "2px solid var(--theme-accent)", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: "10px", height: "10px", backgroundColor: "var(--theme-accent)" }} />
               </div>
             </div>
           </Link>
 
-          <div style={{ color: "#888", fontSize: "12px", borderRight: "1px solid #333", paddingRight: "12px" }}>
+          <div style={{ color: "var(--theme-text-muted)", fontSize: "12px", borderRight: "1px solid var(--theme-border)", paddingRight: "12px" }}>
             به دلی گلد خوش آمدید
           </div>
         </div>
@@ -279,17 +279,17 @@ export default function Navbar() {
 
       {/* ── Search bar ── */}
       {searchOpen && (
-        <div style={{ backgroundColor: "#111", borderTop: "1px solid #1a1a1a", padding: "12px 16px" }}>
+        <div style={{ backgroundColor: "var(--theme-bg-secondary)", borderTop: "1px solid var(--theme-card)", padding: "12px 16px" }}>
           <form onSubmit={handleSearch} style={{ maxWidth: "560px", margin: "0 auto", display: "flex", gap: "8px" }}>
             <input
               autoFocus
               value={searchVal}
               onChange={e => setSearchVal(e.target.value)}
               placeholder="جستجو در محصولات دلی گلد..."
-              style={{ flex: 1, backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", padding: "10px 14px", color: "#fff", fontSize: "14px", outline: "none" }}
+              style={{ flex: 1, backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: "8px", padding: "10px 14px", color: "var(--theme-text)", fontSize: "14px", outline: "none" }}
             />
             <button type="submit"
-              style={{ backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+              style={{ backgroundColor: "var(--theme-accent)", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
               جستجو
             </button>
           </form>
@@ -298,19 +298,19 @@ export default function Navbar() {
 
       {/* ── Mobile menu ── */}
       {menuOpen && (
-        <div style={{ backgroundColor: "#161616", borderTop: "1px solid #2a2a2a", padding: "8px 0" }}>
+        <div style={{ backgroundColor: "var(--theme-surface)", borderTop: "1px solid var(--theme-border)", padding: "8px 0" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {navLinks.map(link => (
               <li key={link.href} style={{ borderBottom: "1px solid #1f1f1f" }}>
                 <Link href={link.href} onClick={() => setMenuOpen(false)}
-                  style={{ display: "block", padding: "13px 20px", color: isActive(link.href) ? "#d4af37" : "#ccc", textDecoration: "none", fontSize: "14px", fontWeight: isActive(link.href) ? "700" : "400" }}>
+                  style={{ display: "block", padding: "13px 20px", color: isActive(link.href) ? "var(--theme-accent)" : "var(--theme-text-muted)", textDecoration: "none", fontSize: "14px", fontWeight: isActive(link.href) ? "700" : "400" }}>
                   {link.label}
                 </Link>
               </li>
             ))}
             <li style={{ borderBottom: "1px solid #1f1f1f" }}>
               <Link href="/cart" onClick={() => setMenuOpen(false)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#ccc", textDecoration: "none", fontSize: "14px" }}>
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: "14px" }}>
                 <ShoppingCart size={16} /> سبد خرید {count > 0 && `(${count})`}
               </Link>
             </li>
@@ -318,7 +318,7 @@ export default function Navbar() {
               <>
                 <li style={{ borderBottom: "1px solid #1f1f1f" }}>
                   <Link href="/account" onClick={() => setMenuOpen(false)}
-                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#d4af37", textDecoration: "none", fontSize: "14px" }}>
+                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-accent)", textDecoration: "none", fontSize: "14px" }}>
                     <User size={16} /> {authUser.name}
                   </Link>
                 </li>
@@ -332,7 +332,7 @@ export default function Navbar() {
             ) : (
               <li>
                 <Link href="/login" onClick={() => setMenuOpen(false)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#d4af37", textDecoration: "none", fontSize: "14px" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-accent)", textDecoration: "none", fontSize: "14px" }}>
                   <LogIn size={16} /> ورود / ثبت‌نام
                 </Link>
               </li>

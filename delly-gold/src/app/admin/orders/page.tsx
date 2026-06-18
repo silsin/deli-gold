@@ -21,6 +21,8 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Order | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [updating, setUpdating] = useState(false);
 
   const fetchOrders = useCallback(async () => {
@@ -33,6 +35,30 @@ export default function AdminOrdersPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
+  async function openOrderDetail(order: Order) {
+    setSelected(order);
+    setDetailLoading(true);
+    setDetailError("");
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setSelected(data.data);
+      } else {
+        setDetailError(data.error || "خطا در بارگذاری جزئیات");
+      }
+    } catch {
+      setDetailError("خطای شبکه");
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  function closeDetail() {
+    setSelected(null);
+    setDetailError("");
+  }
+
   async function updateStatus(orderId: string, status: string) {
     setUpdating(true);
     await fetch(`/api/orders/${orderId}`, {
@@ -42,7 +68,7 @@ export default function AdminOrdersPage() {
     });
     setUpdating(false);
     fetchOrders();
-    setSelected(null);
+    closeDetail();
   }
 
   const getStatus = (s: string) => statusOptions.find(o => o.value === s);
@@ -72,8 +98,8 @@ export default function AdminOrdersPage() {
                   <tr key={order.id} style={{ borderTop: "1px solid #222" }}>
                     <td style={{ padding: "12px 16px", color: "#888", fontSize: "11px", fontFamily: "monospace" }}>{order.id.slice(0, 8)}</td>
                     <td style={{ padding: "12px 16px" }}>
-                      <p style={{ color: "#fff", fontSize: "13px" }}>{order.user.name}</p>
-                      <p style={{ color: "#666", fontSize: "11px" }}>{order.user.email}</p>
+                      <p style={{ color: "#fff", fontSize: "13px" }}>{order.user?.name ?? "—"}</p>
+                      <p style={{ color: "#666", fontSize: "11px" }}>{order.user?.email ?? ""}</p>
                     </td>
                     <td style={{ padding: "12px 16px", color: "#d4af37", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
                       {order.total.toLocaleString("fa-IR")} ت
@@ -86,7 +112,7 @@ export default function AdminOrdersPage() {
                       {new Date(order.createdAt).toLocaleDateString("fa-IR")}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
-                      <button onClick={() => setSelected(order)} style={{ backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", color: "#d4af37", borderRadius: "6px", padding: "5px 12px", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
+                      <button onClick={() => openOrderDetail(order)} style={{ backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", color: "#d4af37", borderRadius: "6px", padding: "5px 12px", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
                         مشاهده
                       </button>
                     </td>
@@ -104,19 +130,27 @@ export default function AdminOrdersPage() {
           <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>جزئیات سفارش</h3>
-              <button onClick={() => setSelected(null)} style={{ color: "#888", background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}>×</button>
+              <button onClick={closeDetail} style={{ color: "#888", background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}>×</button>
             </div>
             <div style={{ padding: "24px" }}>
+              {detailLoading ? (
+                <div style={{ padding: "32px", textAlign: "center", color: "#d4af37" }}>در حال بارگذاری جزئیات...</div>
+              ) : detailError ? (
+                <div style={{ padding: "16px", textAlign: "center", color: "#ef4444" }}>{detailError}</div>
+              ) : (
+              <>
               <div style={{ marginBottom: "16px" }}>
-                <p style={{ color: "#888", fontSize: "12px" }}>مشتری: <span style={{ color: "#fff" }}>{selected.user.name}</span></p>
-                <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>ایمیل: <span style={{ color: "#fff", direction: "ltr" }}>{selected.user.email}</span></p>
+                <p style={{ color: "#888", fontSize: "12px" }}>مشتری: <span style={{ color: "#fff" }}>{selected.user?.name ?? "—"}</span></p>
+                <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>ایمیل: <span style={{ color: "#fff", direction: "ltr" }}>{selected.user?.email ?? ""}</span></p>
                 <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>آدرس: <span style={{ color: "#fff" }}>{selected.address}</span></p>
               </div>
 
               <h4 style={{ color: "#d4af37", fontSize: "13px", marginBottom: "10px" }}>اقلام سفارش</h4>
-              {selected.items.map(item => (
+              {(selected.items ?? []).length === 0 ? (
+                <p style={{ color: "#666", fontSize: "13px", padding: "8px 0" }}>اقلامی ثبت نشده</p>
+              ) : (selected.items ?? []).map(item => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #222" }}>
-                  <span style={{ color: "#fff", fontSize: "13px" }}>{item.product.name} × {item.quantity}</span>
+                  <span style={{ color: "#fff", fontSize: "13px" }}>{item.product?.name ?? "محصول"} × {item.quantity}</span>
                   <span style={{ color: "#d4af37", fontSize: "13px" }}>{(item.price * item.quantity).toLocaleString("fa-IR")} ت</span>
                 </div>
               ))}
@@ -134,6 +168,8 @@ export default function AdminOrdersPage() {
                   </button>
                 ))}
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

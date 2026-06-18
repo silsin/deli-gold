@@ -63,32 +63,32 @@ function LoginForm() {
   }
 
   const inp: React.CSSProperties = {
-    width: "100%", backgroundColor: "#121212", border: "1px solid #333",
-    borderRadius: "8px", padding: "11px 14px", color: "#fff",
+    width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)",
+    borderRadius: "8px", padding: "11px 14px", color: "var(--theme-text)",
     fontSize: "14px", outline: "none", fontFamily: "inherit", transition: "border-color 0.2s",
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0e0e0e", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "var(--theme-bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       {/* Logo */}
       <Link href="/" style={{ textDecoration: "none", marginBottom: "32px", textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
-          <div style={{ width: "32px", height: "32px", border: "2px solid #d4af37", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: "11px", height: "11px", backgroundColor: "#d4af37" }} />
+          <div style={{ width: "32px", height: "32px", border: "2px solid var(--theme-accent)", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: "11px", height: "11px", backgroundColor: "var(--theme-accent)" }} />
           </div>
           <div>
-            <div style={{ color: "#d4af37", fontSize: "22px", fontWeight: "900", letterSpacing: "-1px", lineHeight: 1 }}>DELLY GOLD</div>
-            <div style={{ color: "#888", fontSize: "11px", letterSpacing: "1px" }}>فروشگاه طلا و جواهر</div>
+            <div style={{ color: "var(--theme-accent)", fontSize: "22px", fontWeight: "900", letterSpacing: "-1px", lineHeight: 1 }}>DELLY GOLD</div>
+            <div style={{ color: "var(--theme-text-muted)", fontSize: "11px", letterSpacing: "1px" }}>فروشگاه طلا و جواهر</div>
           </div>
         </div>
       </Link>
 
-      <div style={{ width: "100%", maxWidth: "420px", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "16px", overflow: "hidden" }}>
+      <div style={{ width: "100%", maxWidth: "420px", backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: "16px", overflow: "hidden" }}>
         {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #2a2a2a" }}>
+        <div style={{ display: "flex", borderBottom: "1px solid var(--theme-border)" }}>
           {(["login", "register"] as Tab[]).map(t => (
             <button key={t} onClick={() => { setTab(t); setError(""); }}
-              style={{ flex: 1, padding: "16px", backgroundColor: tab === t ? "rgba(212,175,55,0.08)" : "transparent", color: tab === t ? "#d4af37" : "#666", border: "none", borderBottom: tab === t ? "2px solid #d4af37" : "2px solid transparent", fontSize: "14px", fontWeight: tab === t ? "700" : "400", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              style={{ flex: 1, padding: "16px", backgroundColor: tab === t ? "color-mix(in srgb, var(--theme-accent) 8%, transparent)" : "transparent", color: tab === t ? "var(--theme-accent)" : "var(--theme-text-muted)", border: "none", borderBottom: tab === t ? "2px solid var(--theme-accent)" : "2px solid transparent", fontSize: "14px", fontWeight: tab === t ? "700" : "400", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
               {t === "login" ? <><LogIn size={15} /> ورود</> : <><UserPlus size={15} /> ثبت‌نام</>}
             </button>
           ))}
@@ -104,35 +104,35 @@ function LoginForm() {
           {tab === "login" ? (
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
+                <label style={{ color: "var(--theme-text-muted)", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
                 <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
                   placeholder="example@email.com" required autoFocus
                   style={{ ...inp, direction: "ltr" }}
-                  onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                  onBlur={e => (e.target.style.borderColor = "#333")} />
+                  onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                  onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
               </div>
               <div style={{ marginBottom: "24px" }}>
-                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
+                <label style={{ color: "var(--theme-text-muted)", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
                 <div style={{ position: "relative" }}>
                   <input type={showPass ? "text" : "password"} value={loginPass} onChange={e => setLoginPass(e.target.value)}
                     placeholder="رمز عبور خود را وارد کنید" required
                     style={{ ...inp, direction: "ltr", paddingLeft: "42px" }}
-                    onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                    onBlur={e => (e.target.style.borderColor = "#333")} />
+                    onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                    onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
                   <button type="button" onClick={() => setShowPass(p => !p)}
-                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#666", cursor: "pointer" }}>
+                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--theme-text-muted)", cursor: "pointer" }}>
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
               <button type="submit" disabled={loading}
-                style={{ width: "100%", backgroundColor: loading ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "13px", fontWeight: "800", fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background-color 0.2s" }}>
+                style={{ width: "100%", backgroundColor: loading ? "var(--theme-accent)" : "var(--theme-accent)", color: "#000", border: "none", borderRadius: "8px", padding: "13px", fontWeight: "800", fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", transition: "background-color 0.2s" }}>
                 {loading ? "در حال ورود..." : <><LogIn size={16} /> ورود به حساب</>}
               </button>
-              <p style={{ textAlign: "center", marginTop: "16px", color: "#666", fontSize: "13px" }}>
+              <p style={{ textAlign: "center", marginTop: "16px", color: "var(--theme-text-muted)", fontSize: "13px" }}>
                 حساب ندارید؟{" "}
                 <button type="button" onClick={() => { setTab("register"); setError(""); }}
-                  style={{ background: "none", border: "none", color: "#d4af37", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "600" }}>
+                  style={{ background: "none", border: "none", color: "var(--theme-accent)", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "600" }}>
                   ثبت‌نام کنید
                 </button>
               </p>
@@ -140,43 +140,43 @@ function LoginForm() {
           ) : (
             <form onSubmit={handleRegister}>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "6px" }}>نام کامل</label>
+                <label style={{ color: "var(--theme-text-muted)", fontSize: "12px", display: "block", marginBottom: "6px" }}>نام کامل</label>
                 <input type="text" value={regName} onChange={e => setRegName(e.target.value)}
                   placeholder="نام و نام خانوادگی" required autoFocus style={inp}
-                  onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                  onBlur={e => (e.target.style.borderColor = "#333")} />
+                  onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                  onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
               </div>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
+                <label style={{ color: "var(--theme-text-muted)", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
                 <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)}
                   placeholder="example@email.com" required
                   style={{ ...inp, direction: "ltr" }}
-                  onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                  onBlur={e => (e.target.style.borderColor = "#333")} />
+                  onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                  onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
               </div>
               <div style={{ marginBottom: "24px" }}>
-                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
+                <label style={{ color: "var(--theme-text-muted)", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
                 <div style={{ position: "relative" }}>
                   <input type={showPass ? "text" : "password"} value={regPass} onChange={e => setRegPass(e.target.value)}
                     placeholder="حداقل ۸ کاراکتر" required
                     style={{ ...inp, direction: "ltr", paddingLeft: "42px" }}
-                    onFocus={e => (e.target.style.borderColor = "#d4af37")}
-                    onBlur={e => (e.target.style.borderColor = "#333")} />
+                    onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
+                    onBlur={e => (e.target.style.borderColor = "var(--theme-border)")} />
                   <button type="button" onClick={() => setShowPass(p => !p)}
-                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#666", cursor: "pointer" }}>
+                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--theme-text-muted)", cursor: "pointer" }}>
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <p style={{ color: "#555", fontSize: "11px", marginTop: "5px" }}>حداقل ۸ کاراکتر شامل حرف</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: "11px", marginTop: "5px" }}>حداقل ۸ کاراکتر شامل حرف</p>
               </div>
               <button type="submit" disabled={loading}
-                style={{ width: "100%", backgroundColor: loading ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "13px", fontWeight: "800", fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                style={{ width: "100%", backgroundColor: loading ? "var(--theme-accent)" : "var(--theme-accent)", color: "#000", border: "none", borderRadius: "8px", padding: "13px", fontWeight: "800", fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                 {loading ? "در حال ثبت‌نام..." : <><UserPlus size={16} /> ایجاد حساب</>}
               </button>
-              <p style={{ textAlign: "center", marginTop: "16px", color: "#666", fontSize: "13px" }}>
+              <p style={{ textAlign: "center", marginTop: "16px", color: "var(--theme-text-muted)", fontSize: "13px" }}>
                 حساب دارید؟{" "}
                 <button type="button" onClick={() => { setTab("login"); setError(""); }}
-                  style={{ background: "none", border: "none", color: "#d4af37", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "600" }}>
+                  style={{ background: "none", border: "none", color: "var(--theme-accent)", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "600" }}>
                   وارد شوید
                 </button>
               </p>
@@ -185,7 +185,7 @@ function LoginForm() {
         </div>
       </div>
 
-      <Link href="/" style={{ color: "#555", textDecoration: "none", marginTop: "20px", fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" }}>
+      <Link href="/" style={{ color: "var(--theme-text-muted)", textDecoration: "none", marginTop: "20px", fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" }}>
         <ChevronLeft size={13} /> بازگشت به صفحه اصلی
       </Link>
     </div>
@@ -196,8 +196,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: "100vh", backgroundColor: "#0e0e0e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ color: "#d4af37", fontSize: "14px" }}>در حال بارگذاری...</div>
+      <div style={{ minHeight: "100vh", backgroundColor: "var(--theme-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "var(--theme-accent)", fontSize: "14px" }}>در حال بارگذاری...</div>
       </div>
     }>
       <LoginForm />

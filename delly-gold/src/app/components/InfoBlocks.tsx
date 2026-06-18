@@ -82,7 +82,7 @@ function GoldLineChart({
       <div
         style={{
           flex: 1,
-          backgroundColor: "#121212",
+          backgroundColor: "var(--theme-surface)",
           borderRadius: "8px",
           marginBottom: "12px",
           minHeight: "110px",
@@ -105,7 +105,7 @@ function GoldLineChart({
               style={{
                 width: "4px",
                 height: `${20 + Math.sin(i * 0.8) * 15 + 20}%`,
-                backgroundColor: "rgba(212,175,55,0.12)",
+                backgroundColor: "color-mix(in srgb, var(--theme-accent) 12%, transparent)",
                 borderRadius: "2px",
                 animation: `pulse 1.5s ease-in-out ${i * 0.1}s infinite alternate`,
               }}
@@ -145,7 +145,7 @@ function GoldLineChart({
     <div
       style={{
         flex: 1,
-        backgroundColor: "#121212",
+        backgroundColor: "var(--theme-surface)",
         borderRadius: "8px",
         padding: "6px 4px 0",
         marginBottom: "12px",
@@ -184,7 +184,7 @@ function GoldLineChart({
             y1={PAD.top + innerH * (1 - t)}
             x2={PAD.left + innerW}
             y2={PAD.top + innerH * (1 - t)}
-            stroke="#222"
+            stroke="var(--theme-border)"
             strokeWidth="1"
           />
         ))}
@@ -217,7 +217,7 @@ function GoldLineChart({
               idx === 0 ? "start" : idx === history.length - 1 ? "end" : "middle"
             }
             fontSize="7"
-            fill="#555"
+            fill="var(--theme-text-muted)"
           >
             {formatDate(dates[idx] ?? "")}
           </text>
@@ -253,7 +253,7 @@ function GoldLineChart({
                   cy={toY(p)}
                   r="3.5"
                   fill={color}
-                  stroke="#121212"
+                  stroke="var(--theme-surface)"
                   strokeWidth="1.5"
                 />
               </>
@@ -268,7 +268,7 @@ function GoldLineChart({
             cy={toY(history[history.length - 1])}
             r="3"
             fill={color}
-            stroke="#121212"
+            stroke="var(--theme-surface)"
             strokeWidth="1.5"
           />
         )}
@@ -282,12 +282,12 @@ function GoldLineChart({
             top: "6px",
             left: "50%",
             transform: "translateX(-50%)",
-            backgroundColor: "#1a1a1a",
+            backgroundColor: "var(--theme-card)",
             border: `1px solid ${colorDim}`,
             borderRadius: "6px",
             padding: "4px 8px",
             fontSize: "10px",
-            color: "#fff",
+            color: "var(--theme-text)",
             pointerEvents: "none",
             whiteSpace: "nowrap",
             zIndex: 10,
@@ -296,9 +296,9 @@ function GoldLineChart({
           <span style={{ color }}>
             {history[hoverIdx].toLocaleString("fa-IR")}
           </span>
-          <span style={{ color: "#666", marginRight: "4px" }}> تومان</span>
+          <span style={{ color: "var(--theme-text-muted)", marginRight: "4px" }}> تومان</span>
           {dates[hoverIdx] && (
-            <span style={{ color: "#555", marginRight: "4px" }}>
+            <span style={{ color: "var(--theme-text-muted)", marginRight: "4px" }}>
               {" "}
               · {formatDate(dates[hoverIdx])}
             </span>
@@ -400,8 +400,8 @@ export default function InfoBlocks() {
         {/* ── 1. Gold Calculator ── */}
         <div
           style={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--theme-card)",
+            border: "1px solid var(--theme-border)",
             borderRadius: "12px",
             padding: "24px",
           }}
@@ -418,18 +418,18 @@ export default function InfoBlocks() {
               style={{
                 width: "40px",
                 height: "40px",
-                backgroundColor: "rgba(212,175,55,0.15)",
+                backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
                 borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Calculator size={20} color="#d4af37" />
+              <Calculator size={20} color="var(--theme-accent)" />
             </div>
             <div>
-              <p style={{ color: "#888", fontSize: "11px" }}>محاسبه‌گر طلا</p>
-              <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "700" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>محاسبه‌گر طلا</p>
+              <h3 style={{ color: "var(--theme-text)", fontSize: "15px", fontWeight: "700" }}>
                 قیمت‌یابی طلا
               </h3>
             </div>
@@ -443,9 +443,9 @@ export default function InfoBlocks() {
                 onClick={() => setKarat(k)}
                 style={{
                   flex: 1,
-                  backgroundColor: karat === k ? "#d4af37" : "#121212",
-                  color: karat === k ? "#000" : "#888",
-                  border: `1px solid ${karat === k ? "#d4af37" : "#333"}`,
+                  backgroundColor: karat === k ? "var(--theme-accent)" : "var(--theme-surface)",
+                  color: karat === k ? "#000" : "var(--theme-text-muted)",
+                  border: `1px solid ${karat === k ? "var(--theme-accent)" : "var(--theme-border)"}`,
                   borderRadius: "6px",
                   padding: "7px",
                   fontSize: "13px",
@@ -464,7 +464,7 @@ export default function InfoBlocks() {
           <div style={{ marginBottom: "12px" }}>
             <label
               style={{
-                color: "#888",
+                color: "var(--theme-text-muted)",
                 fontSize: "12px",
                 display: "block",
                 marginBottom: "6px",
@@ -481,11 +481,11 @@ export default function InfoBlocks() {
               step="0.01"
               style={{
                 width: "100%",
-                backgroundColor: "#121212",
-                border: "1px solid #333",
+                backgroundColor: "var(--theme-surface)",
+                border: "1px solid var(--theme-border)",
                 borderRadius: "6px",
                 padding: "10px 12px",
-                color: "#fff",
+                color: "var(--theme-text)",
                 fontSize: "14px",
                 outline: "none",
                 direction: "ltr",
@@ -496,7 +496,7 @@ export default function InfoBlocks() {
           {/* Price per gram */}
           <div
             style={{
-              backgroundColor: "#121212",
+              backgroundColor: "var(--theme-surface)",
               borderRadius: "6px",
               padding: "8px 12px",
               marginBottom: "12px",
@@ -505,11 +505,11 @@ export default function InfoBlocks() {
               alignItems: "center",
             }}
           >
-            <span style={{ color: "#555", fontSize: "11px" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>
               قیمت هر گرم ({karat} عیار)
             </span>
             <span
-              style={{ color: "#d4af37", fontSize: "13px", fontWeight: "700" }}
+              style={{ color: "var(--theme-accent)", fontSize: "13px", fontWeight: "700" }}
             >
               {loadingPrice ? "..." : priceWithMarkup.toLocaleString("fa-IR")}{" "}
               تومان
@@ -520,8 +520,8 @@ export default function InfoBlocks() {
           {calcResult !== null && (
             <div
               style={{
-                backgroundColor: "rgba(212,175,55,0.1)",
-                border: "1px solid rgba(212,175,55,0.3)",
+                backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)",
                 borderRadius: "6px",
                 padding: "12px",
                 marginBottom: "12px",
@@ -530,7 +530,7 @@ export default function InfoBlocks() {
             >
               <p
                 style={{
-                  color: "#888",
+                  color: "var(--theme-text-muted)",
                   fontSize: "11px",
                   marginBottom: "4px",
                 }}
@@ -539,14 +539,14 @@ export default function InfoBlocks() {
               </p>
               <p
                 style={{
-                  color: "#d4af37",
+                  color: "var(--theme-accent)",
                   fontSize: "20px",
                   fontWeight: "800",
                 }}
               >
                 {calcResult.toLocaleString("fa-IR")}
               </p>
-              <p style={{ color: "#888", fontSize: "11px" }}>تومان</p>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>تومان</p>
             </div>
           )}
 
@@ -555,7 +555,7 @@ export default function InfoBlocks() {
             style={{
               display: "block",
               width: "100%",
-              backgroundColor: "#d4af37",
+              backgroundColor: "var(--theme-accent)",
               color: "#000",
               borderRadius: "6px",
               padding: "10px",
@@ -573,8 +573,8 @@ export default function InfoBlocks() {
         {/* ── 2. Live Gold Price Chart ── */}
         <div
           style={{
-            backgroundColor: "#1a1a1a",
-            border: "1px solid #2a2a2a",
+            backgroundColor: "var(--theme-card)",
+            border: "1px solid var(--theme-border)",
             borderRadius: "12px",
             padding: "24px",
             display: "flex",
@@ -595,21 +595,21 @@ export default function InfoBlocks() {
                 style={{
                   width: "40px",
                   height: "40px",
-                  backgroundColor: "rgba(212,175,55,0.15)",
+                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Activity size={20} color="#d4af37" />
+                <Activity size={20} color="var(--theme-accent)" />
               </div>
               <div>
-                <p style={{ color: "#888", fontSize: "11px" }}>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>
                   داده از TGJU · بروز هر ۳۰ ثانیه
                 </p>
                 <h3
-                  style={{ color: "#fff", fontSize: "15px", fontWeight: "700" }}
+                  style={{ color: "var(--theme-text)", fontSize: "15px", fontWeight: "700" }}
                 >
                   قیمت لحظه‌ای طلا ۱۸ عیار
                 </h3>
@@ -632,7 +632,7 @@ export default function InfoBlocks() {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: refreshing ? "#d4af37" : "#555",
+                  color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)",
                   padding: "4px",
                   transition: "color 0.2s",
                 }}
@@ -645,7 +645,7 @@ export default function InfoBlocks() {
                 />
               </button>
               {!loadingPrice && (
-                <span style={{ color: "#444", fontSize: "9px" }}>
+                <span style={{ color: "var(--theme-text-muted)", fontSize: "9px" }}>
                   {countdown}s
                 </span>
               )}
@@ -662,14 +662,14 @@ export default function InfoBlocks() {
             }}
           >
             {loadingPrice ? (
-              <span style={{ color: "#555", fontSize: "22px" }}>
+              <span style={{ color: "var(--theme-text-muted)", fontSize: "22px" }}>
                 در حال بارگذاری...
               </span>
             ) : (
               <>
                 <span
                   style={{
-                    color: "#d4af37",
+                    color: "var(--theme-accent)",
                     fontSize: "28px",
                     fontWeight: "800",
                     lineHeight: 1,
@@ -677,7 +677,7 @@ export default function InfoBlocks() {
                 >
                   {basePrice.toLocaleString("fa-IR")}
                 </span>
-                <span style={{ color: "#888", fontSize: "12px" }}>تومان/گرم</span>
+                <span style={{ color: "var(--theme-text-muted)", fontSize: "12px" }}>تومان/گرم</span>
                 <div
                   style={{
                     display: "inline-flex",
@@ -729,7 +729,7 @@ export default function InfoBlocks() {
                 <div
                   key={item.label}
                   style={{
-                    backgroundColor: "#121212",
+                    backgroundColor: "var(--theme-surface)",
                     borderRadius: "4px",
                     padding: "3px 7px",
                     fontSize: "10px",
@@ -737,8 +737,8 @@ export default function InfoBlocks() {
                     textAlign: "center",
                   }}
                 >
-                  <span style={{ color: "#555" }}>{item.label}: </span>
-                  <span style={{ color: item.color ?? "#aaa", fontWeight: "600" }}>
+                  <span style={{ color: "var(--theme-text-muted)" }}>{item.label}: </span>
+                  <span style={{ color: item.color ?? "var(--theme-text-muted)", fontWeight: "600" }}>
                     {item.value.toLocaleString("fa-IR")}
                   </span>
                 </div>
@@ -762,24 +762,24 @@ export default function InfoBlocks() {
               alignItems: "center",
             }}
           >
-            <span style={{ color: "#444", fontSize: "10px" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
               {history.length > 0 ? `${history.length} روز گذشته` : ""}
             </span>
-            <span style={{ color: "#444", fontSize: "10px" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
               {lastUpdated ? `آخرین بروز: ${lastUpdated}` : ""}
             </span>
           </div>
 
           {goldData?.fallback && (
             <p
-              style={{ color: "#555", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
+              style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
             >
               * قیمت پیش‌فرض (خطا در اتصال به TGJU)
             </p>
           )}
           {goldData?.stale && (
             <p
-              style={{ color: "#555", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
+              style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
             >
               * آخرین داده ذخیره‌شده
             </p>
@@ -792,8 +792,8 @@ export default function InfoBlocks() {
             href="/contact"
             style={{
               textDecoration: "none",
-              backgroundColor: "#1a1a1a",
-              border: "1px solid #2a2a2a",
+              backgroundColor: "var(--theme-card)",
+              border: "1px solid var(--theme-border)",
               borderRadius: "12px",
               padding: "20px",
               flex: 1,
@@ -801,10 +801,10 @@ export default function InfoBlocks() {
               transition: "border-color 0.2s",
             }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "#d4af37")
+              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a")
+              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)")
             }
           >
             <div
@@ -819,19 +819,19 @@ export default function InfoBlocks() {
                 style={{
                   width: "36px",
                   height: "36px",
-                  backgroundColor: "rgba(212,175,55,0.15)",
+                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <BookOpen size={18} color="#d4af37" />
+                <BookOpen size={18} color="var(--theme-accent)" />
               </div>
               <div>
-                <p style={{ color: "#888", fontSize: "11px" }}>راهنمای خرید</p>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>راهنمای خرید</p>
                 <h3
-                  style={{ color: "#fff", fontSize: "14px", fontWeight: "700" }}
+                  style={{ color: "var(--theme-text)", fontSize: "14px", fontWeight: "700" }}
                 >
                   راهنمای خرید طلا
                 </h3>
@@ -839,7 +839,7 @@ export default function InfoBlocks() {
             </div>
             <p
               style={{
-                color: "#888",
+                color: "var(--theme-text-muted)",
                 fontSize: "12px",
                 lineHeight: "1.7",
                 marginBottom: "12px",
@@ -852,13 +852,13 @@ export default function InfoBlocks() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "4px",
-                color: "#d4af37",
+                color: "var(--theme-accent)",
                 fontSize: "12px",
                 fontWeight: "600",
-                border: "1px solid rgba(212,175,55,0.3)",
+                border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)",
                 padding: "6px 12px",
                 borderRadius: "6px",
-                backgroundColor: "rgba(212,175,55,0.08)",
+                backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)",
               }}
             >
               مطالعه کنید
@@ -869,8 +869,8 @@ export default function InfoBlocks() {
             href="/about"
             style={{
               textDecoration: "none",
-              backgroundColor: "#1a1a1a",
-              border: "1px solid #2a2a2a",
+              backgroundColor: "var(--theme-card)",
+              border: "1px solid var(--theme-border)",
               borderRadius: "12px",
               padding: "20px",
               flex: 1,
@@ -880,17 +880,17 @@ export default function InfoBlocks() {
               transition: "border-color 0.2s",
             }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "#d4af37")
+              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a")
+              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)")
             }
           >
             <div
               style={{
                 width: "50px",
                 height: "50px",
-                backgroundColor: "rgba(212,175,55,0.15)",
+                backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
                 borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
@@ -898,12 +898,12 @@ export default function InfoBlocks() {
                 flexShrink: 0,
               }}
             >
-              <Gift size={24} color="#d4af37" />
+              <Gift size={24} color="var(--theme-accent)" />
             </div>
             <div>
               <h3
                 style={{
-                  color: "#fff",
+                  color: "var(--theme-text)",
                   fontSize: "14px",
                   fontWeight: "700",
                   marginBottom: "4px",
@@ -911,12 +911,12 @@ export default function InfoBlocks() {
               >
                 بسته‌بندی شیک
               </h3>
-              <p style={{ color: "#888", fontSize: "12px", lineHeight: "1.6" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: "12px", lineHeight: "1.6" }}>
                 هدیه‌ای به یاد ماندگار
               </p>
               <span
                 style={{
-                  color: "#d4af37",
+                  color: "var(--theme-accent)",
                   fontSize: "11px",
                   marginTop: "6px",
                   display: "block",

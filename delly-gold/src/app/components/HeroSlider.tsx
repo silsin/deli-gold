@@ -118,30 +118,30 @@ function PricePanel() {
       flexDirection: "column",
       justifyContent: "center",
       // Solid panel — no bleed-through from slider
-      backgroundColor: "#0c0c0c",
-      borderInlineStart: "1px solid rgba(212,175,55,0.15)",
+      backgroundColor: "var(--theme-bg)",
+      borderInlineStart: "1px solid color-mix(in srgb, var(--theme-accent) 15%, transparent)",
       boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
       overflow: "hidden",
     }}>
       {/* Top accent line */}
-      <div style={{ height: "2px", background: "linear-gradient(to left, #d4af37, transparent)", flexShrink: 0 }} />
+      <div style={{ height: "2px", background: "linear-gradient(to left, var(--theme-accent), transparent)", flexShrink: 0 }} />
 
       <div style={{ padding: "18px 20px", overflowY: "auto", flex: 1 }}>
 
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
           <div>
-            <p style={{ color: "#888", fontSize: "10px", letterSpacing: "0.5px", marginBottom: "2px" }}>قیمت لحظه‌ای · TGJU</p>
-            <p style={{ color: "#fff", fontSize: "12px", fontWeight: "600" }}>طلای ۱۸ عیار</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: "10px", letterSpacing: "0.5px", marginBottom: "2px" }}>قیمت لحظه‌ای · TGJU</p>
+            <p style={{ color: "var(--theme-text)", fontSize: "12px", fontWeight: "600" }}>طلای ۱۸ عیار</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             {/* Live dot */}
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <div style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: trendColor, animation: "pulse-dot 2s ease-in-out infinite" }} />
-              <span style={{ color: "#555", fontSize: "9px" }}>{countdown}s</span>
+              <span style={{ color: "var(--theme-text-muted)", fontSize: "9px" }}>{countdown}s</span>
             </div>
             <button onClick={() => fetchData(true)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "#d4af37" : "#444", padding: 0, display: "flex" }}>
+              style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)", padding: 0, display: "flex" }}>
               <RefreshCw size={11} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
             </button>
           </div>
@@ -151,13 +151,13 @@ function PricePanel() {
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "10px" }}>
           <div>
             {loading ? (
-              <div style={{ color: "#444", fontSize: "13px" }}>در حال دریافت...</div>
+              <div style={{ color: "var(--theme-text-muted)", fontSize: "13px" }}>در حال دریافت...</div>
             ) : (
               <>
-                <div style={{ color: "#d4af37", fontSize: "26px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>
+                <div style={{ color: "var(--theme-accent)", fontSize: "26px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>
                   {price.toLocaleString("fa-IR")}
                 </div>
-                <div style={{ color: "#666", fontSize: "11px", marginTop: "2px" }}>تومان / گرم</div>
+                <div style={{ color: "var(--theme-text-muted)", fontSize: "11px", marginTop: "2px" }}>تومان / گرم</div>
               </>
             )}
           </div>
@@ -173,7 +173,7 @@ function PricePanel() {
               {isUp ? <TrendingUp size={10} color={trendColor} /> : <TrendingDown size={10} color={trendColor} />}
               <span style={{ color: trendColor, fontSize: "11px", fontWeight: "700" }}>{isUp ? "+" : "-"}{data.changePercent}%</span>
             </div>
-            <span style={{ color: "#555", fontSize: "10px" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
               <span style={{ color: "#10b981" }}>↑{data.high.toLocaleString("fa-IR")}</span>
               {" "}
               <span style={{ color: "#ef4444" }}>↓{data.low.toLocaleString("fa-IR")}</span>
@@ -186,15 +186,15 @@ function PricePanel() {
 
         {/* Calculator */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-          <Calculator size={12} color="#d4af37" />
-          <span style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "0.3px" }}>محاسبه‌گر سریع</span>
+          <Calculator size={12} color="var(--theme-accent)" />
+          <span style={{ color: "var(--theme-accent)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.3px" }}>محاسبه‌گر سریع</span>
         </div>
 
         {/* Karat toggle */}
         <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
           {([18, 24] as const).map(k => (
             <button key={k} onClick={() => setKarat(k)}
-              style={{ flex: 1, backgroundColor: karat === k ? "#d4af37" : "rgba(255,255,255,0.05)", color: karat === k ? "#000" : "#888", border: `1px solid ${karat === k ? "#d4af37" : "rgba(255,255,255,0.08)"}`, borderRadius: "6px", padding: "5px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
+              style={{ flex: 1, backgroundColor: karat === k ? "var(--theme-accent)" : "rgba(255,255,255,0.05)", color: karat === k ? "#000" : "var(--theme-text-muted)", border: `1px solid ${karat === k ? "var(--theme-accent)" : "rgba(255,255,255,0.08)"}`, borderRadius: "6px", padding: "5px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
               {k} عیار
             </button>
           ))}
@@ -214,7 +214,7 @@ function PricePanel() {
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: "8px",
               padding: "8px 12px",
-              color: "#fff",
+              color: "var(--theme-text)",
               fontSize: "13px",
               outline: "none",
               direction: "ltr",
@@ -224,29 +224,29 @@ function PricePanel() {
             onFocus={e => (e.target.style.borderColor = "rgba(212,175,55,0.5)")}
             onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
           />
-          <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#555", fontSize: "11px", pointerEvents: "none" }}>گرم</span>
+          <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--theme-text-muted)", fontSize: "11px", pointerEvents: "none" }}>گرم</span>
         </div>
 
         {/* Price per gram row */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-          <span style={{ color: "#555", fontSize: "10px" }}>قیمت هر گرم ({karat} عیار)</span>
-          <span style={{ color: "#888", fontSize: "11px", fontWeight: "600" }}>
+          <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>قیمت هر گرم ({karat} عیار)</span>
+          <span style={{ color: "var(--theme-text-muted)", fontSize: "11px", fontWeight: "600" }}>
             {loading ? "..." : pricePerGram.toLocaleString("fa-IR")} ت
           </span>
         </div>
 
         {/* Result */}
         {calcResult !== null ? (
-          <div style={{ backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "8px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "#888", fontSize: "11px" }}>قیمت کل</span>
+          <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent)", borderRadius: "8px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>قیمت کل</span>
             <div style={{ textAlign: "left" }}>
-              <span style={{ color: "#d4af37", fontSize: "16px", fontWeight: "900" }}>{calcResult.toLocaleString("fa-IR")}</span>
-              <span style={{ color: "#666", fontSize: "10px", marginRight: "4px" }}>تومان</span>
+              <span style={{ color: "var(--theme-accent)", fontSize: "16px", fontWeight: "900" }}>{calcResult.toLocaleString("fa-IR")}</span>
+              <span style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginRight: "4px" }}>تومان</span>
             </div>
           </div>
         ) : (
           <div style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
-            <span style={{ color: "#444", fontSize: "11px" }}>وزن را وارد کنید تا قیمت محاسبه شود</span>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>وزن را وارد کنید تا قیمت محاسبه شود</span>
           </div>
         )}
       </div>
@@ -301,7 +301,7 @@ export default function HeroSlider() {
         position: "relative",
         height: "560px",
         overflow: "hidden",
-        backgroundColor: "#0e0e0e",
+        backgroundColor: "var(--theme-bg)",
         display: "grid",
         gridTemplateColumns: "320px minmax(0, 1fr)",
         direction: "rtl",
@@ -339,7 +339,7 @@ export default function HeroSlider() {
             {/* Gradient over slider only */}
             <div style={{
               position: "absolute", inset: 0,
-              background: "linear-gradient(to right, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 45%, rgba(10,10,10,0.15) 100%)",
+              background: "linear-gradient(to right, color-mix(in srgb, var(--theme-bg) 85%, transparent) 0%, rgba(10,10,10,0.4) 45%, rgba(10,10,10,0.15) 100%)",
             }} />
 
             {/* Slide text content */}
@@ -356,9 +356,9 @@ export default function HeroSlider() {
               }}>
                 <span style={{
                   display: "inline-block",
-                  backgroundColor: "rgba(212,175,55,0.2)",
-                  border: "1px solid #d4af37",
-                  color: "#d4af37",
+                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 20%, transparent)",
+                  border: "1px solid var(--theme-accent)",
+                  color: "var(--theme-accent)",
                   fontSize: "12px", padding: "4px 14px",
                   borderRadius: "20px", marginBottom: "18px",
                 }}>
@@ -366,24 +366,24 @@ export default function HeroSlider() {
                 </span>
                 <h1 style={{
                   fontSize: "38px", fontWeight: "800",
-                  color: "#fff", marginBottom: "12px",
+                  color: "var(--theme-text)", marginBottom: "12px",
                   lineHeight: "1.25", textShadow: "0 2px 16px rgba(0,0,0,0.6)",
                 }}>
                   {slide.title}
                 </h1>
-                <p style={{ color: "#bbb", fontSize: "15px", marginBottom: "30px", lineHeight: "1.6" }}>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: "15px", marginBottom: "30px", lineHeight: "1.6" }}>
                   {slide.subtitle}
                 </p>
                 <a href={slide.href} style={{
                   display: "inline-flex", alignItems: "center", gap: "8px",
-                  backgroundColor: "#d4af37", color: "#000",
+                  backgroundColor: "var(--theme-accent)", color: "#000",
                   padding: "12px 28px", borderRadius: "6px",
                   fontWeight: "700", fontSize: "15px", textDecoration: "none",
-                  boxShadow: "0 4px 20px rgba(212,175,55,0.35)",
+                  boxShadow: "0 4px 20px color-mix(in srgb, var(--theme-accent) 35%, transparent)",
                   transition: "all 0.2s",
                 }}
-                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#f0d060"; el.style.transform = "translateY(-1px)"; }}
-                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#d4af37"; el.style.transform = "translateY(0)"; }}>
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "var(--theme-accent-light)"; el.style.transform = "translateY(-1px)"; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "var(--theme-accent)"; el.style.transform = "translateY(0)"; }}>
                   <ChevronLeft size={17} /> {slide.cta}
                 </a>
               </div>
@@ -401,15 +401,15 @@ export default function HeroSlider() {
           style={{
             position: "absolute", [side]: "20px", top: "50%",
             transform: "translateY(-50%)",
-            backgroundColor: "rgba(212,175,55,0.12)",
-            border: "1px solid rgba(212,175,55,0.35)",
-            color: "#d4af37", width: "44px", height: "44px",
+            backgroundColor: "color-mix(in srgb, var(--theme-accent) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)",
+            color: "var(--theme-accent)", width: "44px", height: "44px",
             borderRadius: "50%", display: "flex", alignItems: "center",
             justifyContent: "center", cursor: "pointer", zIndex: 10,
             backdropFilter: "blur(4px)", transition: "all 0.2s",
           }}
-          onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "rgba(212,175,55,0.28)"; el.style.transform = "translateY(-50%) scale(1.1)"; }}
-          onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "rgba(212,175,55,0.12)"; el.style.transform = "translateY(-50%) scale(1)"; }}>
+          onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 28%, transparent)"; el.style.transform = "translateY(-50%) scale(1.1)"; }}
+          onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 12%, transparent)"; el.style.transform = "translateY(-50%) scale(1)"; }}>
           {icon}
         </button>
       ))}
@@ -426,18 +426,18 @@ export default function HeroSlider() {
               style={{
                 width: idx === current ? "28px" : "8px", height: "8px",
                 borderRadius: "4px",
-                backgroundColor: idx === current ? "#d4af37" : "rgba(212,175,55,0.35)",
+                backgroundColor: idx === current ? "var(--theme-accent)" : "color-mix(in srgb, var(--theme-accent) 35%, transparent)",
                 border: "none", cursor: "pointer", padding: 0,
                 transition: "width 0.4s ease, background-color 0.3s",
               }} />
           ))}
         </div>
         {!paused ? (
-          <div style={{ width: "60px", height: "2px", backgroundColor: "rgba(212,175,55,0.15)", borderRadius: "1px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${progress}%`, backgroundColor: "#d4af37", transition: "width 0.05s linear" }} />
+          <div style={{ width: "60px", height: "2px", backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)", borderRadius: "1px", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${progress}%`, backgroundColor: "var(--theme-accent)", transition: "width 0.05s linear" }} />
           </div>
         ) : (
-          <span style={{ color: "rgba(212,175,55,0.4)", fontSize: "10px" }}>■ متوقف</span>
+          <span style={{ color: "color-mix(in srgb, var(--theme-accent) 40%, transparent)", fontSize: "10px" }}>■ متوقف</span>
         )}
       </div>
 

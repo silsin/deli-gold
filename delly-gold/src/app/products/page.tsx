@@ -89,11 +89,11 @@ export default function ProductsPage() {
   return (
     <PageLayout>
       {/* Breadcrumb */}
-      <div style={{ borderBottom: "1px solid #1a1a1a", padding: "12px 0" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#666" }}>
-          <Link href="/" style={{ color: "#888", textDecoration: "none" }}>خانه</Link>
+      <div style={{ borderBottom: "1px solid var(--theme-card)", padding: "12px 0" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--theme-text-muted)" }}>
+          <Link href="/" style={{ color: "var(--theme-text-muted)", textDecoration: "none" }}>خانه</Link>
           <span>›</span>
-          <span style={{ color: "#d4af37" }}>محصولات</span>
+          <span style={{ color: "var(--theme-accent)" }}>محصولات</span>
         </div>
       </div>
 
@@ -109,40 +109,40 @@ export default function ProductsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
             {/* Search */}
             <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-              <Search size={14} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#888" }} />
+              <Search size={14} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--theme-text-muted)" }} />
               <input
                 value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="جستجو در محصولات..."
-                style={{ width: "100%", backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 32px 9px 12px", color: "#fff", fontSize: 13, outline: "none" }}
+                style={{ width: "100%", backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "9px 32px 9px 12px", color: "var(--theme-text)", fontSize: 13, outline: "none" }}
               />
-              {search && <button onClick={() => setSearch("")} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#666", cursor: "pointer" }}><X size={14} /></button>}
+              {search && <button onClick={() => setSearch("")} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--theme-text-muted)", cursor: "pointer" }}><X size={14} /></button>}
             </div>
 
             {/* Sort */}
             <select value={sort} onChange={e => setSort(e.target.value)}
-              style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 12px", color: "#ccc", fontSize: 13, outline: "none", cursor: "pointer" }}>
+              style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "9px 12px", color: "var(--theme-text-muted)", fontSize: 13, outline: "none", cursor: "pointer" }}>
               {sortOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
 
             {/* Mobile filter toggle */}
             <button onClick={() => setShowFilter(true)}
-              style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "9px 14px", color: "#ccc", fontSize: 13, cursor: "pointer" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "9px 14px", color: "var(--theme-text-muted)", fontSize: 13, cursor: "pointer" }}
               className="mobile-filter-btn">
               <SlidersHorizontal size={14} /> فیلتر
             </button>
 
-            <p style={{ color: "#666", fontSize: 12, marginRight: "auto" }}>{pagination.total} محصول</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginRight: "auto" }}>{pagination.total} محصول</p>
           </div>
 
           {/* Category chips */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
             <button onClick={() => { setSelectedCat(""); setPage(1); }}
-              style={{ backgroundColor: !selectedCat ? "#d4af37" : "#1a1a1a", color: !selectedCat ? "#000" : "#888", border: `1px solid ${!selectedCat ? "#d4af37" : "#2a2a2a"}`, borderRadius: 20, padding: "5px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ backgroundColor: !selectedCat ? "var(--theme-accent)" : "var(--theme-card)", color: !selectedCat ? "#000" : "var(--theme-text-muted)", border: `1px solid ${!selectedCat ? "var(--theme-accent)" : "var(--theme-border)"}`, borderRadius: 20, padding: "5px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
               همه
             </button>
             {categories.map(c => (
               <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); }}
-                style={{ backgroundColor: selectedCat === c.id ? "#d4af37" : "#1a1a1a", color: selectedCat === c.id ? "#000" : "#888", border: `1px solid ${selectedCat === c.id ? "#d4af37" : "#2a2a2a"}`, borderRadius: 20, padding: "5px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ backgroundColor: selectedCat === c.id ? "var(--theme-accent)" : "var(--theme-card)", color: selectedCat === c.id ? "#000" : "var(--theme-text-muted)", border: `1px solid ${selectedCat === c.id ? "var(--theme-accent)" : "var(--theme-border)"}`, borderRadius: 20, padding: "5px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                 {c.name}
               </button>
             ))}
@@ -152,11 +152,11 @@ export default function ProductsPage() {
           {loading ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} style={{ backgroundColor: "#1a1a1a", borderRadius: 10, height: 280, border: "1px solid #2a2a2a", opacity: 0.5 }} />
+                <div key={i} style={{ backgroundColor: "var(--theme-card)", borderRadius: 10, height: 280, border: "1px solid var(--theme-border)", opacity: 0.5 }} />
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 0", color: "#555" }}>
+            <div style={{ textAlign: "center", padding: "80px 0", color: "var(--theme-text-muted)" }}>
               <Package />
               <p style={{ marginTop: 12 }}>محصولی یافت نشد</p>
             </div>
@@ -166,14 +166,14 @@ export default function ProductsPage() {
                 const image = imgUrl(p.images) || goldImages[i % goldImages.length];
                 const isLiked = liked.includes(p.id);
                 return (
-                  <div key={p.id} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, overflow: "hidden", transition: "border-color 0.2s, transform 0.2s", cursor: "pointer" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#d4af37"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#2a2a2a"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
+                  <div key={p.id} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 10, overflow: "hidden", transition: "border-color 0.2s, transform 0.2s", cursor: "pointer" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
                     <Link href={`/products/${p.slug}`} style={{ textDecoration: "none", display: "block" }}>
                       <div style={{ position: "relative", paddingBottom: "100%", overflow: "hidden" }}>
                         <img src={image} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                         {p.featured === 1 && (
-                          <span style={{ position: "absolute", top: 8, right: 8, backgroundColor: "#d4af37", color: "#000", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10 }}>ویژه</span>
+                          <span style={{ position: "absolute", top: 8, right: 8, backgroundColor: "var(--theme-accent)", color: "#000", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10 }}>ویژه</span>
                         )}
                         {p.stock === 0 && (
                           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -185,17 +185,17 @@ export default function ProductsPage() {
                     <div style={{ padding: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                         <Link href={`/products/${p.slug}`} style={{ textDecoration: "none" }}>
-                          <h3 style={{ color: "#fff", fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{p.name}</h3>
+                          <h3 style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{p.name}</h3>
                         </Link>
-                        <button onClick={() => toggleLike(p.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isLiked ? "#d4af37" : "#555", flexShrink: 0, padding: "0 0 0 4px" }}>
-                          <Heart size={15} fill={isLiked ? "#d4af37" : "none"} />
+                        <button onClick={() => toggleLike(p.id)} style={{ background: "none", border: "none", cursor: "pointer", color: isLiked ? "var(--theme-accent)" : "var(--theme-text-muted)", flexShrink: 0, padding: "0 0 0 4px" }}>
+                          <Heart size={15} fill={isLiked ? "var(--theme-accent)" : "none"} />
                         </button>
                       </div>
-                      <p style={{ color: "#666", fontSize: 11, marginBottom: 8 }}>{p.category_name} · {p.karat} عیار · {p.weight}گ</p>
+                      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 8 }}>{p.category_name} · {p.karat} عیار · {p.weight}گ</p>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                         <div>
-                          <p style={{ color: "#d4af37", fontSize: 13, fontWeight: 700 }}>
-                            {calcFinalPrice(p, settings).finalPrice.toLocaleString("fa-IR")} <span style={{ color: "#888", fontSize: 11, fontWeight: 400 }}>تومان</span>
+                          <p style={{ color: "var(--theme-accent)", fontSize: 13, fontWeight: 700 }}>
+                            {calcFinalPrice(p, settings).finalPrice.toLocaleString("fa-IR")} <span style={{ color: "var(--theme-text-muted)", fontSize: 11, fontWeight: 400 }}>تومان</span>
                           </p>
                         </div>
                         <button
@@ -204,10 +204,10 @@ export default function ProductsPage() {
                           title={p.stock === 0 ? "ناموجود" : "افزودن به سبد"}
                           style={{
                             width: 30, height: 30, flexShrink: 0,
-                            backgroundColor: addedId === p.id ? "rgba(16,185,129,0.2)" : items.some(i => i.productId === p.id) ? "rgba(212,175,55,0.15)" : "rgba(212,175,55,0.1)",
-                            border: `1px solid ${addedId === p.id ? "rgba(16,185,129,0.4)" : "rgba(212,175,55,0.3)"}`,
+                            backgroundColor: addedId === p.id ? "rgba(16,185,129,0.2)" : items.some(i => i.productId === p.id) ? "color-mix(in srgb, var(--theme-accent) 15%, transparent)" : "color-mix(in srgb, var(--theme-accent) 10%, transparent)",
+                            border: `1px solid ${addedId === p.id ? "rgba(16,185,129,0.4)" : "color-mix(in srgb, var(--theme-accent) 30%, transparent)"}`,
                             borderRadius: 6, cursor: p.stock === 0 ? "not-allowed" : "pointer",
-                            color: addedId === p.id ? "#10b981" : "#d4af37",
+                            color: addedId === p.id ? "#10b981" : "var(--theme-accent)",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             transition: "all 0.2s",
                           }}>
@@ -226,7 +226,7 @@ export default function ProductsPage() {
             <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 32 }}>
               {Array.from({ length: pagination.pages }).map((_, i) => (
                 <button key={i} onClick={() => setPage(i + 1)}
-                  style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${page === i + 1 ? "#d4af37" : "#2a2a2a"}`, backgroundColor: page === i + 1 ? "#d4af37" : "transparent", color: page === i + 1 ? "#000" : "#888", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${page === i + 1 ? "var(--theme-accent)" : "var(--theme-border)"}`, backgroundColor: page === i + 1 ? "var(--theme-accent)" : "transparent", color: page === i + 1 ? "#000" : "var(--theme-text-muted)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {i + 1}
                 </button>
               ))}
@@ -239,10 +239,10 @@ export default function ProductsPage() {
       {showFilter && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }}>
           <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.7)" }} onClick={() => setShowFilter(false)} />
-          <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 280, backgroundColor: "#111", borderLeft: "1px solid #2a2a2a", padding: 20, overflowY: "auto" }}>
+          <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 280, backgroundColor: "var(--theme-bg-secondary)", borderLeft: "1px solid var(--theme-border)", padding: 20, overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-              <h3 style={{ color: "#fff", fontSize: 16 }}>فیلتر</h3>
-              <button onClick={() => setShowFilter(false)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer" }}><X size={18} /></button>
+              <h3 style={{ color: "var(--theme-text)", fontSize: 16 }}>فیلتر</h3>
+              <button onClick={() => setShowFilter(false)} style={{ background: "none", border: "none", color: "var(--theme-text-muted)", cursor: "pointer" }}><X size={18} /></button>
             </div>
             <FilterPanel categories={categories} selected={selectedCat} onSelect={c => { setSelectedCat(c); setPage(1); setShowFilter(false); }} />
           </div>
@@ -260,17 +260,17 @@ export default function ProductsPage() {
 }
 
 function Package() {
-  return <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" style={{ margin: "0 auto", display: "block" }}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
+  return <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--theme-text-muted)" strokeWidth="1.5" style={{ margin: "0 auto", display: "block" }}><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
 }
 
 function FilterPanel({ categories, selected, onSelect }: { categories: Category[]; selected: string; onSelect: (id: string) => void; }) {
   return (
     <div>
-      <h4 style={{ color: "#d4af37", fontSize: 13, fontWeight: 700, marginBottom: 12 }}>دسته‌بندی</h4>
+      <h4 style={{ color: "var(--theme-accent)", fontSize: 13, fontWeight: 700, marginBottom: 12 }}>دسته‌بندی</h4>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {[{ id: "", name: "همه محصولات" }, ...categories].map(c => (
           <button key={c.id} onClick={() => onSelect(c.id)}
-            style={{ textAlign: "right", background: "none", border: "none", borderRadius: 6, padding: "8px 10px", color: selected === c.id ? "#d4af37" : "#888", fontSize: 13, cursor: "pointer", fontFamily: "inherit", backgroundColor: selected === c.id ? "rgba(212,175,55,0.1)" : "transparent", borderLeft: selected === c.id ? "3px solid #d4af37" : "3px solid transparent" }}>
+            style={{ textAlign: "right", background: "none", border: "none", borderRadius: 6, padding: "8px 10px", color: selected === c.id ? "var(--theme-accent)" : "var(--theme-text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit", backgroundColor: selected === c.id ? "color-mix(in srgb, var(--theme-accent) 10%, transparent)" : "transparent", borderLeft: selected === c.id ? "3px solid var(--theme-accent)" : "3px solid transparent" }}>
             {c.name}
           </button>
         ))}
