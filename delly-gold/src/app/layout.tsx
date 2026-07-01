@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "./components/CartContext";
-import { ThemeProvider } from "./components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "دلی گلد | زیبایی، ماندگار مثل طلا",
@@ -16,9 +15,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body>
-        <ThemeProvider>
-          <CartProvider>{children}</CartProvider>
-        </ThemeProvider>
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

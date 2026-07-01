@@ -1,944 +1,224 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Calculator,
-  TrendingUp,
-  TrendingDown,
-  BookOpen,
-  Gift,
-  RefreshCw,
-  Activity,
-} from "lucide-react";
+import { Calculator, TrendingUp, TrendingDown, RefreshCw, Activity } from "lucide-react";
 import Link from "next/link";
 
 interface GoldData {
-  price: number;
-  open: number;
-  high: number;
-  low: number;
-  changeAmount: number;
-  changePercent: string;
-  isUp: boolean;
-  history: number[];
-  dates: string[];
-  updatedAt?: string;
-  fallback?: boolean;
-  stale?: boolean;
-  cached?: boolean;
+  price: number; open: number; high: number; low: number;
+  changePercent: string; isUp: boolean; history: number[]; dates: string[];
+  fallback?: boolean; stale?: boolean;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(d: string) {
   if (!d) return "";
   try {
-    const parts = d.split("/");
-    const dt = new Date(
-      parseInt(parts[0]),
-      parseInt(parts[1]) - 1,
-      parseInt(parts[2])
-    );
-    return dt.toLocaleDateString("fa-IR", { month: "short", day: "numeric" });
-  } catch {
-    return d;
-  }
+    const p = d.split("/");
+    return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("fa-IR", { month: "short", day: "numeric" });
+  } catch { return d; }
 }
 
-// ── SVG Line/Area Chart ──────────────────────────────────────────────────────
-function GoldLineChart({
-  history,
-  dates,
-  isUp,
-  loading,
-}: {
-  history: number[];
-  dates: string[];
-  isUp: boolean;
-  loading: boolean;
-}) {
-  const W = 320;
-  const H = 100;
-  const PAD = { top: 8, right: 8, bottom: 20, left: 4 };
-  const innerW = W - PAD.left - PAD.right;
-  const innerH = H - PAD.top - PAD.bottom;
-
-  const prevHistory = useRef<number[]>([]);
-  const [animated, setAnimated] = useState(false);
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (
-      history.length > 0 &&
-      JSON.stringify(history) !== JSON.stringify(prevHistory.current)
-    ) {
-      setAnimated(false);
-      const t = setTimeout(() => setAnimated(true), 50);
-      prevHistory.current = history;
-      return () => clearTimeout(t);
-    }
-  }, [history]);
-
-  if (loading || history.length < 2) {
-    return (
-      <div
-        style={{
-          flex: 1,
-          backgroundColor: "var(--theme-surface)",
-          borderRadius: "8px",
-          marginBottom: "12px",
-          minHeight: "110px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: "3px",
-            alignItems: "flex-end",
-            height: "60px",
-          }}
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: "4px",
-                height: `${20 + Math.sin(i * 0.8) * 15 + 20}%`,
-                backgroundColor: "color-mix(in srgb, var(--theme-accent) 12%, transparent)",
-                borderRadius: "2px",
-                animation: `pulse 1.5s ease-in-out ${i * 0.1}s infinite alternate`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const minP = Math.min(...history);
-  const maxP = Math.max(...history);
-  const range = maxP - minP || 1;
-
-  const xStep = innerW / (history.length - 1);
-
-  const toX = (i: number) => PAD.left + i * xStep;
-  const toY = (p: number) =>
-    PAD.top + innerH - ((p - minP) / range) * innerH;
-
-  // Build SVG path
-  const points = history.map((p, i) => `${toX(i)},${toY(p)}`);
-  const linePath = `M ${points.join(" L ")}`;
-  const areaPath = `M ${toX(0)},${PAD.top + innerH} L ${points.join(" L ")} L ${toX(history.length - 1)},${PAD.top + innerH} Z`;
-
-  const color = isUp ? "#10b981" : "#ef4444";
-  const colorDim = isUp ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.12)";
-  const gradId = `goldGrad_${isUp ? "up" : "dn"}`;
-
-  // Show a few date labels (first, middle, last)
-  const labelIndices =
-    dates.length > 0
-      ? [0, Math.floor((history.length - 1) / 2), history.length - 1]
-      : [];
-
+function MiniChart({ history, isUp }: { history: number[]; isUp: boolean }) {
+  if (history.length < 2) return null;
+  const W = 300; const H = 80;
+  const min = Math.min(...history); const max = Math.max(...history); const range = max - min || 1;
+  const step = W / (history.length - 1);
+  const toX = (i: number) => i * step;
+  const toY = (v: number) => H - 6 - ((v - min) / range) * (H - 12);
+  const pts = history.map((v, i) => `${toX(i)},${toY(v)}`).join(" L ");
+  const color = isUp ? "#16a34a" : "#dc2626";
   return (
-    <div
-      style={{
-        flex: 1,
-        backgroundColor: "var(--theme-surface)",
-        borderRadius: "8px",
-        padding: "6px 4px 0",
-        marginBottom: "12px",
-        position: "relative",
-        userSelect: "none",
-      }}
-    >
-      <svg
-        width="100%"
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        style={{ display: "block" }}
-      >
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-          </linearGradient>
-          {/* Clip for animation */}
-          <clipPath id="chartClip">
-            <rect
-              x={PAD.left}
-              y={0}
-              width={animated ? innerW : 0}
-              height={H}
-              style={{ transition: "width 1s ease-out" }}
-            />
-          </clipPath>
-        </defs>
-
-        {/* Horizontal grid lines */}
-        {[0.25, 0.5, 0.75].map((t) => (
-          <line
-            key={t}
-            x1={PAD.left}
-            y1={PAD.top + innerH * (1 - t)}
-            x2={PAD.left + innerW}
-            y2={PAD.top + innerH * (1 - t)}
-            stroke="var(--theme-border)"
-            strokeWidth="1"
-          />
-        ))}
-
-        {/* Area fill */}
-        <path
-          d={areaPath}
-          fill={`url(#${gradId})`}
-          clipPath="url(#chartClip)"
-        />
-
-        {/* Line */}
-        <path
-          d={linePath}
-          fill="none"
-          stroke={color}
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          clipPath="url(#chartClip)"
-        />
-
-        {/* Date labels */}
-        {labelIndices.map((idx) => (
-          <text
-            key={idx}
-            x={toX(idx)}
-            y={H - 3}
-            textAnchor={
-              idx === 0 ? "start" : idx === history.length - 1 ? "end" : "middle"
-            }
-            fontSize="7"
-            fill="var(--theme-text-muted)"
-          >
-            {formatDate(dates[idx] ?? "")}
-          </text>
-        ))}
-
-        {/* Hover dots + invisible hit targets */}
-        {history.map((p, i) => (
-          <g key={i}>
-            <rect
-              x={toX(i) - xStep / 2}
-              y={0}
-              width={xStep}
-              height={H}
-              fill="transparent"
-              onMouseEnter={() => setHoverIdx(i)}
-              onMouseLeave={() => setHoverIdx(null)}
-              style={{ cursor: "crosshair" }}
-            />
-            {hoverIdx === i && (
-              <>
-                <line
-                  x1={toX(i)}
-                  y1={PAD.top}
-                  x2={toX(i)}
-                  y2={PAD.top + innerH}
-                  stroke={color}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.6"
-                />
-                <circle
-                  cx={toX(i)}
-                  cy={toY(p)}
-                  r="3.5"
-                  fill={color}
-                  stroke="var(--theme-surface)"
-                  strokeWidth="1.5"
-                />
-              </>
-            )}
-          </g>
-        ))}
-
-        {/* Latest dot */}
-        {hoverIdx === null && history.length > 0 && (
-          <circle
-            cx={toX(history.length - 1)}
-            cy={toY(history[history.length - 1])}
-            r="3"
-            fill={color}
-            stroke="var(--theme-surface)"
-            strokeWidth="1.5"
-          />
-        )}
-      </svg>
-
-      {/* Tooltip */}
-      {hoverIdx !== null && (
-        <div
-          style={{
-            position: "absolute",
-            top: "6px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            backgroundColor: "var(--theme-card)",
-            border: `1px solid ${colorDim}`,
-            borderRadius: "6px",
-            padding: "4px 8px",
-            fontSize: "10px",
-            color: "var(--theme-text)",
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            zIndex: 10,
-          }}
-        >
-          <span style={{ color }}>
-            {history[hoverIdx].toLocaleString("fa-IR")}
-          </span>
-          <span style={{ color: "var(--theme-text-muted)", marginRight: "4px" }}> تومان</span>
-          {dates[hoverIdx] && (
-            <span style={{ color: "var(--theme-text-muted)", marginRight: "4px" }}>
-              {" "}
-              · {formatDate(dates[hoverIdx])}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block", borderRadius: "6px" }}>
+      <defs>
+        <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <path d={`M 0,${H} L ${pts} L ${W},${H} Z`} fill="url(#cg)" />
+      <path d={`M ${pts}`} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={toX(history.length-1)} cy={toY(history[history.length-1])} r="3" fill={color} />
+    </svg>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 export default function InfoBlocks() {
   const [grams, setGrams] = useState("");
   const [karat, setKarat] = useState<18 | 24>(18);
   const [goldData, setGoldData] = useState<GoldData | null>(null);
   const [markup, setMarkup] = useState(5);
-  const [loadingPrice, setLoadingPrice] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string>("");
   const [countdown, setCountdown] = useState(30);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchPrice = useCallback(async (showSpinner = false) => {
-    if (showSpinner) setRefreshing(true);
+  const fetchPrice = useCallback(async (spinner = false) => {
+    if (spinner) setRefreshing(true);
     try {
-      const [priceRes, settingsRes] = await Promise.all([
+      const [pr, sr] = await Promise.all([
         fetch("/api/admin/gold-price", { cache: "no-store" }),
         fetch("/api/admin/settings"),
       ]);
-      const priceJson = await priceRes.json();
-      const settingsJson = await settingsRes.json();
-
-      if (priceJson.success) {
-        setGoldData(priceJson.data);
-        setLastUpdated(new Date().toLocaleTimeString("fa-IR"));
-      }
-      if (settingsJson.success) {
-        const m = parseFloat(settingsJson.data?.gold_markup_percent ?? "5");
-        setMarkup(isNaN(m) ? 5 : m);
-      }
-    } catch {
-      // keep current data
-    } finally {
-      setLoadingPrice(false);
-      setRefreshing(false);
-      setCountdown(30);
-    }
+      const pj = await pr.json(); const sj = await sr.json();
+      if (pj.success) setGoldData(pj.data);
+      if (sj.success) setMarkup(parseFloat(sj.data?.gold_markup_percent ?? "5") || 5);
+    } catch {}
+    finally { setLoading(false); setRefreshing(false); setCountdown(30); }
   }, []);
 
   useEffect(() => {
     fetchPrice();
-
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(() => fetchPrice(), 30 * 1000);
-
-    // Countdown ticker
-    countdownRef.current = setInterval(() => {
-      setCountdown((c) => (c <= 1 ? 30 : c - 1));
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
+    const iv = setInterval(() => fetchPrice(), 30_000);
+    cRef.current = setInterval(() => setCountdown(c => c <= 1 ? 30 : c - 1), 1000);
+    return () => { clearInterval(iv); if (cRef.current) clearInterval(cRef.current); };
   }, [fetchPrice]);
 
-  // Price calculations
-  const basePrice = goldData?.price ?? 0;
-  const karatMultiplier = karat === 24 ? 24 / 18 : 1;
-  const priceWithMarkup = Math.round(
-    basePrice * karatMultiplier * (1 + markup / 100)
-  );
-  const calcResult =
-    grams && parseFloat(grams) > 0
-      ? Math.round(parseFloat(grams) * priceWithMarkup)
-      : null;
-
-  const history = goldData?.history ?? [];
-  const dates = goldData?.dates ?? [];
+  const base = goldData?.price ?? 0;
+  const mul = karat === 24 ? 24 / 18 : 1;
+  const pricePerGram = Math.round(base * mul * (1 + markup / 100));
+  const calcResult = grams && parseFloat(grams) > 0 ? Math.round(parseFloat(grams) * pricePerGram) : null;
   const isUp = goldData?.isUp ?? true;
-  const changePercent = goldData?.changePercent ?? "0";
-  const changeAmount = goldData?.changeAmount ?? 0;
-  const high = goldData?.high ?? 0;
-  const low = goldData?.low ?? 0;
-  const open = goldData?.open ?? 0;
+  const tc = isUp ? "#16a34a" : "#dc2626";
+
+  const inp: React.CSSProperties = {
+    width: "100%", backgroundColor: "#fff", border: "1px solid #ddd",
+    borderRadius: "7px", padding: "9px 12px", color: "#222",
+    fontSize: "13px", outline: "none", fontFamily: "inherit",
+  };
 
   return (
-    <section
-      style={{ maxWidth: "1280px", margin: "40px auto", padding: "0 16px" }}
-    >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "16px",
-        }}
-        className="info-grid"
-      >
-        {/* ── 1. Gold Calculator ── */}
-        <div
-          style={{
-            backgroundColor: "var(--theme-card)",
-            border: "1px solid var(--theme-border)",
-            borderRadius: "12px",
-            padding: "24px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Calculator size={20} color="var(--theme-accent)" />
-            </div>
-            <div>
-              <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>محاسبه‌گر طلا</p>
-              <h3 style={{ color: "var(--theme-text)", fontSize: "15px", fontWeight: "700" }}>
-                قیمت‌یابی طلا
-              </h3>
-            </div>
-          </div>
+    <section style={{ backgroundColor: "#f8f8f8", borderTop: "1px solid #ebebeb", borderBottom: "1px solid #ebebeb", padding: "32px 0", margin: "28px 0" }}>
+      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }} className="ib-grid">
 
-          {/* Karat selector */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-            {([18, 24] as const).map((k) => (
-              <button
-                key={k}
-                onClick={() => setKarat(k)}
-                style={{
-                  flex: 1,
-                  backgroundColor: karat === k ? "var(--theme-accent)" : "var(--theme-surface)",
-                  color: karat === k ? "#000" : "var(--theme-text-muted)",
-                  border: `1px solid ${karat === k ? "var(--theme-accent)" : "var(--theme-border)"}`,
-                  borderRadius: "6px",
-                  padding: "7px",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  transition: "all 0.2s",
-                }}
-              >
-                {k} عیار
-              </button>
-            ))}
-          </div>
-
-          {/* Weight input */}
-          <div style={{ marginBottom: "12px" }}>
-            <label
-              style={{
-                color: "var(--theme-text-muted)",
-                fontSize: "12px",
-                display: "block",
-                marginBottom: "6px",
-              }}
-            >
-              وزن طلا (گرم)
-            </label>
-            <input
-              type="number"
-              value={grams}
-              onChange={(e) => setGrams(e.target.value)}
-              placeholder="مثلاً ۲.۵"
-              min="0"
-              step="0.01"
-              style={{
-                width: "100%",
-                backgroundColor: "var(--theme-surface)",
-                border: "1px solid var(--theme-border)",
-                borderRadius: "6px",
-                padding: "10px 12px",
-                color: "var(--theme-text)",
-                fontSize: "14px",
-                outline: "none",
-                direction: "ltr",
-              }}
-            />
-          </div>
-
-          {/* Price per gram */}
-          <div
-            style={{
-              backgroundColor: "var(--theme-surface)",
-              borderRadius: "6px",
-              padding: "8px 12px",
-              marginBottom: "12px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>
-              قیمت هر گرم ({karat} عیار)
-            </span>
-            <span
-              style={{ color: "var(--theme-accent)", fontSize: "13px", fontWeight: "700" }}
-            >
-              {loadingPrice ? "..." : priceWithMarkup.toLocaleString("fa-IR")}{" "}
-              تومان
-            </span>
-          </div>
-
-          {/* Result */}
-          {calcResult !== null && (
-            <div
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)",
-                borderRadius: "6px",
-                padding: "12px",
-                marginBottom: "12px",
-                textAlign: "center",
-              }}
-            >
-              <p
-                style={{
-                  color: "var(--theme-text-muted)",
-                  fontSize: "11px",
-                  marginBottom: "4px",
-                }}
-              >
-                قیمت تخمینی
-              </p>
-              <p
-                style={{
-                  color: "var(--theme-accent)",
-                  fontSize: "20px",
-                  fontWeight: "800",
-                }}
-              >
-                {calcResult.toLocaleString("fa-IR")}
-              </p>
-              <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>تومان</p>
-            </div>
-          )}
-
-          <Link
-            href="/products"
-            style={{
-              display: "block",
-              width: "100%",
-              backgroundColor: "var(--theme-accent)",
-              color: "#000",
-              borderRadius: "6px",
-              padding: "10px",
-              fontWeight: "700",
-              fontSize: "14px",
-              cursor: "pointer",
-              textAlign: "center",
-              textDecoration: "none",
-            }}
-          >
-            مشاهده محصولات
-          </Link>
-        </div>
-
-        {/* ── 2. Live Gold Price Chart ── */}
-        <div
-          style={{
-            backgroundColor: "var(--theme-card)",
-            border: "1px solid var(--theme-border)",
-            borderRadius: "12px",
-            padding: "24px",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "12px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Activity size={20} color="var(--theme-accent)" />
+          {/* Calculator */}
+          <div style={{ backgroundColor: "#fff", border: "1px solid #ebebeb", borderRadius: "12px", padding: "22px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "38px", height: "38px", backgroundColor: "#fdf8ee", border: "1px solid #f5e4a0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Calculator size={18} color="#c8a12a" />
               </div>
               <div>
-                <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>
-                  داده از TGJU · بروز هر ۳۰ ثانیه
-                </p>
-                <h3
-                  style={{ color: "var(--theme-text)", fontSize: "15px", fontWeight: "700" }}
-                >
-                  قیمت لحظه‌ای طلا ۱۸ عیار
-                </h3>
+                <p style={{ color: "#aaa", fontSize: "10px" }}>محاسبه‌گر طلا</p>
+                <h3 style={{ color: "#222", fontSize: "14px", fontWeight: "700" }}>قیمت‌یابی طلا</h3>
               </div>
             </div>
 
-            {/* Refresh + countdown */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "2px",
-              }}
-            >
-              <button
-                onClick={() => fetchPrice(true)}
-                title="بروزرسانی دستی"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)",
-                  padding: "4px",
-                  transition: "color 0.2s",
-                }}
-              >
-                <RefreshCw
-                  size={14}
-                  style={{
-                    animation: refreshing ? "spin 1s linear infinite" : "none",
-                  }}
-                />
-              </button>
-              {!loadingPrice && (
-                <span style={{ color: "var(--theme-text-muted)", fontSize: "9px" }}>
-                  {countdown}s
-                </span>
-              )}
+            <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
+              {([18, 24] as const).map(k => (
+                <button key={k} onClick={() => setKarat(k)}
+                  style={{ flex: 1, backgroundColor: karat === k ? "#c8a12a" : "#f8f8f8", color: karat === k ? "#fff" : "#666", border: `1px solid ${karat === k ? "#c8a12a" : "#ddd"}`, borderRadius: "6px", padding: "7px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
+                  {k} عیار
+                </button>
+              ))}
             </div>
+
+            <div style={{ marginBottom: "10px" }}>
+              <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "5px" }}>وزن طلا (گرم)</label>
+              <input type="number" value={grams} onChange={e => setGrams(e.target.value)} placeholder="مثلاً ۲.۵" min="0" step="0.01"
+                style={{ ...inp, direction: "ltr" }}
+                onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                onBlur={e => (e.target.style.borderColor = "#ddd")} />
+            </div>
+
+            <div style={{ backgroundColor: "#f8f8f8", borderRadius: "6px", padding: "8px 12px", marginBottom: "10px", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#aaa", fontSize: "11px" }}>قیمت هر گرم ({karat} عیار)</span>
+              <span style={{ color: "#c8a12a", fontSize: "12px", fontWeight: "700" }}>
+                {loading ? "..." : pricePerGram.toLocaleString("fa-IR")} ت
+              </span>
+            </div>
+
+            {calcResult !== null && (
+              <div style={{ backgroundColor: "#fdf8ee", border: "1px solid #f5e4a0", borderRadius: "8px", padding: "12px", marginBottom: "12px", textAlign: "center" }}>
+                <p style={{ color: "#aaa", fontSize: "10px", marginBottom: "3px" }}>قیمت تخمینی</p>
+                <p style={{ color: "#c8a12a", fontSize: "22px", fontWeight: "900" }}>{calcResult.toLocaleString("fa-IR")}</p>
+                <p style={{ color: "#aaa", fontSize: "10px" }}>تومان</p>
+              </div>
+            )}
+
+            <Link href="/products" style={{ display: "block", width: "100%", backgroundColor: "#c8a12a", color: "#fff", borderRadius: "7px", padding: "10px", fontWeight: "700", fontSize: "13px", textAlign: "center", textDecoration: "none", transition: "background-color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#a8821f"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#c8a12a"}>
+              مشاهده محصولات
+            </Link>
           </div>
 
-          {/* Current price + change badge */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              gap: "10px",
-              marginBottom: "8px",
-            }}
-          >
-            {loadingPrice ? (
-              <span style={{ color: "var(--theme-text-muted)", fontSize: "22px" }}>
-                در حال بارگذاری...
-              </span>
+          {/* Live chart */}
+          <div style={{ backgroundColor: "#fff", border: "1px solid #ebebeb", borderRadius: "12px", padding: "22px", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "38px", height: "38px", backgroundColor: "#fdf8ee", border: "1px solid #f5e4a0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Activity size={18} color="#c8a12a" />
+                </div>
+                <div>
+                  <p style={{ color: "#aaa", fontSize: "10px" }}>داده از TGJU · هر ۳۰ ثانیه</p>
+                  <h3 style={{ color: "#222", fontSize: "14px", fontWeight: "700" }}>قیمت لحظه‌ای طلا ۱۸ عیار</h3>
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                <button onClick={() => fetchPrice(true)} style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "#c8a12a" : "#bbb", padding: "2px" }}>
+                  <RefreshCw size={13} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
+                </button>
+                {!loading && <span style={{ color: "#ccc", fontSize: "9px" }}>{countdown}s</span>}
+              </div>
+            </div>
+
+            {loading ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "13px" }}>در حال بارگذاری...</div>
             ) : (
               <>
-                <span
-                  style={{
-                    color: "var(--theme-accent)",
-                    fontSize: "28px",
-                    fontWeight: "800",
-                    lineHeight: 1,
-                  }}
-                >
-                  {basePrice.toLocaleString("fa-IR")}
-                </span>
-                <span style={{ color: "var(--theme-text-muted)", fontSize: "12px" }}>تومان/گرم</span>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    backgroundColor: isUp
-                      ? "rgba(16,185,129,0.15)"
-                      : "rgba(239,68,68,0.15)",
-                    border: `1px solid ${isUp ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`,
-                    borderRadius: "20px",
-                    padding: "2px 8px",
-                  }}
-                >
-                  {isUp ? (
-                    <TrendingUp size={10} color="#10b981" />
-                  ) : (
-                    <TrendingDown size={10} color="#ef4444" />
-                  )}
-                  <span
-                    style={{
-                      color: isUp ? "#10b981" : "#ef4444",
-                      fontSize: "11px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {isUp ? "+" : "-"}
-                    {changePercent}%
+                <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: "#c8a12a", fontSize: "26px", fontWeight: "900", lineHeight: 1 }}>{base.toLocaleString("fa-IR")}</span>
+                  <span style={{ color: "#aaa", fontSize: "11px" }}>تومان/گرم</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", backgroundColor: isUp ? "#f0fdf4" : "#fff1f2", border: `1px solid ${isUp ? "#bbf7d0" : "#fecdd3"}`, borderRadius: "20px", padding: "2px 8px" }}>
+                    {isUp ? <TrendingUp size={10} color={tc} /> : <TrendingDown size={10} color={tc} />}
+                    <span style={{ color: tc, fontSize: "10px", fontWeight: "700" }}>{isUp ? "+" : "-"}{goldData?.changePercent}%</span>
                   </span>
+                </div>
+
+                <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+                  {[{ l: "باز", v: goldData?.open ?? 0 }, { l: "بالا", v: goldData?.high ?? 0, c: "#16a34a" }, { l: "پایین", v: goldData?.low ?? 0, c: "#dc2626" }].map(item => (
+                    <div key={item.l} style={{ flex: 1, backgroundColor: "#f8f8f8", borderRadius: "5px", padding: "4px 6px", textAlign: "center" }}>
+                      <p style={{ color: "#bbb", fontSize: "9px" }}>{item.l}</p>
+                      <p style={{ color: item.c ?? "#555", fontSize: "10px", fontWeight: "700" }}>{item.v.toLocaleString("fa-IR")}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ flex: 1, backgroundColor: "#f8f8f8", borderRadius: "8px", padding: "8px", marginBottom: "8px", minHeight: "80px" }}>
+                  <MiniChart history={goldData?.history ?? []} isUp={isUp} />
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#ccc" }}>
+                  <span>{(goldData?.history?.length ?? 0) > 0 ? `${goldData!.history.length} روز` : ""}</span>
+                  {goldData?.fallback && <span>* قیمت پیش‌فرض</span>}
                 </div>
               </>
             )}
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
 
-          {/* OHLC mini-row */}
-          {!loadingPrice && basePrice > 0 && (
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                marginBottom: "10px",
-                flexWrap: "wrap",
-              }}
-            >
-              {[
-                { label: "باز", value: open },
-                { label: "بالا", value: high, color: "#10b981" },
-                { label: "پایین", value: low, color: "#ef4444" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    backgroundColor: "var(--theme-surface)",
-                    borderRadius: "4px",
-                    padding: "3px 7px",
-                    fontSize: "10px",
-                    flex: 1,
-                    textAlign: "center",
-                  }}
-                >
-                  <span style={{ color: "var(--theme-text-muted)" }}>{item.label}: </span>
-                  <span style={{ color: item.color ?? "var(--theme-text-muted)", fontWeight: "600" }}>
-                    {item.value.toLocaleString("fa-IR")}
-                  </span>
+          {/* Quick links */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {[
+              { href: "/contact", title: "راهنمای خرید طلا", sub: "نکات مهم قبل از خرید", btn: "مطالعه کنید" },
+              { href: "/about",   title: "بسته‌بندی شیک",    sub: "هدیه‌ای به یاد ماندگار", btn: "بیشتر بدانید" },
+            ].map((item, i) => (
+              <Link key={i} href={item.href} style={{ textDecoration: "none", flex: 1, backgroundColor: "#fff", border: "1px solid #ebebeb", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", justifyContent: "space-between", transition: "border-color 0.2s, box-shadow 0.2s" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.07)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#ebebeb"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
+                <div>
+                  <p style={{ color: "#aaa", fontSize: "10px", marginBottom: "4px" }}>{i === 0 ? "راهنمای خرید" : "خدمات ما"}</p>
+                  <h3 style={{ color: "#222", fontSize: "14px", fontWeight: "700", marginBottom: "6px" }}>{item.title}</h3>
+                  <p style={{ color: "#aaa", fontSize: "12px", lineHeight: "1.6" }}>{item.sub}</p>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* SVG Chart */}
-          <GoldLineChart
-            history={history}
-            dates={dates}
-            isUp={isUp}
-            loading={loadingPrice}
-          />
-
-          {/* Footer meta */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
-              {history.length > 0 ? `${history.length} روز گذشته` : ""}
-            </span>
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
-              {lastUpdated ? `آخرین بروز: ${lastUpdated}` : ""}
-            </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#c8a12a", fontSize: "12px", fontWeight: "600", border: "1px solid #f5e4a0", padding: "5px 12px", borderRadius: "6px", backgroundColor: "#fdf8ee", marginTop: "12px", width: "fit-content" }}>
+                  {item.btn}
+                </span>
+              </Link>
+            ))}
           </div>
-
-          {goldData?.fallback && (
-            <p
-              style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
-            >
-              * قیمت پیش‌فرض (خطا در اتصال به TGJU)
-            </p>
-          )}
-          {goldData?.stale && (
-            <p
-              style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginTop: "4px", textAlign: "center" }}
-            >
-              * آخرین داده ذخیره‌شده
-            </p>
-          )}
-        </div>
-
-        {/* ── 3. Buy guide + Gift ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Link
-            href="/contact"
-            style={{
-              textDecoration: "none",
-              backgroundColor: "var(--theme-card)",
-              border: "1px solid var(--theme-border)",
-              borderRadius: "12px",
-              padding: "20px",
-              flex: 1,
-              display: "block",
-              transition: "border-color 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)")
-            }
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <BookOpen size={18} color="var(--theme-accent)" />
-              </div>
-              <div>
-                <p style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>راهنمای خرید</p>
-                <h3
-                  style={{ color: "var(--theme-text)", fontSize: "14px", fontWeight: "700" }}
-                >
-                  راهنمای خرید طلا
-                </h3>
-              </div>
-            </div>
-            <p
-              style={{
-                color: "var(--theme-text-muted)",
-                fontSize: "12px",
-                lineHeight: "1.7",
-                marginBottom: "12px",
-              }}
-            >
-              نکات مهم قبل از خرید از زیبایی و اعتماد
-            </p>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                color: "var(--theme-accent)",
-                fontSize: "12px",
-                fontWeight: "600",
-                border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)",
-              }}
-            >
-              مطالعه کنید
-            </span>
-          </Link>
-
-          <Link
-            href="/about"
-            style={{
-              textDecoration: "none",
-              backgroundColor: "var(--theme-card)",
-              border: "1px solid var(--theme-border)",
-              borderRadius: "12px",
-              padding: "20px",
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              transition: "border-color 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)")
-            }
-            onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)")
-            }
-          >
-            <div
-              style={{
-                width: "50px",
-                height: "50px",
-                backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <Gift size={24} color="var(--theme-accent)" />
-            </div>
-            <div>
-              <h3
-                style={{
-                  color: "var(--theme-text)",
-                  fontSize: "14px",
-                  fontWeight: "700",
-                  marginBottom: "4px",
-                }}
-              >
-                بسته‌بندی شیک
-              </h3>
-              <p style={{ color: "var(--theme-text-muted)", fontSize: "12px", lineHeight: "1.6" }}>
-                هدیه‌ای به یاد ماندگار
-              </p>
-              <span
-                style={{
-                  color: "var(--theme-accent)",
-                  fontSize: "11px",
-                  marginTop: "6px",
-                  display: "block",
-                }}
-              >
-                بیشتر بدانید ←
-              </span>
-            </div>
-          </Link>
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse {
-          from { opacity: 0.3; }
-          to   { opacity: 0.7; }
-        }
-        @media (max-width: 900px) {
-          .info-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      <style>{`@media(max-width:900px){.ib-grid{grid-template-columns:1fr!important}}`}</style>
     </section>
   );
 }

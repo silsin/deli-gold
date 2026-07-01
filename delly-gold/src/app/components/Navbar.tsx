@@ -1,356 +1,276 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  Search, User, ShoppingCart, Menu, X, ChevronDown,
-  LogOut, Package, LogIn,
-} from "lucide-react";
+import { Search, User, ShoppingCart, Menu, X, LogOut, Package, LogIn, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartContext";
 
-interface AuthUser {
-  id: string; name: string; email: string; role: string;
-}
+interface AuthUser { id: string; name: string; email: string; role: string; }
+interface GoldPrice { price: number; changePercent: string; isUp: boolean; }
 
-const navLinks = [
-  { label: "صفحه اصلی", href: "/" },
-  { label: "محصولات", href: "/products" },
-  {
-    label: "کالکشن‌ها",
-    href: "/collections",
-    dropdown: [
-      { label: "همه کالکشن‌ها", href: "/collections" },
-      { label: "گردنبند", href: "/products?category=necklaces" },
-      { label: "انگشتر", href: "/products?category=rings" },
-      { label: "دستبند", href: "/products?category=bracelets" },
-      { label: "گوشواره", href: "/products?category=earrings" },
-    ],
-  },
-  {
-    label: "ویترین‌ها",
-    href: "/showcase",
-    dropdown: [
-      { label: "همه ویترین‌ها", href: "/showcase" },
-      { label: "ویترین اقتصادی", href: "/showcase" },
-      { label: "ویترین دانشجویی", href: "/showcase" },
-      { label: "پیشنهاد ویژه", href: "/showcase" },
-    ],
-  },
-  { label: "درباره ما", href: "/about" },
-  { label: "تماس با ما", href: "/contact" },
+const Ig = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/>
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+  </svg>
+);
+const Wa = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.016-1.375l-.36-.213-3.727.977 1.002-3.641-.234-.373A9.818 9.818 0 012.182 12C2.182 6.575 6.575 2.182 12 2.182S21.818 6.575 21.818 12 17.425 21.818 12 21.818z"/>
+  </svg>
+);
+
+const catLinks = [
+  { label: "هدیه",          href: "/products" },
+  { label: "کالکشن",        href: "/collections" },
+  { label: "تخفیف‌دار",     href: "/products" },
+  { label: "✨ پرو مجازی",  href: "/tryon" },
+  { label: "گردنبند",       href: "/products?category=necklaces" },
+  { label: "گوشواره",       href: "/products?category=earrings" },
+  { label: "انگشتر",        href: "/products?category=rings" },
+  { label: "دستبند",        href: "/products?category=bracelets" },
+  { label: "آویز ساعت",     href: "/products" },
+  { label: "ست و نیم‌ست",  href: "/products" },
+  { label: "پابند",         href: "/products" },
+  { label: "جاسوئیچی",     href: "/products" },
+  { label: "بچه‌گانه",      href: "/products" },
+  { label: "سکه",           href: "/products" },
 ];
 
 export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen]   = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState("");
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [userOpen, setUserOpen]   = useState(false);
+  const [authUser, setAuthUser]   = useState<AuthUser | null>(null);
+  const [authDone, setAuthDone]   = useState(false);
+  const [gold, setGold]           = useState<GoldPrice | null>(null);
 
-  const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const userMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uT = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const { count } = useCart();
 
   const checkAuth = useCallback(() => {
     fetch("/api/auth/me", { cache: "no-store" })
       .then(r => r.json())
-      .then(d => {
-        setAuthUser(d.success ? d.data : null);
-        setAuthChecked(true);
-      })
-      .catch(() => { setAuthUser(null); setAuthChecked(true); });
+      .then(d => { setAuthUser(d.success ? d.data : null); setAuthDone(true); })
+      .catch(() => { setAuthUser(null); setAuthDone(true); });
   }, []);
 
-  useEffect(() => { checkAuth(); }, [checkAuth]);
+  useEffect(() => { checkAuth(); }, [checkAuth, pathname]);
 
-  // Re-check auth whenever pathname changes (handles login/logout redirects)
-  useEffect(() => { checkAuth(); }, [pathname, checkAuth]);
+  useEffect(() => {
+    const fetchGold = () => {
+      fetch("/api/admin/gold-price", { cache: "no-store" })
+        .then(r => r.json()).then(d => { if (d.success) setGold(d.data); }).catch(() => {});
+    };
+    fetchGold();
+    const iv = setInterval(fetchGold, 60_000);
+    return () => clearInterval(iv);
+  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (searchVal.trim()) {
-      setSearchOpen(false);
-      router.push(`/products?search=${encodeURIComponent(searchVal.trim())}`);
-      setSearchVal("");
-    }
-  }
-
-  function openMenu(label: string) {
-    if (dropdownTimer.current) clearTimeout(dropdownTimer.current);
-    setOpenDropdown(label);
-  }
-  function scheduleClose() {
-    dropdownTimer.current = setTimeout(() => setOpenDropdown(null), 150);
-  }
-  function openUserMenu() {
-    if (userMenuTimer.current) clearTimeout(userMenuTimer.current);
-    setUserMenuOpen(true);
-  }
-  function scheduleCloseUser() {
-    userMenuTimer.current = setTimeout(() => setUserMenuOpen(false), 180);
+    if (!searchVal.trim()) return;
+    setSearchOpen(false);
+    router.push(`/products?search=${encodeURIComponent(searchVal.trim())}`);
+    setSearchVal("");
   }
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    setAuthUser(null);
-    setUserMenuOpen(false);
-    router.push("/");
-    router.refresh();
+    setAuthUser(null); setUserOpen(false);
+    router.push("/"); router.refresh();
   }
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const active = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav style={{ backgroundColor: "var(--theme-bg)", borderBottom: "1px solid var(--theme-border)", position: "sticky", top: 0, zIndex: 100 }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
+    <header style={{ backgroundColor: "#fff", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
 
-        {/* ── Left: icons ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      {/* ── Main nav row ── */}
+      <div style={{ borderBottom: "1px solid #ebebeb" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "62px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
-          {/* Search */}
-          <button
-            aria-label="جستجو"
-            onClick={() => { setSearchOpen(o => !o); setSearchVal(""); }}
-            style={{ color: searchOpen ? "var(--theme-accent)" : "var(--theme-text-muted)", background: "none", border: "none", cursor: "pointer", padding: "4px", transition: "color 0.2s", display: "flex" }}>
-            {searchOpen ? <X size={20} /> : <Search size={20} />}
-          </button>
-
-          {/* Cart */}
-          <Link href="/cart" aria-label="سبد خرید"
-            style={{ position: "relative", color: "var(--theme-text-muted)", display: "flex", lineHeight: 0, transition: "color 0.2s" }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"}>
-            <ShoppingCart size={20} />
-            {count > 0 && (
-              <span style={{ position: "absolute", top: "-7px", left: "-7px", backgroundColor: "var(--theme-accent)", color: "#000", fontSize: "10px", fontWeight: "800", borderRadius: "50%", width: "17px", height: "17px", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
-                {count > 9 ? "9+" : count}
-              </span>
-            )}
-          </Link>
-
-          {/* User menu / Login */}
-          {authChecked && (
-            authUser ? (
-              <div style={{ position: "relative" }}
-                onMouseEnter={openUserMenu}
-                onMouseLeave={scheduleCloseUser}>
-                <button
-                  aria-label="حساب کاربری"
-                  style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)", borderRadius: "20px", padding: "5px 10px 5px 6px", color: "var(--theme-accent)", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
-                  <User size={15} />
-                  <span style={{ maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {authUser.name.split(" ")[0]}
-                  </span>
-                  <ChevronDown size={11} style={{ transition: "transform 0.2s", transform: userMenuOpen ? "rotate(180deg)" : "rotate(0)" }} />
-                </button>
-
-                {userMenuOpen && (
-                  <div
-                    onMouseEnter={openUserMenu}
-                    onMouseLeave={scheduleCloseUser}
-                    style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, minWidth: 180, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 10, padding: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
-                    {/* User info */}
-                    <div style={{ padding: "8px 10px 10px", borderBottom: "1px solid var(--theme-border)", marginBottom: 4 }}>
-                      <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600 }}>{authUser.name}</p>
-                      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis" }}>{authUser.email}</p>
-                    </div>
-                    <Link href="/account"
-                      onClick={() => setUserMenuOpen(false)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
-                      <User size={14} /> حساب کاربری
-                    </Link>
-                    <Link href="/account?tab=orders"
-                      onClick={() => setUserMenuOpen(false)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: 13, borderRadius: 6, transition: "background-color 0.15s" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
-                      <Package size={14} /> سفارش‌های من
-                    </Link>
-                    {authUser.role === "ADMIN" && (
-                      <Link href="/admin"
-                        onClick={() => setUserMenuOpen(false)}
-                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "var(--theme-accent)", textDecoration: "none", fontSize: 13, borderRadius: 6, borderTop: "1px solid var(--theme-border)", marginTop: 4, transition: "background-color 0.15s" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"}
+          {/* LEFT: social + phone + cart + login */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {/* Social */}
+            <a href="#" aria-label="WhatsApp" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#25d366"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Wa /></a>
+            <a href="#" aria-label="Instagram" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#e1306c"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Ig /></a>
+            {/* Phone */}
+            <a href="tel:02112345678" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", direction: "ltr", borderRight: "1px solid #e8e8e8", paddingRight: "14px" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.72A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
+              021-1234-5678
+            </a>
+            {/* Cart */}
+            <Link href="/cart" style={{ position: "relative", color: "#555", display: "flex", transition: "color 0.2s", textDecoration: "none" }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#c8a12a"}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#555"}>
+              <ShoppingCart size={20} />
+              {count > 0 && <span style={{ position: "absolute", top: "-6px", left: "-6px", backgroundColor: "#c8a12a", color: "#fff", fontSize: "9px", fontWeight: "900", borderRadius: "50%", width: "15px", height: "15px", display: "flex", alignItems: "center", justifyContent: "center" }}>{count > 9 ? "9+" : count}</span>}
+            </Link>
+            {/* User */}
+            {authDone && (
+              authUser ? (
+                <div style={{ position: "relative" }}
+                  onMouseEnter={() => { uT.current && clearTimeout(uT.current); setUserOpen(true); }}
+                  onMouseLeave={() => { uT.current = setTimeout(() => setUserOpen(false), 180); }}>
+                  <button style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "#fdf8ee", border: "1px solid #c8a12a", borderRadius: "20px", padding: "5px 12px", color: "#c8a12a", cursor: "pointer", fontSize: "12px", fontFamily: "inherit", fontWeight: "600" }}>
+                    <User size={13} />
+                    <span style={{ maxWidth: "70px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser.name.split(" ")[0]}</span>
+                    <ChevronDown size={10} style={{ transform: userOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
+                  </button>
+                  {userOpen && (
+                    <div onMouseEnter={() => { uT.current && clearTimeout(uT.current); setUserOpen(true); }}
+                      onMouseLeave={() => { uT.current = setTimeout(() => setUserOpen(false), 180); }}
+                      style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, minWidth: "180px", backgroundColor: "#fff", border: "1px solid #e8e8e8", borderRadius: "10px", padding: "6px", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 200, animation: "ddIn 0.15s ease" }}>
+                      <div style={{ padding: "8px 12px 10px", borderBottom: "1px solid #f0f0f0", marginBottom: "4px" }}>
+                        <p style={{ color: "#222", fontSize: "13px", fontWeight: "700" }}>{authUser.name}</p>
+                        <p style={{ color: "#aaa", fontSize: "11px" }}>{authUser.email}</p>
+                      </div>
+                      {[{ href: "/account", icon: <User size={13} />, label: "حساب کاربری" }, { href: "/account?tab=orders", icon: <Package size={13} />, label: "سفارش‌های من" }].map(item => (
+                        <Link key={item.href} href={item.href} onClick={() => setUserOpen(false)}
+                          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", color: "#444", textDecoration: "none", fontSize: "13px", borderRadius: "6px", transition: "background-color 0.15s" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = "#444"; }}>
+                          {item.icon} {item.label}
+                        </Link>
+                      ))}
+                      {authUser.role === "ADMIN" && (
+                        <Link href="/admin" onClick={() => setUserOpen(false)}
+                          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", color: "#c8a12a", textDecoration: "none", fontSize: "13px", borderRadius: "6px", borderTop: "1px solid #f0f0f0", marginTop: "4px", fontWeight: "600", transition: "background-color 0.15s" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
+                          پنل مدیریت ←
+                        </Link>
+                      )}
+                      <button onClick={handleLogout}
+                        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", color: "#dc2626", background: "none", border: "none", fontSize: "13px", borderRadius: "6px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right", borderTop: "1px solid #f0f0f0", marginTop: "4px", transition: "background-color 0.15s" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "#fff1f1"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
-                        پنل مدیریت ←
-                      </Link>
-                    )}
-                    <button onClick={handleLogout}
-                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", color: "#ef4444", background: "none", border: "none", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right", borderTop: "1px solid var(--theme-border)", marginTop: 4, transition: "background-color 0.15s" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(239,68,68,0.1)"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"}>
-                      <LogOut size={14} /> خروج
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link href="/login"
-                style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: "var(--theme-accent)", color: "#000", textDecoration: "none", borderRadius: "20px", padding: "5px 12px", fontSize: "12px", fontWeight: "700" }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "var(--theme-accent-light)"}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "var(--theme-accent)"}>
-                <LogIn size={14} /> ورود
-              </Link>
-            )
-          )}
-        </div>
-
-        {/* ── Center: nav links ── */}
-        <ul style={{ display: "flex", alignItems: "center", gap: "4px", listStyle: "none", margin: 0, padding: 0 }} className="desktop-nav">
-          {navLinks.map(link => (
-            <li key={link.href} style={{ position: "relative" }}
-              onMouseEnter={() => link.dropdown && openMenu(link.label)}
-              onMouseLeave={() => link.dropdown && scheduleClose()}>
-              <Link
-                href={link.href}
-                style={{
-                  color: isActive(link.href) ? "var(--theme-accent)" : "var(--theme-text-muted)",
-                  textDecoration: "none",
-                  fontSize: "14px",
-                  fontWeight: isActive(link.href) ? "700" : "500",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "3px",
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  transition: "color 0.2s, background-color 0.2s",
-                  backgroundColor: isActive(link.href) ? "color-mix(in srgb, var(--theme-accent) 8%, transparent)" : "transparent",
-                }}
-                onMouseEnter={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
-                onMouseLeave={e => { if (!isActive(link.href)) (e.currentTarget as HTMLElement).style.color = "var(--theme-text-muted)"; }}>
-                {link.label}
-                {link.dropdown && (
-                  <ChevronDown size={12} style={{ transition: "transform 0.2s", transform: openDropdown === link.label ? "rotate(180deg)" : "rotate(0)" }} />
-                )}
-              </Link>
-
-              {link.dropdown && openDropdown === link.label && (
-                <div
-                  onMouseEnter={() => openMenu(link.label)}
-                  onMouseLeave={scheduleClose}
-                  style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, minWidth: "180px", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: "10px", padding: "6px", boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200, animation: "fadeIn 0.15s ease" }}>
-                  {link.dropdown.map((item, i) => (
-                    <Link key={i} href={item.href}
-                      onClick={() => setOpenDropdown(null)}
-                      style={{ display: "block", padding: "9px 14px", color: i === 0 ? "var(--theme-accent)" : "var(--theme-text-muted)", textDecoration: "none", fontSize: "13px", borderRadius: "6px", transition: "background-color 0.15s, color 0.15s", borderBottom: i === 0 ? "1px solid var(--theme-border)" : "none", fontWeight: i === 0 ? "600" : "400" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 10%, transparent)"; (e.currentTarget as HTMLElement).style.color = "var(--theme-accent)"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLElement).style.color = i === 0 ? "var(--theme-accent)" : "var(--theme-text-muted)"; }}>
-                      {item.label}
-                    </Link>
-                  ))}
+                        <LogOut size={13} /> خروج
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              ) : (
+                <Link href="/login" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", fontWeight: "600", transition: "color 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#c8a12a"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#555"}>
+                  <LogIn size={14} /> عضویت/ورود
+                </Link>
+              )
+            )}
+            {/* Search icon */}
+            <button onClick={() => { setSearchOpen(o => !o); setSearchVal(""); }}
+              style={{ color: searchOpen ? "#c8a12a" : "#aaa", background: "none", border: "none", cursor: "pointer", padding: "2px", display: "flex", transition: "color 0.2s" }}>
+              {searchOpen ? <X size={18} /> : <Search size={18} />}
+            </button>
+          </div>
 
-        {/* ── Right: logo + mobile menu ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <button aria-label="منو" onClick={() => setMenuOpen(!menuOpen)}
-            style={{ display: "none", color: "var(--theme-accent)", background: "none", border: "none", cursor: "pointer" }}
-            className="mobile-menu-btn">
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* CENTER: live gold price pill */}
+          <div style={{
+            backgroundColor: "#c8a12a",
+            borderRadius: "24px",
+            padding: "6px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}>
+            <span style={{ color: "#fff", fontSize: "12px", fontWeight: "600" }}>قیمت طلا :</span>
+            <span style={{ color: "#fff", fontSize: "13px", fontWeight: "900", direction: "ltr" }}>
+              {gold ? `${gold.price.toLocaleString("fa-IR")} تومان` : "در حال دریافت..."}
+            </span>
+          </div>
 
-          <Link href="/" style={{ textDecoration: "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div>
-                <div style={{ color: "var(--theme-accent)", fontSize: "22px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>DG</div>
-                <div style={{ color: "var(--theme-accent)", fontSize: "11px", fontWeight: "600", letterSpacing: "2px" }}>DELLY GOLD</div>
-              </div>
-              <div style={{ width: "28px", height: "28px", border: "2px solid var(--theme-accent)", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "10px", height: "10px", backgroundColor: "var(--theme-accent)" }} />
-              </div>
-            </div>
-          </Link>
-
-          <div style={{ color: "var(--theme-text-muted)", fontSize: "12px", borderRight: "1px solid var(--theme-border)", paddingRight: "12px" }}>
-            به دلی گلد خوش آمدید
+          {/* RIGHT: Logo */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button aria-label="منو" onClick={() => setMenuOpen(o => !o)} className="hamburger"
+              style={{ display: "none", color: "#c8a12a", background: "none", border: "1px solid #ddd", borderRadius: "7px", width: "34px", height: "34px", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+            <Link href="/" style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <div style={{ color: "#c8a12a", fontSize: "22px", fontWeight: "900", lineHeight: 1, letterSpacing: "-0.5px" }}>DELLY GOLD</div>
+              <div style={{ color: "#bbb", fontSize: "9px", letterSpacing: "2px" }}>دلی گلد</div>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* ── Search bar ── */}
       {searchOpen && (
-        <div style={{ backgroundColor: "var(--theme-bg-secondary)", borderTop: "1px solid var(--theme-card)", padding: "12px 16px" }}>
-          <form onSubmit={handleSearch} style={{ maxWidth: "560px", margin: "0 auto", display: "flex", gap: "8px" }}>
-            <input
-              autoFocus
-              value={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-              placeholder="جستجو در محصولات دلی گلد..."
-              style={{ flex: 1, backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: "8px", padding: "10px 14px", color: "var(--theme-text)", fontSize: "14px", outline: "none" }}
-            />
-            <button type="submit"
-              style={{ backgroundColor: "var(--theme-accent)", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-              جستجو
-            </button>
+        <div style={{ backgroundColor: "#fafafa", borderBottom: "1px solid #ebebeb", padding: "10px 16px" }}>
+          <form onSubmit={handleSearch} style={{ maxWidth: "600px", margin: "0 auto", display: "flex", gap: "8px" }}>
+            <input autoFocus value={searchVal} onChange={e => setSearchVal(e.target.value)} placeholder="جستجو در محصولات دلی گلد..."
+              style={{ flex: 1, backgroundColor: "#fff", border: "1px solid #ddd", borderRadius: "8px", padding: "9px 14px", color: "#222", fontSize: "14px", outline: "none" }}
+              onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
+            <button type="submit" style={{ backgroundColor: "#c8a12a", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 22px", fontWeight: "700", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>جستجو</button>
           </form>
         </div>
       )}
 
+      {/* ── Category links row ── */}
+      <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }} className="cat-nav-row">
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", height: "40px", gap: "0", minWidth: "max-content" }}>
+            {catLinks.map((link, i) => (
+              <Link key={i} href={link.href}
+                style={{
+                  display: "flex", alignItems: "center", height: "100%",
+                  padding: "0 16px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#444",
+                  textDecoration: "none", fontSize: "13px", fontWeight: "500",
+                  borderLeft: i < catLinks.length - 1 ? "1px solid #f0f0f0" : "none",
+                  whiteSpace: "nowrap", transition: "color 0.2s, background-color 0.15s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#c8a12a"; (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#444"; (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── Mobile menu ── */}
       {menuOpen && (
-        <div style={{ backgroundColor: "var(--theme-surface)", borderTop: "1px solid var(--theme-border)", padding: "8px 0" }}>
+        <div style={{ backgroundColor: "#fff", borderTop: "1px solid #ebebeb" }}>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-            {navLinks.map(link => (
-              <li key={link.href} style={{ borderBottom: "1px solid #1f1f1f" }}>
+            {catLinks.map((link, i) => (
+              <li key={i} style={{ borderBottom: "1px solid #f5f5f5" }}>
                 <Link href={link.href} onClick={() => setMenuOpen(false)}
-                  style={{ display: "block", padding: "13px 20px", color: isActive(link.href) ? "var(--theme-accent)" : "var(--theme-text-muted)", textDecoration: "none", fontSize: "14px", fontWeight: isActive(link.href) ? "700" : "400" }}>
+                  style={{ display: "block", padding: "13px 20px", color: "#333", textDecoration: "none", fontSize: "14px" }}>
                   {link.label}
                 </Link>
               </li>
             ))}
-            <li style={{ borderBottom: "1px solid #1f1f1f" }}>
-              <Link href="/cart" onClick={() => setMenuOpen(false)}
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-text-muted)", textDecoration: "none", fontSize: "14px" }}>
+            <li style={{ borderBottom: "1px solid #f5f5f5" }}>
+              <Link href="/cart" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#333", textDecoration: "none", fontSize: "14px" }}>
                 <ShoppingCart size={16} /> سبد خرید {count > 0 && `(${count})`}
               </Link>
             </li>
             {authUser ? (
-              <>
-                <li style={{ borderBottom: "1px solid #1f1f1f" }}>
-                  <Link href="/account" onClick={() => setMenuOpen(false)}
-                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-accent)", textDecoration: "none", fontSize: "14px" }}>
-                    <User size={16} /> {authUser.name}
-                  </Link>
-                </li>
-                <li>
-                  <button onClick={() => { handleLogout(); setMenuOpen(false); }}
-                    style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "#ef4444", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
-                    <LogOut size={16} /> خروج
-                  </button>
-                </li>
-              </>
+              <li><button onClick={() => { handleLogout(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#dc2626", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
+                <LogOut size={16} /> خروج
+              </button></li>
             ) : (
-              <li>
-                <Link href="/login" onClick={() => setMenuOpen(false)}
-                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "13px 20px", color: "var(--theme-accent)", textDecoration: "none", fontSize: "14px" }}>
-                  <LogIn size={16} /> ورود / ثبت‌نام
-                </Link>
-              </li>
+              <li><Link href="/login" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#c8a12a", textDecoration: "none", fontSize: "14px", fontWeight: "600" }}>
+                <LogIn size={16} /> ورود / ثبت‌نام
+              </Link></li>
             )}
           </ul>
         </div>
       )}
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @media (max-width: 900px) {
-          .desktop-nav { display: none !important; }
-          .mobile-menu-btn { display: block !important; }
-        }
+        @keyframes ddIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+        .cat-nav-row ::-webkit-scrollbar { display: none; }
+        @media(max-width:900px) { .cat-nav-row { display: none !important; } .hamburger { display: flex !important; } }
       `}</style>
-    </nav>
+    </header>
   );
 }

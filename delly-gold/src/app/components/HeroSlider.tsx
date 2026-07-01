@@ -1,473 +1,296 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  ChevronLeft, ChevronRight, TrendingUp, TrendingDown,
-  RefreshCw, Calculator,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
-// ── Slide data ─────────────────────────────────────────────────────────────
 const slides = [
   {
     id: 1,
-    title: "زیبایی، ماندگار مثل طلا",
-    subtitle: "مجموعه‌ای از بهترین طلاها و جواهرات",
-    cta: "مشاهده محصولات",
-    href: "/products",
-    image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1400&q=80",
-    badge: "جدیدترین کالکشن",
+    eyebrow: "کالکشن بهار ۱۴۰۴",
+    tag:     "DELLY GOLD  ·  NEW COLLECTION",
+    title:   ["جدیدترین", "گردنبندهای", "دلی‌گلد"],
+    sub:     "ظریف‌ترین طرح‌ها برای لحظه‌های خاص",
+    cta:     { label: "مشاهده محصولات", href: "/products" },
+    cta2:    { label: "خرید اقساطی",   href: "/contact" },
+    image:   "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1400&q=90",
+    bg:      "#f2ebe0",
+    accent:  "#c8a12a",
   },
   {
     id: 2,
-    title: "کالکشن ویژه بهار",
-    subtitle: "طلاهای خاص برای لحظه‌های خاص",
-    cta: "مشاهده کالکشن",
-    href: "/collections",
-    image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1400&q=80",
-    badge: "پیشنهاد ویژه",
+    eyebrow: "پرفروش‌ترین‌های فصل",
+    tag:     "DELLY GOLD  ·  BESTSELLERS",
+    title:   ["انگشترهای", "ویژه فصل", ""],
+    sub:     "طرح‌های کلاسیک و مدرن با بهترین اجرت",
+    cta:     { label: "مشاهده انگشترها", href: "/products?category=rings" },
+    cta2:    { label: "پرو مجازی",        href: "/tryon" },
+    image:   "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1400&q=90",
+    bg:      "#ede5d8",
+    accent:  "#b8860b",
   },
   {
     id: 3,
-    title: "ویترین ویژه دلی گلد",
-    subtitle: "بهترین پیشنهادها برای هر بودجه",
-    cta: "مشاهده ویترین",
-    href: "/showcase",
-    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1400&q=80",
-    badge: "محبوب‌ترین",
+    eyebrow: "کمترین اجرت",
+    tag:     "DELLY GOLD  ·  LOW FEE",
+    title:   ["طلای", "کم‌اجرت", "دلی‌گلد"],
+    sub:     "محصولات با کمترین اجرت ساخت در بازار",
+    cta:     { label: "مشاهده دستبندها", href: "/products?category=bracelets" },
+    cta2:    { label: "تماس با ما",       href: "/contact" },
+    image:   "https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=1400&q=90",
+    bg:      "#e8e0d5",
+    accent:  "#c8a12a",
   },
 ];
 
-const AUTO_PLAY = 5000;
+const INTERVAL = 6000;
 
-// ── Sparkline SVG (tiny inline chart) ─────────────────────────────────────
-function Sparkline({ data, isUp }: { data: number[]; isUp: boolean }) {
-  if (data.length < 2) return null;
-  const W = 120; const H = 36;
-  const min = Math.min(...data); const max = Math.max(...data);
-  const range = max - min || 1;
-  const xStep = W / (data.length - 1);
-  const toX = (i: number) => i * xStep;
-  const toY = (v: number) => H - 4 - ((v - min) / range) * (H - 8);
-  const pts = data.map((v, i) => `${toX(i)},${toY(v)}`).join(" L ");
-  const area = `M 0,${H} L ${pts} L ${W},${H} Z`;
-  const color = isUp ? "#10b981" : "#ef4444";
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
-      <defs>
-        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#sg)" />
-      <path d={`M ${pts}`} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={toX(data.length - 1)} cy={toY(data[data.length - 1])} r="2.5" fill={color} />
-    </svg>
-  );
-}
-
-// ── Price Panel (embedded in hero) ────────────────────────────────────────
-interface GoldData {
-  price: number; high: number; low: number; open: number;
-  changePercent: string; isUp: boolean; history: number[]; fallback?: boolean;
-}
-
-function PricePanel() {
-  const [data, setData] = useState<GoldData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [countdown, setCountdown] = useState(30);
-  const [markup, setMarkup] = useState(5);
-  const [grams, setGrams] = useState("");
-  const [karat, setKarat] = useState<18 | 24>(18);
-  const countRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const fetchData = useCallback(async (spinner = false) => {
-    if (spinner) setRefreshing(true);
-    try {
-      const [pr, sr] = await Promise.all([
-        fetch("/api/admin/gold-price", { cache: "no-store" }),
-        fetch("/api/admin/settings"),
-      ]);
-      const pj = await pr.json(); const sj = await sr.json();
-      if (pj.success) setData(pj.data);
-      if (sj.success) setMarkup(parseFloat(sj.data?.gold_markup_percent ?? "5") || 5);
-    } catch {}
-    finally { setLoading(false); setRefreshing(false); setCountdown(30); }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const iv = setInterval(() => fetchData(), 30_000);
-    countRef.current = setInterval(() => setCountdown(c => c <= 1 ? 30 : c - 1), 1000);
-    return () => { clearInterval(iv); if (countRef.current) clearInterval(countRef.current); };
-  }, [fetchData]);
-
-  const price = data?.price ?? 0;
-  const karatMul = karat === 24 ? 24 / 18 : 1;
-  const pricePerGram = Math.round(price * karatMul * (1 + markup / 100));
-  const calcResult = grams && parseFloat(grams) > 0
-    ? Math.round(parseFloat(grams) * pricePerGram) : null;
-  const isUp = data?.isUp ?? true;
-  const trendColor = isUp ? "#10b981" : "#ef4444";
-
-  return (
-    <div className="hero-price-panel" style={{
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      // Solid panel — no bleed-through from slider
-      backgroundColor: "var(--theme-bg)",
-      borderInlineStart: "1px solid color-mix(in srgb, var(--theme-accent) 15%, transparent)",
-      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
-      overflow: "hidden",
-    }}>
-      {/* Top accent line */}
-      <div style={{ height: "2px", background: "linear-gradient(to left, var(--theme-accent), transparent)", flexShrink: 0 }} />
-
-      <div style={{ padding: "18px 20px", overflowY: "auto", flex: 1 }}>
-
-        {/* Header row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-          <div>
-            <p style={{ color: "var(--theme-text-muted)", fontSize: "10px", letterSpacing: "0.5px", marginBottom: "2px" }}>قیمت لحظه‌ای · TGJU</p>
-            <p style={{ color: "var(--theme-text)", fontSize: "12px", fontWeight: "600" }}>طلای ۱۸ عیار</p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {/* Live dot */}
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <div style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: trendColor, animation: "pulse-dot 2s ease-in-out infinite" }} />
-              <span style={{ color: "var(--theme-text-muted)", fontSize: "9px" }}>{countdown}s</span>
-            </div>
-            <button onClick={() => fetchData(true)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)", padding: 0, display: "flex" }}>
-              <RefreshCw size={11} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
-            </button>
-          </div>
-        </div>
-
-        {/* Price + sparkline */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "10px" }}>
-          <div>
-            {loading ? (
-              <div style={{ color: "var(--theme-text-muted)", fontSize: "13px" }}>در حال دریافت...</div>
-            ) : (
-              <>
-                <div style={{ color: "var(--theme-accent)", fontSize: "26px", fontWeight: "900", lineHeight: 1, letterSpacing: "-1px" }}>
-                  {price.toLocaleString("fa-IR")}
-                </div>
-                <div style={{ color: "var(--theme-text-muted)", fontSize: "11px", marginTop: "2px" }}>تومان / گرم</div>
-              </>
-            )}
-          </div>
-          {data?.history && data.history.length > 1 && (
-            <Sparkline data={data.history.slice(-12)} isUp={isUp} />
-          )}
-        </div>
-
-        {/* Change badge + OHLC */}
-        {!loading && data && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px", flexWrap: "wrap" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", backgroundColor: isUp ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", border: `1px solid ${isUp ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: "20px", padding: "3px 9px" }}>
-              {isUp ? <TrendingUp size={10} color={trendColor} /> : <TrendingDown size={10} color={trendColor} />}
-              <span style={{ color: trendColor, fontSize: "11px", fontWeight: "700" }}>{isUp ? "+" : "-"}{data.changePercent}%</span>
-            </div>
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>
-              <span style={{ color: "#10b981" }}>↑{data.high.toLocaleString("fa-IR")}</span>
-              {" "}
-              <span style={{ color: "#ef4444" }}>↓{data.low.toLocaleString("fa-IR")}</span>
-            </span>
-          </div>
-        )}
-
-        {/* Divider */}
-        <div style={{ height: "1px", backgroundColor: "rgba(255,255,255,0.06)", marginBottom: "14px" }} />
-
-        {/* Calculator */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-          <Calculator size={12} color="var(--theme-accent)" />
-          <span style={{ color: "var(--theme-accent)", fontSize: "11px", fontWeight: "700", letterSpacing: "0.3px" }}>محاسبه‌گر سریع</span>
-        </div>
-
-        {/* Karat toggle */}
-        <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
-          {([18, 24] as const).map(k => (
-            <button key={k} onClick={() => setKarat(k)}
-              style={{ flex: 1, backgroundColor: karat === k ? "var(--theme-accent)" : "rgba(255,255,255,0.05)", color: karat === k ? "#000" : "var(--theme-text-muted)", border: `1px solid ${karat === k ? "var(--theme-accent)" : "rgba(255,255,255,0.08)"}`, borderRadius: "6px", padding: "5px", fontSize: "11px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
-              {k} عیار
-            </button>
-          ))}
-        </div>
-
-        {/* Weight input */}
-        <div style={{ position: "relative", marginBottom: "10px" }}>
-          <input
-            type="number"
-            value={grams}
-            onChange={e => setGrams(e.target.value)}
-            placeholder="وزن (گرم)"
-            min="0" step="0.01"
-            style={{
-              width: "100%",
-              backgroundColor: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              padding: "8px 12px",
-              color: "var(--theme-text)",
-              fontSize: "13px",
-              outline: "none",
-              direction: "ltr",
-              fontFamily: "inherit",
-              transition: "border-color 0.2s",
-            }}
-            onFocus={e => (e.target.style.borderColor = "rgba(212,175,55,0.5)")}
-            onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
-          />
-          <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--theme-text-muted)", fontSize: "11px", pointerEvents: "none" }}>گرم</span>
-        </div>
-
-        {/* Price per gram row */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-          <span style={{ color: "var(--theme-text-muted)", fontSize: "10px" }}>قیمت هر گرم ({karat} عیار)</span>
-          <span style={{ color: "var(--theme-text-muted)", fontSize: "11px", fontWeight: "600" }}>
-            {loading ? "..." : pricePerGram.toLocaleString("fa-IR")} ت
-          </span>
-        </div>
-
-        {/* Result */}
-        {calcResult !== null ? (
-          <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent)", borderRadius: "8px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>قیمت کل</span>
-            <div style={{ textAlign: "left" }}>
-              <span style={{ color: "var(--theme-accent)", fontSize: "16px", fontWeight: "900" }}>{calcResult.toLocaleString("fa-IR")}</span>
-              <span style={{ color: "var(--theme-text-muted)", fontSize: "10px", marginRight: "4px" }}>تومان</span>
-            </div>
-          </div>
-        ) : (
-          <div style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.08)", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
-            <span style={{ color: "var(--theme-text-muted)", fontSize: "11px" }}>وزن را وارد کنید تا قیمت محاسبه شود</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Hero Slider ───────────────────────────────────────────────────────────
 export default function HeroSlider() {
-  const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  const [cur, setCur]       = useState(0);
+  const [prev_, setPrev]    = useState<number | null>(null);
+  const [dir, setDir]       = useState<"next" | "prev">("next");
+  const [animating, setAnim] = useState(false);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const goTo = useCallback((idx: number) => {
-    if (animating || idx === current) return;
-    setAnimating(true);
-    setCurrent(idx);
+  const goTo = useCallback((idx: number, d: "next" | "prev" = "next") => {
+    if (animating || idx === cur) return;
+    setDir(d);
+    setPrev(cur);
+    setAnim(true);
+    setCur(idx);
     setProgress(0);
-    setTimeout(() => setAnimating(false), 700);
-  }, [animating, current]);
+    setTimeout(() => { setAnim(false); setPrev(null); }, 800);
+  }, [animating, cur]);
 
-  const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo]);
-  const prev = useCallback(() => goTo(current === 0 ? slides.length - 1 : current - 1), [current, goTo]);
+  const next = useCallback(() => goTo((cur + 1) % slides.length, "next"), [cur, goTo]);
+  const prev = useCallback(() => goTo(cur === 0 ? slides.length - 1 : cur - 1, "prev"), [cur, goTo]);
 
   useEffect(() => {
     if (paused) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (progressRef.current) clearInterval(progressRef.current);
+      tRef.current && clearInterval(tRef.current);
+      pRef.current && clearInterval(pRef.current);
       return;
     }
     setProgress(0);
-    timerRef.current = setInterval(() => {
-      setCurrent(c => (c + 1) % slides.length);
-      setProgress(0);
-    }, AUTO_PLAY);
-    progressRef.current = setInterval(() => {
-      setProgress(p => Math.min(p + 50 / AUTO_PLAY * 100, 100));
-    }, 50);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
-  }, [paused, current]);
+    tRef.current = setInterval(() => { setCur(c => (c + 1) % slides.length); setPrev(c => { setDir("next"); return c; }); setProgress(0); }, INTERVAL);
+    pRef.current = setInterval(() => setProgress(p => Math.min(p + (50 / INTERVAL) * 100, 100)), 50);
+    return () => { tRef.current && clearInterval(tRef.current); pRef.current && clearInterval(pRef.current); };
+  }, [paused, cur]);
+
+  const s = slides[cur];
 
   return (
     <section
-      className="hero-section"
-      style={{
-        position: "relative",
-        height: "560px",
-        overflow: "hidden",
-        backgroundColor: "var(--theme-bg)",
-        display: "grid",
-        gridTemplateColumns: "320px minmax(0, 1fr)",
-        direction: "rtl",
-      }}
+      style={{ position: "relative", width: "100%", height: "500px", overflow: "hidden", backgroundColor: s.bg, transition: "background-color 1s ease" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* ── Price column (RTL: right side) ── */}
-      <aside className="hero-price-aside" style={{ position: "relative", zIndex: 30, minHeight: 0 }}>
-        <PricePanel />
-      </aside>
-
-      {/* ── Slider column ── */}
-      <div className="hero-slider-area" style={{ position: "relative", overflow: "hidden", minHeight: 0 }}>
+      {/* ── Slides ── */}
       {slides.map((slide, idx) => {
-        const isActive = idx === current;
+        const isActive = idx === cur;
+        const isLeaving = idx === prev_;
+        const enterFrom = dir === "next" ? "translateX(-40px)" : "translateX(40px)";
+        const leaveTo   = dir === "next" ? "translateX(40px)"  : "translateX(-40px)";
+
         return (
-          <div key={slide.id} aria-hidden={!isActive} style={{
+          <div key={slide.id} style={{
             position: "absolute", inset: 0,
-            opacity: isActive ? 1 : 0,
-            transform: isActive ? "scale(1)" : "scale(1.04)",
-            transition: "opacity 0.8s ease, transform 0.8s ease",
+            display: "flex", alignItems: "stretch",
+            opacity: isActive ? 1 : isLeaving ? 0 : 0,
+            transition: "opacity 0.75s ease",
             pointerEvents: isActive ? "auto" : "none",
           }}>
-            {/* BG image */}
-            <div style={{
-              position: "absolute", inset: 0,
-              backgroundImage: `url(${slide.image})`,
-              backgroundSize: "cover", backgroundPosition: "center",
-              filter: "brightness(0.28)",
-              transform: isActive ? "scale(1.06)" : "scale(1)",
-              transition: "transform 6s ease-out",
-            }} />
+            {/* Photo side */}
+            <div style={{ flex: "0 0 55%", position: "relative", overflow: "hidden" }}>
+              <img src={slide.image} alt={slide.title.join(" ")} style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%",
+                objectFit: "cover", objectPosition: "center top",
+                transform: isActive ? "scale(1.05)" : "scale(1)",
+                transition: "transform 7s ease-out",
+                filter: "brightness(0.95)",
+              }} />
+              {/* Right fade into bg */}
+              <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "35%", background: `linear-gradient(to right, transparent, ${slide.bg})`, pointerEvents: "none" }} />
+            </div>
 
-            {/* Gradient over slider only */}
+            {/* Text side */}
             <div style={{
-              position: "absolute", inset: 0,
-              background: "linear-gradient(to right, color-mix(in srgb, var(--theme-bg) 85%, transparent) 0%, rgba(10,10,10,0.4) 45%, rgba(10,10,10,0.15) 100%)",
-            }} />
-
-            {/* Slide text content */}
-            <div className="hero-slide-text" style={{
-              position: "relative", maxWidth: "720px",
-              margin: "0 auto", padding: "0 48px 0 72px",
-              width: "100%", height: "100%",
-              display: "flex", alignItems: "center",
+              flex: 1,
+              display: "flex", flexDirection: "column", justifyContent: "center",
+              padding: "0 52px 0 20px",
+              position: "relative",
             }}>
+              {/* Decorative background circle */}
               <div style={{
+                position: "absolute",
+                left: "10%", top: "50%", transform: "translate(-50%,-50%)",
+                width: "320px", height: "320px",
+                borderRadius: "50%",
+                backgroundColor: `${slide.accent}10`,
+                pointerEvents: "none",
+              }} />
+
+              {/* Eyebrow tag */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                marginBottom: "14px",
                 opacity: isActive ? 1 : 0,
-                transform: isActive ? "translateY(0)" : "translateY(20px)",
-                transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s",
+                transform: isActive ? "translateY(0)" : enterFrom,
+                transition: "opacity 0.55s ease 0.05s, transform 0.55s ease 0.05s",
               }}>
-                <span style={{
-                  display: "inline-block",
-                  backgroundColor: "color-mix(in srgb, var(--theme-accent) 20%, transparent)",
-                  border: "1px solid var(--theme-accent)",
-                  color: "var(--theme-accent)",
-                  fontSize: "12px", padding: "4px 14px",
-                  borderRadius: "20px", marginBottom: "18px",
-                }}>
-                  {slide.badge}
+                <span style={{ display: "block", width: "32px", height: "2px", backgroundColor: slide.accent, borderRadius: "1px", flexShrink: 0 }} />
+                <span style={{ color: "#999", fontSize: "11px", fontWeight: "700", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+                  {slide.tag}
                 </span>
-                <h1 style={{
-                  fontSize: "38px", fontWeight: "800",
-                  color: "var(--theme-text)", marginBottom: "12px",
-                  lineHeight: "1.25", textShadow: "0 2px 16px rgba(0,0,0,0.6)",
-                }}>
-                  {slide.title}
-                </h1>
-                <p style={{ color: "var(--theme-text-muted)", fontSize: "15px", marginBottom: "30px", lineHeight: "1.6" }}>
-                  {slide.subtitle}
-                </p>
-                <a href={slide.href} style={{
-                  display: "inline-flex", alignItems: "center", gap: "8px",
-                  backgroundColor: "var(--theme-accent)", color: "#000",
-                  padding: "12px 28px", borderRadius: "6px",
-                  fontWeight: "700", fontSize: "15px", textDecoration: "none",
-                  boxShadow: "0 4px 20px color-mix(in srgb, var(--theme-accent) 35%, transparent)",
-                  transition: "all 0.2s",
+              </div>
+
+              {/* Title lines — each line staggers in */}
+              <div style={{ marginBottom: "18px" }}>
+                {slide.title.filter(Boolean).map((line, li) => (
+                  <div key={li} style={{
+                    overflow: "hidden",
+                    lineHeight: 1.1,
+                  }}>
+                    <h1 style={{
+                      margin: 0, padding: 0,
+                      fontSize: li === 0 ? "46px" : li === 1 ? "52px" : "42px",
+                      fontWeight: "900",
+                      color: li === 1 ? slide.accent : "#1a1a1a",
+                      lineHeight: 1.15,
+                      opacity: isActive ? 1 : 0,
+                      transform: isActive ? "translateY(0)" : "translateY(32px)",
+                      transition: `opacity 0.6s ease ${0.12 + li * 0.1}s, transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94) ${0.12 + li * 0.1}s`,
+                      whiteSpace: "nowrap",
+                    }}>
+                      {line}
+                    </h1>
+                  </div>
+                ))}
+              </div>
+
+              {/* Subtitle */}
+              <p style={{
+                color: "#888",
+                fontSize: "14px",
+                lineHeight: "1.7",
+                marginBottom: "32px",
+                maxWidth: "320px",
+                opacity: isActive ? 1 : 0,
+                transform: isActive ? "translateY(0)" : "translateY(16px)",
+                transition: "opacity 0.6s ease 0.38s, transform 0.6s ease 0.38s",
+              }}>
+                {slide.sub}
+              </p>
+
+              {/* CTA buttons */}
+              <div style={{
+                display: "flex", gap: "10px", flexWrap: "wrap",
+                opacity: isActive ? 1 : 0,
+                transform: isActive ? "translateY(0)" : "translateY(16px)",
+                transition: "opacity 0.6s ease 0.5s, transform 0.6s ease 0.5s",
+              }}>
+                <Link href={slide.cta.href} style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  backgroundColor: "#1a1a1a", color: "#fff",
+                  padding: "12px 26px", borderRadius: "8px",
+                  fontWeight: "700", fontSize: "13px", textDecoration: "none",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
+                  transition: "background-color 0.2s, transform 0.15s, box-shadow 0.2s",
                 }}
-                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "var(--theme-accent-light)"; el.style.transform = "translateY(-1px)"; }}
-                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "var(--theme-accent)"; el.style.transform = "translateY(0)"; }}>
-                  <ChevronLeft size={17} /> {slide.cta}
-                </a>
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = slide.accent; el.style.transform = "translateY(-2px)"; el.style.boxShadow = `0 8px 20px ${slide.accent}40`; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#1a1a1a"; el.style.transform = "translateY(0)"; el.style.boxShadow = "0 4px 14px rgba(0,0,0,0.15)"; }}>
+                  {slide.cta.label}
+                  <ChevronLeft size={15} />
+                </Link>
+                <Link href={slide.cta2.href} style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  backgroundColor: "transparent", color: "#555",
+                  padding: "12px 22px", borderRadius: "8px",
+                  fontWeight: "600", fontSize: "13px", textDecoration: "none",
+                  border: "1px solid #ccc",
+                  transition: "border-color 0.2s, color 0.2s, transform 0.15s",
+                }}
+                  onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = slide.accent; el.style.color = slide.accent; el.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#ccc"; el.style.color = "#555"; el.style.transform = "translateY(0)"; }}>
+                  {slide.cta2.label}
+                </Link>
               </div>
             </div>
           </div>
         );
       })}
 
-      {/* ── Arrows (inside slider area only) ── */}
-      {[
-        { onClick: prev, side: "right", label: "قبلی", icon: <ChevronRight size={20} /> },
-        { onClick: next, side: "left",  label: "بعدی", icon: <ChevronLeft size={20} /> },
-      ].map(({ onClick, side, label, icon }) => (
-        <button key={side} onClick={onClick} aria-label={label}
-          style={{
-            position: "absolute", [side]: "20px", top: "50%",
-            transform: "translateY(-50%)",
-            backgroundColor: "color-mix(in srgb, var(--theme-accent) 12%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--theme-accent) 35%, transparent)",
-            color: "var(--theme-accent)", width: "44px", height: "44px",
-            borderRadius: "50%", display: "flex", alignItems: "center",
-            justifyContent: "center", cursor: "pointer", zIndex: 10,
-            backdropFilter: "blur(4px)", transition: "all 0.2s",
-          }}
-          onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 28%, transparent)"; el.style.transform = "translateY(-50%) scale(1.1)"; }}
-          onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "color-mix(in srgb, var(--theme-accent) 12%, transparent)"; el.style.transform = "translateY(-50%) scale(1)"; }}>
-          {icon}
-        </button>
-      ))}
+      {/* ── Left arrow ── */}
+      <button onClick={prev} aria-label="قبلی" style={{
+        position: "absolute", right: "20px", top: "50%", transform: "translateY(-50%)",
+        width: "42px", height: "42px", borderRadius: "50%",
+        backgroundColor: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.08)",
+        color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", backdropFilter: "blur(6px)",
+        transition: "all 0.2s",
+      }}
+        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = s.accent; el.style.color = "#fff"; el.style.borderColor = s.accent; el.style.transform = "translateY(-50%) scale(1.08)"; }}
+        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "rgba(255,255,255,0.9)"; el.style.color = "#333"; el.style.borderColor = "rgba(0,0,0,0.08)"; el.style.transform = "translateY(-50%) scale(1)"; }}>
+        <ChevronRight size={18} strokeWidth={2.5} />
+      </button>
 
-      {/* ── Bottom: dots + progress ── */}
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        display: "flex", flexDirection: "column", alignItems: "center",
-        gap: "10px", paddingBottom: "18px", zIndex: 10,
-      }}>
-        <div style={{ display: "flex", gap: "8px" }}>
+      {/* ── Right arrow ── */}
+      <button onClick={next} aria-label="بعدی" style={{
+        position: "absolute", left: "20px", top: "50%", transform: "translateY(-50%)",
+        width: "42px", height: "42px", borderRadius: "50%",
+        backgroundColor: "rgba(255,255,255,0.9)", border: "1px solid rgba(0,0,0,0.08)",
+        color: "#333", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.1)", backdropFilter: "blur(6px)",
+        transition: "all 0.2s",
+      }}
+        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = s.accent; el.style.color = "#fff"; el.style.borderColor = s.accent; el.style.transform = "translateY(-50%) scale(1.08)"; }}
+        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "rgba(255,255,255,0.9)"; el.style.color = "#333"; el.style.borderColor = "rgba(0,0,0,0.08)"; el.style.transform = "translateY(-50%) scale(1)"; }}>
+        <ChevronLeft size={18} strokeWidth={2.5} />
+      </button>
+
+      {/* ── Bottom controls ── */}
+      <div style={{ position: "absolute", bottom: "22px", left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: "20px", zIndex: 20 }}>
+        {/* Slide counter */}
+        <span style={{ color: "rgba(0,0,0,0.25)", fontSize: "11px", fontWeight: "700", letterSpacing: "2px", minWidth: "40px" }}>
+          {String(cur + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+        </span>
+
+        {/* Dot indicators with progress */}
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           {slides.map((_, idx) => (
-            <button key={idx} onClick={() => goTo(idx)} aria-label={`اسلاید ${idx + 1}`}
+            <button key={idx} onClick={() => goTo(idx, idx > cur ? "next" : "prev")} aria-label={`اسلاید ${idx + 1}`}
               style={{
-                width: idx === current ? "28px" : "8px", height: "8px",
-                borderRadius: "4px",
-                backgroundColor: idx === current ? "var(--theme-accent)" : "color-mix(in srgb, var(--theme-accent) 35%, transparent)",
-                border: "none", cursor: "pointer", padding: 0,
+                padding: 0, border: "none", cursor: "pointer",
+                height: "6px",
+                width: idx === cur ? "32px" : "6px",
+                borderRadius: "3px",
+                backgroundColor: idx === cur ? s.accent : "rgba(0,0,0,0.18)",
                 transition: "width 0.4s ease, background-color 0.3s",
-              }} />
+                overflow: "hidden",
+                position: "relative",
+              }}>
+              {/* Progress fill on active dot */}
+              {idx === cur && !paused && (
+                <span style={{
+                  position: "absolute", inset: 0,
+                  width: `${progress}%`,
+                  backgroundColor: "rgba(255,255,255,0.35)",
+                  borderRadius: "3px",
+                  transition: "width 0.05s linear",
+                }} />
+              )}
+            </button>
           ))}
         </div>
-        {!paused ? (
-          <div style={{ width: "60px", height: "2px", backgroundColor: "color-mix(in srgb, var(--theme-accent) 15%, transparent)", borderRadius: "1px", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${progress}%`, backgroundColor: "var(--theme-accent)", transition: "width 0.05s linear" }} />
-          </div>
-        ) : (
-          <span style={{ color: "color-mix(in srgb, var(--theme-accent) 40%, transparent)", fontSize: "10px" }}>■ متوقف</span>
-        )}
-      </div>
 
-      {/* ── Slide counter ── */}
-      <div style={{
-        position: "absolute", top: "18px", left: "18px",
-        color: "rgba(212,175,55,0.5)", fontSize: "11px",
-        fontWeight: "600", letterSpacing: "1px", zIndex: 10,
-      }}>
-        {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+        <span style={{ minWidth: "40px" }} />
       </div>
-      </div>{/* /hero-slider-area */}
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-dot {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.4; transform: scale(0.7); }
-        }
-        @media (max-width: 900px) {
-          .hero-section {
-            grid-template-columns: 1fr !important;
-            height: 480px !important;
-          }
-          .hero-price-aside {
-            display: none !important;
-          }
-          .hero-slider-area .hero-slide-text {
-            padding: 0 24px !important;
-          }
+        @media(max-width:768px) {
+          .hero-section { flex-direction: column !important; height: auto !important; min-height: 420px; }
         }
       `}</style>
     </section>
