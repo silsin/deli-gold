@@ -94,30 +94,30 @@ export default function Navbar() {
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", height: "62px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
           {/* LEFT: social + phone + cart + login */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            {/* Social */}
-            <a href="#" aria-label="WhatsApp" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+          <div className="nav-left-group" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {/* Social — hide on mobile */}
+            <a href="#" aria-label="WhatsApp" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#25d366"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Wa /></a>
-            <a href="#" aria-label="Instagram" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+            <a href="#" aria-label="Instagram" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#e1306c"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Ig /></a>
-            {/* Phone */}
-            <a href="tel:02112345678" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", direction: "ltr", borderRight: "1px solid #e8e8e8", paddingRight: "14px" }}>
+            {/* Phone — hide on mobile */}
+            <a href="tel:02112345678" className="nav-phone" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", direction: "ltr", borderRight: "1px solid #e8e8e8", paddingRight: "14px" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.72A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
               021-1234-5678
             </a>
-            {/* Cart */}
+            {/* Cart — always visible */}
             <Link href="/cart" style={{ position: "relative", color: "#555", display: "flex", transition: "color 0.2s", textDecoration: "none" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#c8a12a"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#555"}>
               <ShoppingCart size={20} />
               {count > 0 && <span style={{ position: "absolute", top: "-6px", left: "-6px", backgroundColor: "#c8a12a", color: "#fff", fontSize: "9px", fontWeight: "900", borderRadius: "50%", width: "15px", height: "15px", display: "flex", alignItems: "center", justifyContent: "center" }}>{count > 9 ? "9+" : count}</span>}
             </Link>
-            {/* User */}
+            {/* User — hide dropdown on mobile, show compact */}
             {authDone && (
               authUser ? (
-                <div style={{ position: "relative" }}
+                <div className="nav-user-full" style={{ position: "relative" }}
                   onMouseEnter={() => { uT.current && clearTimeout(uT.current); setUserOpen(true); }}
                   onMouseLeave={() => { uT.current = setTimeout(() => setUserOpen(false), 180); }}>
                   <button style={{ display: "flex", alignItems: "center", gap: "5px", backgroundColor: "#fdf8ee", border: "1px solid #c8a12a", borderRadius: "20px", padding: "5px 12px", color: "#c8a12a", cursor: "pointer", fontSize: "12px", fontFamily: "inherit", fontWeight: "600" }}>
@@ -159,7 +159,7 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <Link href="/login" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", fontWeight: "600", transition: "color 0.2s" }}
+                <Link href="/login" className="nav-user-full" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", fontWeight: "600", transition: "color 0.2s" }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#c8a12a"}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#555"}>
                   <LogIn size={14} /> عضویت/ورود
@@ -173,12 +173,11 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* CENTER: live gold price pill */}
-          <div style={{
+          {/* CENTER: live gold price pill — hidden on mobile */}
+          <div className="nav-gold-pill" style={{
             backgroundColor: "#c8a12a",
             borderRadius: "24px",
             padding: "6px 20px",
-            display: "flex",
             alignItems: "center",
             gap: "8px",
           }}>
@@ -188,10 +187,10 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* RIGHT: Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* RIGHT: Logo + hamburger */}
+          <div className="nav-right-group" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <button aria-label="منو" onClick={() => setMenuOpen(o => !o)} className="hamburger"
-              style={{ display: "none", color: "#c8a12a", background: "none", border: "1px solid #ddd", borderRadius: "7px", width: "34px", height: "34px", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              style={{ color: "#c8a12a", background: "none", border: "1px solid #ddd", borderRadius: "7px", width: "34px", height: "34px", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
               {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
             <Link href="/" style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -238,29 +237,62 @@ export default function Navbar() {
 
       {/* ── Mobile menu ── */}
       {menuOpen && (
-        <div style={{ backgroundColor: "#fff", borderTop: "1px solid #ebebeb" }}>
+        <div style={{ backgroundColor: "#fff", borderTop: "1px solid #ebebeb", maxHeight: "80vh", overflowY: "auto" }}>
+          {/* Gold price on mobile */}
+          <div style={{ backgroundColor: "#c8a12a", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ color: "#fff", fontSize: "12px", fontWeight: "600" }}>قیمت طلا:</span>
+            <span style={{ color: "#fff", fontSize: "13px", fontWeight: "900", direction: "ltr" }}>
+              {gold ? `${gold.price.toLocaleString("fa-IR")} تومان` : "..."}
+            </span>
+          </div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {/* Account/login */}
+            {authUser ? (
+              <>
+                <li style={{ borderBottom: "1px solid #f5f5f5", backgroundColor: "#fdf8ee" }}>
+                  <Link href="/account" onClick={() => setMenuOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#c8a12a", textDecoration: "none", fontSize: "14px", fontWeight: "600" }}>
+                    <User size={16} /> {authUser.name}
+                  </Link>
+                </li>
+                <li style={{ borderBottom: "1px solid #f5f5f5" }}>
+                  <Link href="/account?tab=orders" onClick={() => setMenuOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#555", textDecoration: "none", fontSize: "14px" }}>
+                    <Package size={16} /> سفارش‌های من
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <li style={{ borderBottom: "1px solid #f5f5f5", backgroundColor: "#fdf8ee" }}>
+                <Link href="/login" onClick={() => setMenuOpen(false)}
+                  style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#c8a12a", textDecoration: "none", fontSize: "14px", fontWeight: "700" }}>
+                  <LogIn size={16} /> ورود / ثبت‌نام
+                </Link>
+              </li>
+            )}
+            {/* Cart */}
+            <li style={{ borderBottom: "1px solid #f5f5f5" }}>
+              <Link href="/cart" onClick={() => setMenuOpen(false)}
+                style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#333", textDecoration: "none", fontSize: "14px" }}>
+                <ShoppingCart size={16} /> سبد خرید {count > 0 && <span style={{ backgroundColor: "#c8a12a", color: "#fff", borderRadius: "10px", padding: "1px 7px", fontSize: "11px", fontWeight: "700" }}>{count}</span>}
+              </Link>
+            </li>
+            {/* Category links */}
             {catLinks.map((link, i) => (
               <li key={i} style={{ borderBottom: "1px solid #f5f5f5" }}>
                 <Link href={link.href} onClick={() => setMenuOpen(false)}
-                  style={{ display: "block", padding: "13px 20px", color: "#333", textDecoration: "none", fontSize: "14px" }}>
+                  style={{ display: "block", padding: "12px 20px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333", textDecoration: "none", fontSize: "13px", fontWeight: active(link.href) && link.href !== "/products" ? "700" : "400" }}>
                   {link.label}
                 </Link>
               </li>
             ))}
-            <li style={{ borderBottom: "1px solid #f5f5f5" }}>
-              <Link href="/cart" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#333", textDecoration: "none", fontSize: "14px" }}>
-                <ShoppingCart size={16} /> سبد خرید {count > 0 && `(${count})`}
-              </Link>
-            </li>
-            {authUser ? (
-              <li><button onClick={() => { handleLogout(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#dc2626", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
-                <LogOut size={16} /> خروج
-              </button></li>
-            ) : (
-              <li><Link href="/login" onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#c8a12a", textDecoration: "none", fontSize: "14px", fontWeight: "600" }}>
-                <LogIn size={16} /> ورود / ثبت‌نام
-              </Link></li>
+            {authUser && (
+              <li>
+                <button onClick={() => { handleLogout(); setMenuOpen(false); }}
+                  style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#dc2626", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
+                  <LogOut size={16} /> خروج
+                </button>
+              </li>
             )}
           </ul>
         </div>
@@ -269,7 +301,34 @@ export default function Navbar() {
       <style>{`
         @keyframes ddIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
         .cat-nav-row ::-webkit-scrollbar { display: none; }
-        @media(max-width:900px) { .cat-nav-row { display: none !important; } .hamburger { display: flex !important; } }
+
+        /* ── DESKTOP: normal 3-col layout ── */
+        .nav-left-group  { display: flex; }
+        .nav-gold-pill   { display: flex; }
+        .nav-right-group { display: flex; }
+        .hamburger       { display: none !important; }
+
+        @media(max-width:900px) {
+          /* Hide cat nav row */
+          .cat-nav-row { display: none !important; }
+
+          /* Hide desktop-only elements */
+          .nav-social    { display: none !important; }
+          .nav-phone     { display: none !important; }
+          .nav-user-full { display: none !important; }
+          .nav-gold-pill { display: none !important; }
+
+          /* Show hamburger */
+          .hamburger { display: flex !important; }
+
+          /* Mobile nav row: logo right, icons left */
+          .nav-left-group {
+            gap: 10px !important;
+          }
+          .nav-right-group {
+            flex: 1 !important;
+          }
+        }
       `}</style>
     </header>
   );
