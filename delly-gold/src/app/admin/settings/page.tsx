@@ -45,12 +45,36 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [goldData, setGoldData] = useState<GoldData | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
-
   const [themePalette, setThemePalette] = useState(DEFAULT_PALETTE_ID);
   const [fontMobile, setFontMobile] = useState(DEFAULT_FONT_MOBILE);
   const [fontDesktop, setFontDesktop] = useState(DEFAULT_FONT_DESKTOP);
   const [savingTheme, setSavingTheme] = useState(false);
   const [themeSaved, setThemeSaved] = useState(false);
+
+  // Site info fields
+  const [announcement, setAnnouncement] = useState("با اعتماد شما، سال‌ها طلایی ساختیم.");
+  const [phone1, setPhone1] = useState("");
+  const [phone2, setPhone2] = useState("");
+  const [address, setAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [instagram, setInstagram] = useState("#");
+  const [telegram, setTelegram] = useState("#");
+  const [whatsapp, setWhatsapp] = useState("#");
+  const [brandDesc, setBrandDesc] = useState("");
+  const [savingSite, setSavingSite] = useState(false);
+  const [siteSaved, setSiteSaved] = useState(false);
+
+  // Promo banners
+  const [pb1Title, setPb1Title] = useState("تخفیف‌های دلی‌گلد");
+  const [pb1Sub, setPb1Sub]   = useState("محصولات تخفیف‌دار");
+  const [pb1Href, setPb1Href] = useState("/products");
+  const [pb1Img, setPb1Img]   = useState("");
+  const [pb2Title, setPb2Title] = useState("طلای کم اُجرت");
+  const [pb2Sub, setPb2Sub]   = useState("محصولات با کمترین اُجرت ساخت");
+  const [pb2Href, setPb2Href] = useState("/products");
+  const [pb2Img, setPb2Img]   = useState("");
+  const [savingBanners, setSavingBanners] = useState(false);
+  const [bannersSaved, setBannersSaved] = useState(false);
 
   const previewTheme = useCallback((palette: string, mobile: string, desktop: string) => {
     applyTheme({
@@ -71,6 +95,25 @@ export default function AdminSettingsPage() {
           setThemePalette(theme.theme_palette);
           setFontMobile(theme.font_size_mobile);
           setFontDesktop(theme.font_size_desktop);
+          // Site info
+          if (d.data.site_announcement) setAnnouncement(d.data.site_announcement);
+          if (d.data.site_phone1)       setPhone1(d.data.site_phone1);
+          if (d.data.site_phone2)       setPhone2(d.data.site_phone2);
+          if (d.data.site_address)      setAddress(d.data.site_address);
+          if (d.data.site_email)        setEmail(d.data.site_email);
+          if (d.data.site_instagram)    setInstagram(d.data.site_instagram);
+          if (d.data.site_telegram)     setTelegram(d.data.site_telegram);
+          if (d.data.site_whatsapp)     setWhatsapp(d.data.site_whatsapp);
+          if (d.data.site_brand_desc)   setBrandDesc(d.data.site_brand_desc);
+          // Promo banners
+          if (d.data.promo_b1_title) setPb1Title(d.data.promo_b1_title);
+          if (d.data.promo_b1_sub)   setPb1Sub(d.data.promo_b1_sub);
+          if (d.data.promo_b1_href)  setPb1Href(d.data.promo_b1_href);
+          if (d.data.promo_b1_image) setPb1Img(d.data.promo_b1_image);
+          if (d.data.promo_b2_title) setPb2Title(d.data.promo_b2_title);
+          if (d.data.promo_b2_sub)   setPb2Sub(d.data.promo_b2_sub);
+          if (d.data.promo_b2_href)  setPb2Href(d.data.promo_b2_href);
+          if (d.data.promo_b2_image) setPb2Img(d.data.promo_b2_image);
         }
       });
 
@@ -128,6 +171,43 @@ export default function AdminSettingsPage() {
       setTimeout(() => setThemeSaved(false), 3000);
     }
     setSavingTheme(false);
+  }
+
+  async function handleSaveSiteInfo() {
+    setSavingSite(true); setSiteSaved(false);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        site_announcement: announcement,
+        site_phone1: phone1,
+        site_phone2: phone2,
+        site_address: address,
+        site_email: email,
+        site_instagram: instagram,
+        site_telegram: telegram,
+        site_whatsapp: whatsapp,
+        site_brand_desc: brandDesc,
+      }),
+    });
+    if (res.ok) { setSiteSaved(true); setTimeout(() => setSiteSaved(false), 3000); }
+    setSavingSite(false);
+  }
+
+  async function handleSaveBanners() {
+    setSavingBanners(true); setBannersSaved(false);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        promo_b1_title: pb1Title, promo_b1_sub: pb1Sub,
+        promo_b1_href: pb1Href,  promo_b1_image: pb1Img,
+        promo_b2_title: pb2Title, promo_b2_sub: pb2Sub,
+        promo_b2_href: pb2Href,  promo_b2_image: pb2Img,
+      }),
+    });
+    if (res.ok) { setBannersSaved(true); setTimeout(() => setBannersSaved(false), 3000); }
+    setSavingBanners(false);
   }
 
   const basePrice = goldData?.price ?? 0;
@@ -345,6 +425,105 @@ export default function AdminSettingsPage() {
           style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: saving ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
           {saving ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
           {saving ? "در حال ذخیره..." : "ذخیره قیمت‌گذاری"}
+        </button>
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* ── Site Info ── */}
+      <div style={{ ...cardStyle, marginTop: "24px" }}>
+        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "20px" }}>اطلاعات سایت</h3>
+
+        <div style={{ marginBottom: "12px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>متن نوار اطلاع‌رسانی بالای سایت</label>
+          <input value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{ ...inp, direction: "rtl" }} />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>شماره تلفن ۱</label>
+            <input value={phone1} onChange={e => setPhone1(e.target.value)} style={inp} placeholder="021-1234-5678" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>شماره تلفن ۲</label>
+            <input value={phone2} onChange={e => setPhone2(e.target.value)} style={inp} placeholder="021-9074-3457" />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "12px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>آدرس</label>
+          <input value={address} onChange={e => setAddress(e.target.value)} style={{ ...inp, direction: "rtl" }} placeholder="تهران، ..." />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>ایمیل</label>
+            <input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="info@dellygold.com" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>توضیح برند (فوتر)</label>
+            <input value={brandDesc} onChange={e => setBrandDesc(e.target.value)} style={{ ...inp, direction: "rtl" }} />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+          {[
+            { label: "لینک اینستاگرام", val: instagram, set: setInstagram },
+            { label: "لینک تلگرام",     val: telegram,  set: setTelegram  },
+            { label: "لینک واتساپ",     val: whatsapp,  set: setWhatsapp  },
+          ].map(f => (
+            <div key={f.label}>
+              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{f.label}</label>
+              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder="https://..." />
+            </div>
+          ))}
+        </div>
+
+        {siteSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ اطلاعات سایت ذخیره شد</div>}
+        <button onClick={handleSaveSiteInfo} disabled={savingSite}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingSite ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingSite ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {savingSite ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingSite ? "در حال ذخیره..." : "ذخیره اطلاعات سایت"}
+        </button>
+      </div>
+
+      {/* ── Promo Banners ── */}
+      <div style={{ ...cardStyle, marginTop: "24px" }}>
+        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "20px" }}>بنرهای تبلیغاتی</h3>
+
+        {[
+          { n: "بنر اول (تخفیف)", title: pb1Title, setTitle: setPb1Title, sub: pb1Sub, setSub: setPb1Sub, href: pb1Href, setHref: setPb1Href, img: pb1Img, setImg: setPb1Img },
+          { n: "بنر دوم (کم‌اجرت)", title: pb2Title, setTitle: setPb2Title, sub: pb2Sub, setSub: setPb2Sub, href: pb2Href, setHref: setPb2Href, img: pb2Img, setImg: setPb2Img },
+        ].map((b, i) => (
+          <div key={i} style={{ marginBottom: "24px", padding: "16px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
+            <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700", marginBottom: "12px" }}>{b.n}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+              <div>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>عنوان</label>
+                <input value={b.title} onChange={e => b.setTitle(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>زیرعنوان</label>
+                <input value={b.sub} onChange={e => b.setSub(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک</label>
+                <input value={b.href} onChange={e => b.setHref(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>URL تصویر</label>
+                <input value={b.img} onChange={e => b.setImg(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px" }} placeholder="https://..." />
+              </div>
+            </div>
+            {b.img && <img src={b.img} alt="" style={{ width: "100%", height: "80px", objectFit: "cover", borderRadius: "6px", border: "1px solid #333" }} />}
+          </div>
+        ))}
+
+        {bannersSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ بنرها ذخیره شدند</div>}
+        <button onClick={handleSaveBanners} disabled={savingBanners}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingBanners ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingBanners ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {savingBanners ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingBanners ? "در حال ذخیره..." : "ذخیره بنرها"}
         </button>
       </div>
 
