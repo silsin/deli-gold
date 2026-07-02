@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
-// SVG icons matching the exact style in the image — black outline, sketchy/bold style
 const PayIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
     <rect x="6" y="10" width="40" height="28" rx="3" stroke="#1a1a1a" strokeWidth="2.5"/>
@@ -11,29 +11,22 @@ const PayIcon = () => (
     <text x="38" y="31.5" textAnchor="middle" fontSize="5" fontWeight="900" fill="#1a1a1a">$</text>
   </svg>
 );
-
 const HandIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
     <path d="M14 34V22a3 3 0 016 0v6" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round"/>
     <path d="M20 28v-3a3 3 0 016 0v3" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round"/>
     <path d="M26 28v-2a3 3 0 016 0v2" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round"/>
     <path d="M32 30v-1a3 3 0 016 0v6c0 4-3 7-7 7h-6c-2 0-4-1-5-3l-5-8a2.5 2.5 0 014-3l3 4" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M10 14c3-3 8-4 12-2" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M14 10c3-3 9-3 13 0" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
-
 const ShopIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
     <path d="M8 20h36v24H8z" stroke="#1a1a1a" strokeWidth="2.5"/>
     <path d="M15 20v-4a11 11 0 0122 0v4" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round"/>
     <rect x="18" y="28" width="16" height="16" rx="1" stroke="#1a1a1a" strokeWidth="2"/>
-    <line x1="8" y1="20" x2="44" y2="20" stroke="#1a1a1a" strokeWidth="2.5"/>
     <line x1="26" y1="28" x2="26" y2="44" stroke="#1a1a1a" strokeWidth="2"/>
-    <path d="M10 14h4M10 17h4" stroke="#1a1a1a" strokeWidth="1.5" strokeLinecap="round"/>
   </svg>
 );
-
 const TruckIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
     <rect x="4" y="16" width="30" height="22" rx="2" stroke="#1a1a1a" strokeWidth="2.5"/>
@@ -41,37 +34,50 @@ const TruckIcon = () => (
     <circle cx="13" cy="40" r="4" stroke="#1a1a1a" strokeWidth="2.5"/>
     <circle cx="39" cy="40" r="4" stroke="#1a1a1a" strokeWidth="2.5"/>
     <line x1="17" y1="40" x2="35" y2="40" stroke="#1a1a1a" strokeWidth="2"/>
-    <line x1="14" y1="24" x2="22" y2="24" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"/>
-    <line x1="14" y1="29" x2="22" y2="29" stroke="#1a1a1a" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
-const items = [
-  { icon: <PayIcon />,   label: "پرداخت اقساط",   href: "/contact" },
-  { icon: <HandIcon />,  label: "دلگرمی مشتری",   href: "/about" },
-  { icon: <ShopIcon />,  label: "شعب",             href: "/contact" },
-  { icon: <TruckIcon />, label: "ارسال رایگان",    href: "/about" },
+const defaultIcons: Record<string, React.ReactNode> = {
+  "پرداخت اقساط":  <PayIcon />,
+  "دلگرمی مشتری": <HandIcon />,
+  "شعب":           <ShopIcon />,
+  "ارسال رایگان":  <TruckIcon />,
+};
+const iconList = [<PayIcon key="p"/>, <HandIcon key="h"/>, <ShopIcon key="s"/>, <TruckIcon key="t"/>];
+
+interface TrustItem { label: string; href: string; }
+
+const DEFAULT_ITEMS: TrustItem[] = [
+  { label: "پرداخت اقساط",  href: "/contact" },
+  { label: "دلگرمی مشتری", href: "/about" },
+  { label: "شعب",           href: "/contact" },
+  { label: "ارسال رایگان",  href: "/about" },
 ];
 
 export default function TrustBar() {
+  const [items, setItems] = useState<TrustItem[]>(DEFAULT_ITEMS);
+
+  useEffect(() => {
+    fetch("/api/admin/settings").then(r => r.json()).then(d => {
+      if (!d.success) return;
+      if (d.data.trust_items) {
+        try { setItems(JSON.parse(d.data.trust_items)); } catch {}
+      }
+    }).catch(() => {});
+  }, []);
+
   return (
     <section style={{ backgroundColor: "#fff", padding: "36px 16px 28px" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "0", maxWidth: "640px", margin: "0 auto" }} className="trust-grid">
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${items.length},1fr)`, gap: "0", maxWidth: "680px", margin: "0 auto" }} className="trust-grid">
           {items.map((item, i) => (
-            <Link key={i} href={item.href} style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: "12px",
-              padding: "16px 8px", textDecoration: "none",
-              transition: "transform 0.2s",
-            }}
+            <Link key={i} href={item.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "16px 8px", textDecoration: "none", transition: "transform 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "translateY(0)"}>
               <div style={{ width: "64px", height: "64px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {item.icon}
+                {defaultIcons[item.label] || iconList[i % iconList.length]}
               </div>
-              <span style={{ color: "#333", fontSize: "12px", fontWeight: "600", textAlign: "center", whiteSpace: "nowrap" }}>
-                {item.label}
-              </span>
+              <span style={{ color: "#333", fontSize: "12px", fontWeight: "600", textAlign: "center", whiteSpace: "nowrap" }}>{item.label}</span>
             </Link>
           ))}
         </div>

@@ -30,6 +30,29 @@ export async function GET(req: NextRequest) {
     if (!settings.theme_palette) settings.theme_palette = "gold-dark";
     if (!settings.font_size_mobile) settings.font_size_mobile = "14";
     if (!settings.font_size_desktop) settings.font_size_desktop = "16";
+    if (!settings.site_announcement) settings.site_announcement = "با اعتماد شما، سال‌ها طلایی ساختیم.";
+    if (!settings.site_phone1)       settings.site_phone1 = "021-1234-5678";
+    if (!settings.site_phone2)       settings.site_phone2 = "";
+    if (!settings.site_address)      settings.site_address = "تهران، پاسداران، کوچه ۴۴";
+    if (!settings.site_email)        settings.site_email = "info@dellygold.com";
+    if (!settings.site_instagram)    settings.site_instagram = "#";
+    if (!settings.site_telegram)     settings.site_telegram = "#";
+    if (!settings.site_whatsapp)     settings.site_whatsapp = "#";
+    if (!settings.site_brand_desc)   settings.site_brand_desc = "دلی گلد؛ ارائه‌دهنده بهترین طلاها با تضمین کیفیت و اعتماد";
+    if (!settings.promo_b1_title)    settings.promo_b1_title = "تخفیف‌های دلی‌گلد";
+    if (!settings.promo_b1_sub)      settings.promo_b1_sub = "محصولات تخفیف‌دار";
+    if (!settings.promo_b1_href)     settings.promo_b1_href = "/products";
+    if (!settings.promo_b1_image)    settings.promo_b1_image = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80";
+    if (!settings.promo_b2_title)    settings.promo_b2_title = "طلای کم اُجرت";
+    if (!settings.promo_b2_sub)      settings.promo_b2_sub = "محصولات با کمترین اُجرت ساخت";
+    if (!settings.promo_b2_href)     settings.promo_b2_href = "/products";
+    if (!settings.promo_b2_image)    settings.promo_b2_image = "https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80";
+    if (!settings.trust_items)       settings.trust_items = JSON.stringify([
+      { label: "پرداخت اقساط",  href: "/contact" },
+      { label: "دلگرمی مشتری", href: "/about" },
+      { label: "شعب",           href: "/contact" },
+      { label: "ارسال رایگان",  href: "/about" },
+    ]);
 
     return ok(settings);
   } catch (e) {
