@@ -5,18 +5,6 @@ import Link from "next/link";
 
 interface Category { id: string; name: string; slug: string; product_count: number; banner_image?: string; image?: string; }
 
-const FALLBACKS: Record<string, string> = {
-  necklaces: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&q=80",
-  rings:     "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500&q=80",
-  bracelets: "https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80",
-  earrings:  "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=500&q=80",
-};
-const FB_LIST = Object.values(FALLBACKS);
-
-function getCatImg(cat: Category, i: number): string {
-  return cat.banner_image || cat.image || FALLBACKS[cat.slug] || FB_LIST[i % FB_LIST.length];
-}
-
 export default function CollectionsGrid() {
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -35,17 +23,24 @@ export default function CollectionsGrid() {
           <ChevronLeft size={13}/> مشاهده همه
         </Link>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px" }} className="cg-grid">
-        {categories.map((col, i) => {
-          const img = getCatImg(col, i);
+        {categories.map(col => {
+          const img = col.banner_image || col.image || null;
           return (
             <Link key={col.id} href={`/products?category=${col.id}`}
-              style={{ textDecoration: "none", display: "block", borderRadius: "10px", overflow: "hidden", position: "relative", aspectRatio: "3/4", border: "1px solid #ebebeb", transition: "border-color 0.2s, transform 0.2s, box-shadow 0.2s" }}
+              style={{ textDecoration: "none", display: "block", borderRadius: "10px", overflow: "hidden", position: "relative", aspectRatio: "3/4", border: "1px solid #ebebeb", backgroundColor: "#f5f5f5", transition: "border-color 0.2s, transform 0.2s, box-shadow 0.2s" }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#c8a12a"; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 20px rgba(0,0,0,0.1)"; }}
               onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#ebebeb"; el.style.transform = "translateY(0)"; el.style.boxShadow = "none"; }}>
-              <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.55)", transition: "filter 0.3s" }}/>
-              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)" }}/>
+              {img ? (
+                <>
+                  <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.55)" }} />
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)" }} />
+                </>
+              ) : (
+                <div style={{ position: "absolute", inset: 0, backgroundColor: "#ddd", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: "#aaa", fontSize: "11px" }}>بدون تصویر</span>
+                </div>
+              )}
               <div style={{ position: "absolute", bottom: "12px", right: "12px", left: "12px" }}>
                 <p style={{ color: "#fff", fontSize: "14px", fontWeight: "700", marginBottom: "2px" }}>{col.name}</p>
                 {col.product_count > 0 && <p style={{ color: "#c8a12a", fontSize: "11px" }}>{col.product_count} محصول</p>}
