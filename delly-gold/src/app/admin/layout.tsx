@@ -10,6 +10,7 @@ import {
 
 const navItems = [
   { label: "داشبورد",        href: "/admin",             icon: LayoutDashboard },
+  { label: "اسلایدر",        href: "/admin/slides",      icon: Package },
   { label: "محصولات",        href: "/admin/products",    icon: Package },
   { label: "سفارش‌ها",       href: "/admin/orders",      icon: ShoppingBag },
   { label: "کاربران",        href: "/admin/users",       icon: Users },

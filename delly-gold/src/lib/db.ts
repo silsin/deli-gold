@@ -137,9 +137,9 @@ export interface Product {
   id: string; name: string; slug: string; description: string | null;
   price: number; weight: number; karat: number; stock: number;
   images: string; featured: number; published: number;
-  ajrat_percent: number | null;  // per-product اجرت % override
-  ajrat_fixed: number | null;    // per-product اجرت fixed (Toman) override
-  ajrat_override: number;        // 1 = use per-product values, 0 = use global
+  ajrat_percent: number | null;
+  ajrat_fixed: number | null;
+  ajrat_override: number;
   category_id: string; created_at: string; updated_at: string;
 }
 
@@ -240,6 +240,51 @@ export const orders = {
   updateStatus(id: string, status: string) {
     getDb().prepare("UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?").run(status, id);
     return orders.findById(id)!;
+  },
+};
+
+// ── Hero Slides ──────────────────────────────────────────────────────────────
+
+export interface HeroSlide {
+  id: string; sort_order: number; tag: string;
+  title1: string; title2: string; title3: string;
+  subtitle: string; cta_label: string; cta_href: string;
+  cta2_label: string; cta2_href: string;
+  image: string; bg_color: string; accent: string;
+  active: number; created_at: string;
+}
+
+export const heroSlides = {
+  list() {
+    return getDb().prepare(
+      "SELECT * FROM hero_slides ORDER BY sort_order ASC, created_at ASC"
+    ).all() as HeroSlide[];
+  },
+  listActive() {
+    return getDb().prepare(
+      "SELECT * FROM hero_slides WHERE active = 1 ORDER BY sort_order ASC"
+    ).all() as HeroSlide[];
+  },
+  findById(id: string) {
+    return getDb().prepare("SELECT * FROM hero_slides WHERE id = ?").get(id) as HeroSlide | undefined;
+  },
+  create(data: Omit<HeroSlide, "id" | "created_at">) {
+    const id = generateId();
+    getDb().prepare(`
+      INSERT INTO hero_slides (id,sort_order,tag,title1,title2,title3,subtitle,cta_label,cta_href,cta2_label,cta2_href,image,bg_color,accent,active)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `).run(id, data.sort_order, data.tag, data.title1, data.title2, data.title3, data.subtitle,
+       data.cta_label, data.cta_href, data.cta2_label, data.cta2_href,
+       data.image, data.bg_color, data.accent, data.active);
+    return heroSlides.findById(id)!;
+  },
+  update(id: string, data: Partial<Omit<HeroSlide, "id" | "created_at">>) {
+    const fields = Object.keys(data).map(k => `${k} = ?`).join(", ");
+    getDb().prepare(`UPDATE hero_slides SET ${fields} WHERE id = ?`).run(...Object.values(data), id);
+    return heroSlides.findById(id)!;
+  },
+  delete(id: string) {
+    getDb().prepare("DELETE FROM hero_slides WHERE id = ?").run(id);
   },
 };
 

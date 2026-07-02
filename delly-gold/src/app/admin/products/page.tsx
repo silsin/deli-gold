@@ -1,20 +1,21 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useEffect, useState, useCallback } from "react";
-import { Plus, Pencil, Trash2, Search, X, Info } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Plus, Pencil, Trash2, Search, X, Info, Upload, ImageIcon } from "lucide-react";
 
 interface Category { id: string; name: string; }
 interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
   karat: number; stock: number; featured: boolean; published: boolean;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
+  images: string;
   category: { name: string };
 }
 interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; }
 
 const emptyForm = {
   name: "", slug: "", description: "", price: "", weight: "", karat: "18",
-  stock: "0", categoryId: "", featured: false, published: true, images: "[]",
+  stock: "0", categoryId: "", featured: false, published: true, images: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
 };
 
@@ -31,6 +32,8 @@ export default function AdminProductsPage() {
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -59,6 +62,43 @@ export default function AdminProductsPage() {
   }
 
   function openEdit(p: Product) {
+    setEditId(p.id);
+    let imgs: string[] = [];
+    try { imgs = JSON.parse(p.images); } catch {}
+    setForm({
+      name: p.name, slug: p.slug, description: "",
+      price: String(p.price), weight: String(p.weight),
+      karat: String(p.karat), stock: String(p.stock),
+      categoryId: p.category ? (categories.find(c => c.name === p.category.name)?.id || "") : "",
+      featured: p.featured, published: p.published,
+      images: imgs,
+      ajrat_override: p.ajrat_override === 1,
+      ajrat_percent: p.ajrat_percent !== null ? String(p.ajrat_percent) : "",
+      ajrat_fixed: p.ajrat_fixed !== null ? String(p.ajrat_fixed) : "",
+    });
+    setError("");
+    setShowModal(true);
+  }
+
+  async function uploadImage(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.success) {
+        setForm(f => ({ ...f, images: [...f.images, data.data.url] }));
+      } else {
+        setError(data.error || "خطا در آپلود تصویر");
+      }
+    } catch { setError("خطای شبکه در آپلود"); }
+    finally { setUploading(false); }
+  }
+
+  function removeImage(idx: number) {
+    setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }));
+  }  function openEdit(p: Product) {
     setEditId(p.id);
     setForm({
       name: p.name, slug: p.slug, description: "",

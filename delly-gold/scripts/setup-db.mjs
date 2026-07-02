@@ -153,6 +153,55 @@ const migrations = [
       ALTER TABLE products ADD COLUMN ajrat_override INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    name: "008_category_image",
+    sql: `ALTER TABLE categories ADD COLUMN banner_image TEXT;`,
+  },
+  {
+    name: "009_hero_slides",
+    sql: `
+      CREATE TABLE IF NOT EXISTS hero_slides (
+        id         TEXT PRIMARY KEY,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        tag        TEXT NOT NULL DEFAULT '',
+        title1     TEXT NOT NULL DEFAULT '',
+        title2     TEXT NOT NULL DEFAULT '',
+        title3     TEXT NOT NULL DEFAULT '',
+        subtitle   TEXT NOT NULL DEFAULT '',
+        cta_label  TEXT NOT NULL DEFAULT 'مشاهده محصولات',
+        cta_href   TEXT NOT NULL DEFAULT '/products',
+        cta2_label TEXT NOT NULL DEFAULT '',
+        cta2_href  TEXT NOT NULL DEFAULT '',
+        image      TEXT NOT NULL DEFAULT '',
+        bg_color   TEXT NOT NULL DEFAULT '#f2ebe0',
+        accent     TEXT NOT NULL DEFAULT '#c8a12a',
+        active     INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+    `,
+  },
+  {
+    name: "010_site_settings_extended",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('site_announcement', 'با اعتماد شما، سال‌ها طلایی ساختیم.'),
+        ('site_phone1', '021-1234-5678'),
+        ('site_phone2', '021-9074-3457'),
+        ('site_address', 'تهران، پاسداران، کوچه ۴۴'),
+        ('site_email', 'info@dellygold.com'),
+        ('site_instagram', '#'),
+        ('site_telegram', '#'),
+        ('site_whatsapp', '#'),
+        ('promo_banner1_title', 'تخفیف‌های دلی‌گلد'),
+        ('promo_banner1_sub', 'محصولات تخفیف‌دار'),
+        ('promo_banner1_href', '/products'),
+        ('promo_banner1_image', 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80'),
+        ('promo_banner2_title', 'طلای کم اُجرت'),
+        ('promo_banner2_sub', 'محصولات با کمترین اُجرت ساخت'),
+        ('promo_banner2_href', '/products'),
+        ('promo_banner2_image', 'https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80');
+    `,
+  },
 ];
 
 let appliedCount = 0;
