@@ -45,6 +45,9 @@ export default function Navbar() {
   const [authUser, setAuthUser]   = useState<AuthUser | null>(null);
   const [authDone, setAuthDone]   = useState(false);
   const [gold, setGold]           = useState<GoldPrice | null>(null);
+  const [phone, setPhone]         = useState("021-1234-5678");
+  const [wa, setWa]               = useState("#");
+  const [ig, setIg]               = useState("#");
 
   const uT = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
@@ -67,6 +70,13 @@ export default function Navbar() {
     };
     fetchGold();
     const iv = setInterval(fetchGold, 60_000);
+    // Load phone/social from settings
+    fetch("/api/admin/settings").then(r => r.json()).then(d => {
+      if (!d.success) return;
+      if (d.data.site_phone1)   setPhone(d.data.site_phone1);
+      if (d.data.site_whatsapp) setWa(d.data.site_whatsapp);
+      if (d.data.site_instagram) setIg(d.data.site_instagram);
+    }).catch(() => {});
     return () => clearInterval(iv);
   }, []);
 
@@ -96,16 +106,16 @@ export default function Navbar() {
           {/* LEFT: social + phone + cart + login */}
           <div className="nav-left-group" style={{ display: "flex", alignItems: "center", gap: "14px" }}>
             {/* Social — hide on mobile */}
-            <a href="#" aria-label="WhatsApp" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+            <a href={wa} aria-label="WhatsApp" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#25d366"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Wa /></a>
-            <a href="#" aria-label="Instagram" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
+            <a href={ig} aria-label="Instagram" className="nav-social" style={{ color: "#aaa", display: "flex", transition: "color 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#e1306c"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#aaa"}><Ig /></a>
             {/* Phone — hide on mobile */}
-            <a href="tel:02112345678" className="nav-phone" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", direction: "ltr", borderRight: "1px solid #e8e8e8", paddingRight: "14px" }}>
+            <a href={`tel:${phone.replace(/[^0-9]/g, "")}`} className="nav-phone" style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "12px", direction: "ltr", borderRight: "1px solid #e8e8e8", paddingRight: "14px" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.72A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
-              021-1234-5678
+              {phone}
             </a>
             {/* Cart — always visible */}
             <Link href="/cart" style={{ position: "relative", color: "#555", display: "flex", transition: "color 0.2s", textDecoration: "none" }}
