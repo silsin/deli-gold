@@ -126,6 +126,9 @@ export const categories = {
     getDb().prepare(`UPDATE categories SET ${fields} WHERE id = ?`).run(...Object.values(data), id);
     return getDb().prepare("SELECT * FROM categories WHERE id = ?").get(id) as Category;
   },
+  countProducts(id: string) {
+    return (getDb().prepare("SELECT COUNT(*) as cnt FROM products WHERE category_id = ?").get(id) as { cnt: number }).cnt;
+  },
   delete(id: string) {
     getDb().prepare("DELETE FROM categories WHERE id = ?").run(id);
   },

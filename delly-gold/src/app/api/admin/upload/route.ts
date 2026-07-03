@@ -6,6 +6,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "public", "uploads");
+// In Docker, UPLOAD_DIR is set to /app/data/uploads (same persistent volume as DB)
 const MAX_SIZE   = 5 * 1024 * 1024; // 5MB
 const ALLOWED    = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await file.arrayBuffer());
     writeFileSync(filePath, buf);
 
-    const publicUrl = `/uploads/${name}`;
+    const publicUrl = `/api/uploads/${name}`;
 
     return NextResponse.json({ success: true, data: { url: publicUrl, name } });
   } catch (e) {

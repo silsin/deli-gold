@@ -11,16 +11,11 @@ interface Slide {
   image: string; bg_color: string; accent: string;
 }
 
-const FALLBACK: Slide[] = [
-  { id:"f1", tag:"DELLY GOLD · NEW COLLECTION", title1:"جدیدترین", title2:"گردنبندهای", title3:"دلی‌گلد", subtitle:"ظریف‌ترین طرح‌ها برای لحظه‌های خاص", cta_label:"مشاهده محصولات", cta_href:"/products", cta2_label:"خرید اقساطی", cta2_href:"/contact", image:"https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=90", bg_color:"#f2ebe0", accent:"#c8a12a" },
-  { id:"f2", tag:"DELLY GOLD · BESTSELLERS", title1:"انگشترهای", title2:"ویژه فصل", title3:"", subtitle:"طرح‌های کلاسیک و مدرن با بهترین اجرت", cta_label:"مشاهده انگشترها", cta_href:"/products?category=rings", cta2_label:"پرو مجازی", cta2_href:"/tryon", image:"https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=90", bg_color:"#ede5d8", accent:"#b8860b" },
-  { id:"f3", tag:"DELLY GOLD · LOW FEE", title1:"طلای", title2:"کم‌اجرت", title3:"دلی‌گلد", subtitle:"محصولات با کمترین اجرت ساخت در بازار", cta_label:"مشاهده دستبندها", cta_href:"/products?category=bracelets", cta2_label:"تماس با ما", cta2_href:"/contact", image:"https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=1200&q=90", bg_color:"#e8e0d5", accent:"#c8a12a" },
-];
-
 const INTERVAL = 6000;
 
 export default function HeroSlider() {
-  const [slides, setSlides]     = useState<Slide[]>(FALLBACK);
+  const [slides, setSlides]     = useState<Slide[]>([]);
+  const [loaded, setLoaded]     = useState(false);
   const [cur, setCur]           = useState(0);
   const [animating, setAnim]    = useState(false);
   const [paused, setPaused]     = useState(false);
@@ -32,7 +27,8 @@ export default function HeroSlider() {
   useEffect(() => {
     fetch("/api/slides").then(r => r.json()).then(d => {
       if (d.success && d.data.length > 0) { setSlides(d.data); setCur(0); }
-    }).catch(() => {});
+      setLoaded(true);
+    }).catch(() => { setLoaded(true); });
   }, []);
 
   const goTo = useCallback((idx: number) => {
@@ -59,7 +55,18 @@ export default function HeroSlider() {
     };
   }, [paused, cur, slides.length]);
 
-  const s = slides[cur] ?? FALLBACK[0];
+  // No slides in DB — show empty state placeholder
+  if (loaded && slides.length === 0) {
+    return (
+      <section style={{ width:"100%", height:"420px", backgroundColor:"#f8f5ee", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"12px" }}>
+        <p style={{ color:"#bbb", fontSize:"14px" }}>هیچ اسلایدی تنظیم نشده</p>
+        <a href="/admin/slides" style={{ color:"#c8a12a", fontSize:"12px", textDecoration:"underline" }}>افزودن اسلاید از پنل مدیریت</a>
+      </section>
+    );
+  }
+
+  const slide = slides[cur];
+  if (!slide) return null;
 
   return (
     <>
@@ -83,7 +90,7 @@ export default function HeroSlider() {
         }
       `}</style>
 
-      <section className="hero-wrap" style={{ backgroundColor: s.bg_color }}
+      <section className="hero-wrap" style={{ backgroundColor: slide.bg_color }}
         onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
 
         {slides.map((slide, idx) => {
@@ -131,12 +138,12 @@ export default function HeroSlider() {
 
         {/* Arrows */}
         <button onClick={prev} aria-label="قبلی" className="hero-arrow hero-arrow-prev" style={{ right:"20px" }}
-          onMouseEnter={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor=s.accent; el.style.color="#fff"; el.style.borderColor=s.accent; }}
+          onMouseEnter={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor=slide.accent; el.style.color="#fff"; el.style.borderColor=slide.accent; }}
           onMouseLeave={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor="rgba(255,255,255,0.9)"; el.style.color="#333"; el.style.borderColor="rgba(0,0,0,0.08)"; }}>
           <ChevronRight size={18} strokeWidth={2.5}/>
         </button>
         <button onClick={next} aria-label="بعدی" className="hero-arrow hero-arrow-next" style={{ left:"20px" }}
-          onMouseEnter={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor=s.accent; el.style.color="#fff"; el.style.borderColor=s.accent; }}
+          onMouseEnter={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor=slide.accent; el.style.color="#fff"; el.style.borderColor=slide.accent; }}
           onMouseLeave={e=>{ const el=e.currentTarget as HTMLElement; el.style.backgroundColor="rgba(255,255,255,0.9)"; el.style.color="#333"; el.style.borderColor="rgba(0,0,0,0.08)"; }}>
           <ChevronLeft size={18} strokeWidth={2.5}/>
         </button>
@@ -149,7 +156,7 @@ export default function HeroSlider() {
           <div style={{ display:"flex", gap:"7px", alignItems:"center" }}>
             {slides.map((_,idx)=>(
               <button key={idx} onClick={()=>goTo(idx)} aria-label={`اسلاید ${idx+1}`}
-                style={{ padding:0, border:"none", cursor:"pointer", height:"6px", width:idx===cur?"28px":"6px", borderRadius:"3px", backgroundColor:idx===cur?s.accent:"rgba(0,0,0,0.18)", transition:"width 0.4s,background-color 0.3s", overflow:"hidden", position:"relative" }}>
+                style={{ padding:0, border:"none", cursor:"pointer", height:"6px", width:idx===cur?"28px":"6px", borderRadius:"3px", backgroundColor:idx===cur?slide.accent:"rgba(0,0,0,0.18)", transition:"width 0.4s,background-color 0.3s", overflow:"hidden", position:"relative" }}>
                 {idx===cur&&!paused&&<span style={{ position:"absolute", inset:0, width:`${progress}%`, backgroundColor:"rgba(255,255,255,0.35)", transition:"width 0.05s linear" }}/>}
               </button>
             ))}

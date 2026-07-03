@@ -26,6 +26,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const { id } = await params;
+    const cat = categories.findById(id);
+    if (!cat) return notFound();
+    const productCount = categories.countProducts(id);
+    if (productCount > 0) {
+      return error(`این دسته‌بندی دارای ${productCount} محصول است. ابتدا محصولات را منتقل یا حذف کنید.`, 409);
+    }
     categories.delete(id);
     return ok({ deleted: true });
   } catch (e) { console.error(e); return serverError(); }

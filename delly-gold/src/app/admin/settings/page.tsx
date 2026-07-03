@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X } from "lucide-react";
 import {
   applyTheme,
   THEME_PALETTES,
@@ -52,29 +52,47 @@ export default function AdminSettingsPage() {
   const [themeSaved, setThemeSaved] = useState(false);
 
   // Site info fields
-  const [announcement, setAnnouncement] = useState("با اعتماد شما، سال‌ها طلایی ساختیم.");
+  const [announcement, setAnnouncement] = useState("");
   const [phone1, setPhone1] = useState("");
   const [phone2, setPhone2] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
-  const [instagram, setInstagram] = useState("#");
-  const [telegram, setTelegram] = useState("#");
-  const [whatsapp, setWhatsapp] = useState("#");
+  const [instagram, setInstagram] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [brandDesc, setBrandDesc] = useState("");
   const [savingSite, setSavingSite] = useState(false);
   const [siteSaved, setSiteSaved] = useState(false);
 
   // Promo banners
-  const [pb1Title, setPb1Title] = useState("تخفیف‌های دلی‌گلد");
-  const [pb1Sub, setPb1Sub]   = useState("محصولات تخفیف‌دار");
+  const [pb1Title, setPb1Title] = useState("");
+  const [pb1Sub, setPb1Sub]   = useState("");
   const [pb1Href, setPb1Href] = useState("/products");
   const [pb1Img, setPb1Img]   = useState("");
-  const [pb2Title, setPb2Title] = useState("طلای کم اُجرت");
-  const [pb2Sub, setPb2Sub]   = useState("محصولات با کمترین اُجرت ساخت");
+  const [pb2Title, setPb2Title] = useState("");
+  const [pb2Sub, setPb2Sub]   = useState("");
   const [pb2Href, setPb2Href] = useState("/products");
   const [pb2Img, setPb2Img]   = useState("");
   const [savingBanners, setSavingBanners] = useState(false);
   const [bannersSaved, setBannersSaved] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState<number | null>(null);
+  const bannerRef1 = useRef<HTMLInputElement>(null);
+  const bannerRef2 = useRef<HTMLInputElement>(null);
+
+  async function uploadBannerImage(bannerNum: 1 | 2, file: File) {
+    setUploadingBanner(bannerNum);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.success) {
+        if (bannerNum === 1) setPb1Img(data.data.url);
+        else setPb2Img(data.data.url);
+      }
+    } catch {}
+    finally { setUploadingBanner(null); }
+  }
 
   const previewTheme = useCallback((palette: string, mobile: string, desktop: string) => {
     applyTheme({
@@ -220,7 +238,73 @@ export default function AdminSettingsPage() {
     <div style={{ maxWidth: "720px" }}>
       <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700", marginBottom: "24px" }}>تنظیمات</h2>
 
-      {/* ── Theme section ── */}
+      {/* ── Site Info — FIRST ── */}
+      <div style={{ ...cardStyle, marginBottom: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+          <Globe size={18} color="#d4af37" />
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>اطلاعات تماس و سایت</h3>
+        </div>
+
+        <div style={{ marginBottom: "14px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>متن نوار اطلاع‌رسانی بالای سایت</label>
+          <input value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{ ...inp, direction: "rtl" }} placeholder="مثال: با اعتماد شما، سال‌ها طلایی ساختیم." />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px" }}>
+              <Phone size={12} /> شماره تلفن ۱
+            </label>
+            <input value={phone1} onChange={e => setPhone1(e.target.value)} style={inp} placeholder="021-1234-5678" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px" }}>
+              <Phone size={12} /> شماره تلفن ۲
+            </label>
+            <input value={phone2} onChange={e => setPhone2(e.target.value)} style={inp} placeholder="021-9074-3457" />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "14px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px" }}>
+            <MapPin size={12} /> آدرس فیزیکی
+          </label>
+          <input value={address} onChange={e => setAddress(e.target.value)} style={{ ...inp, direction: "rtl" }} placeholder="تهران، ..." />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "5px" }}>
+              <Mail size={12} /> ایمیل
+            </label>
+            <input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="info@dellygold.com" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>توضیح برند (فوتر)</label>
+            <input value={brandDesc} onChange={e => setBrandDesc(e.target.value)} style={{ ...inp, direction: "rtl" }} placeholder="معرفی کوتاه برند..." />
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+          {[
+            { label: "اینستاگرام", icon: "📸", val: instagram, set: setInstagram },
+            { label: "تلگرام",     icon: "✈️", val: telegram,  set: setTelegram  },
+            { label: "واتساپ",     icon: "💬", val: whatsapp,  set: setWhatsapp  },
+          ].map(f => (
+            <div key={f.label}>
+              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{f.icon} {f.label}</label>
+              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder="https://..." />
+            </div>
+          ))}
+        </div>
+
+        {siteSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ اطلاعات سایت ذخیره شد</div>}
+        <button onClick={handleSaveSiteInfo} disabled={savingSite}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingSite ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingSite ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {savingSite ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingSite ? "در حال ذخیره..." : "ذخیره اطلاعات تماس"}
+        </button>
+      </div>
       <div style={{ ...cardStyle, marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
           <Palette size={18} color="#d4af37" />
@@ -430,74 +514,20 @@ export default function AdminSettingsPage() {
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* ── Site Info ── */}
-      <div style={{ ...cardStyle, marginTop: "24px" }}>
-        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "20px" }}>اطلاعات سایت</h3>
-
-        <div style={{ marginBottom: "12px" }}>
-          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>متن نوار اطلاع‌رسانی بالای سایت</label>
-          <input value={announcement} onChange={e => setAnnouncement(e.target.value)} style={{ ...inp, direction: "rtl" }} />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-          <div>
-            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>شماره تلفن ۱</label>
-            <input value={phone1} onChange={e => setPhone1(e.target.value)} style={inp} placeholder="021-1234-5678" />
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>شماره تلفن ۲</label>
-            <input value={phone2} onChange={e => setPhone2(e.target.value)} style={inp} placeholder="021-9074-3457" />
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "12px" }}>
-          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>آدرس</label>
-          <input value={address} onChange={e => setAddress(e.target.value)} style={{ ...inp, direction: "rtl" }} placeholder="تهران، ..." />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-          <div>
-            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>ایمیل</label>
-            <input value={email} onChange={e => setEmail(e.target.value)} style={inp} placeholder="info@dellygold.com" />
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>توضیح برند (فوتر)</label>
-            <input value={brandDesc} onChange={e => setBrandDesc(e.target.value)} style={{ ...inp, direction: "rtl" }} />
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "20px" }}>
-          {[
-            { label: "لینک اینستاگرام", val: instagram, set: setInstagram },
-            { label: "لینک تلگرام",     val: telegram,  set: setTelegram  },
-            { label: "لینک واتساپ",     val: whatsapp,  set: setWhatsapp  },
-          ].map(f => (
-            <div key={f.label}>
-              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{f.label}</label>
-              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder="https://..." />
-            </div>
-          ))}
-        </div>
-
-        {siteSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ اطلاعات سایت ذخیره شد</div>}
-        <button onClick={handleSaveSiteInfo} disabled={savingSite}
-          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingSite ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingSite ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-          {savingSite ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
-          {savingSite ? "در حال ذخیره..." : "ذخیره اطلاعات سایت"}
-        </button>
-      </div>
-
       {/* ── Promo Banners ── */}
       <div style={{ ...cardStyle, marginTop: "24px" }}>
-        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "20px" }}>بنرهای تبلیغاتی</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+          <span style={{ fontSize: "18px" }}>🖼️</span>
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>بنرهای تبلیغاتی</h3>
+        </div>
 
         {[
-          { n: "بنر اول (تخفیف)", title: pb1Title, setTitle: setPb1Title, sub: pb1Sub, setSub: setPb1Sub, href: pb1Href, setHref: setPb1Href, img: pb1Img, setImg: setPb1Img },
-          { n: "بنر دوم (کم‌اجرت)", title: pb2Title, setTitle: setPb2Title, sub: pb2Sub, setSub: setPb2Sub, href: pb2Href, setHref: setPb2Href, img: pb2Img, setImg: setPb2Img },
+          { n: "بنر اول", num: 1 as const, title: pb1Title, setTitle: setPb1Title, sub: pb1Sub, setSub: setPb1Sub, href: pb1Href, setHref: setPb1Href, img: pb1Img, setImg: setPb1Img, ref: bannerRef1 },
+          { n: "بنر دوم", num: 2 as const, title: pb2Title, setTitle: setPb2Title, sub: pb2Sub, setSub: setPb2Sub, href: pb2Href, setHref: setPb2Href, img: pb2Img, setImg: setPb2Img, ref: bannerRef2 },
         ].map((b, i) => (
           <div key={i} style={{ marginBottom: "24px", padding: "16px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
             <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700", marginBottom: "12px" }}>{b.n}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
               <div>
                 <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>عنوان</label>
                 <input value={b.title} onChange={e => b.setTitle(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
@@ -506,16 +536,35 @@ export default function AdminSettingsPage() {
                 <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>زیرعنوان</label>
                 <input value={b.sub} onChange={e => b.setSub(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
               </div>
-              <div>
+              <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک</label>
                 <input value={b.href} onChange={e => b.setHref(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px" }} />
               </div>
-              <div>
-                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>URL تصویر</label>
-                <input value={b.img} onChange={e => b.setImg(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px" }} placeholder="https://..." />
-              </div>
             </div>
-            {b.img && <img src={b.img} alt="" style={{ width: "100%", height: "80px", objectFit: "cover", borderRadius: "6px", border: "1px solid #333" }} />}
+            <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>تصویر بنر</label>
+            <input ref={b.ref} type="file" accept="image/*" style={{ display: "none" }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadBannerImage(b.num, f); }} />
+            {b.img ? (
+              <div style={{ position: "relative", width: "100%" }}>
+                <img src={b.img} alt="" style={{ width: "100%", height: "90px", objectFit: "cover", borderRadius: "6px", border: "1px solid #333", display: "block" }} />
+                <button onClick={() => b.setImg("")}
+                  style={{ position: "absolute", top: "6px", right: "6px", backgroundColor: "rgba(239,68,68,0.9)", border: "none", borderRadius: "50%", width: "22px", height: "22px", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <X size={12} />
+                </button>
+                <button onClick={() => b.ref.current?.click()}
+                  style={{ position: "absolute", bottom: "6px", left: "6px", backgroundColor: "rgba(0,0,0,0.7)", color: "#fff", border: "none", borderRadius: "5px", padding: "4px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}>
+                  تغییر تصویر
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => b.ref.current?.click()} disabled={uploadingBanner === b.num}
+                style={{ width: "100%", height: "70px", backgroundColor: "#121212", border: "2px dashed #333", borderRadius: "8px", color: "#666", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "inherit", fontSize: "12px" }}>
+                <Upload size={16} color="#555" />
+                {uploadingBanner === b.num ? "در حال آپلود..." : "آپلود تصویر"}
+              </button>
+            )}
+            <input value={b.img} onChange={e => b.setImg(e.target.value)}
+              style={{ ...inp, fontSize: "12px", padding: "7px 10px", marginTop: "6px" }} placeholder="یا آدرس URL تصویر را وارد کنید" />
           </div>
         ))}
 
@@ -527,7 +576,6 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

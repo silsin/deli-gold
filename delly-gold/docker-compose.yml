@@ -15,6 +15,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/delly-gold.db
+      - UPLOAD_DIR=/app/data/uploads
       - JWT_SECRET=${JWT_SECRET:-delly-gold-change-this-secret-in-production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}

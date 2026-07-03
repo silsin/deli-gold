@@ -185,21 +185,42 @@ const migrations = [
     sql: `
       INSERT OR IGNORE INTO settings (key, value) VALUES
         ('site_announcement', 'با اعتماد شما، سال‌ها طلایی ساختیم.'),
-        ('site_phone1', '021-1234-5678'),
-        ('site_phone2', '021-9074-3457'),
-        ('site_address', 'تهران، پاسداران، کوچه ۴۴'),
-        ('site_email', 'info@dellygold.com'),
-        ('site_instagram', '#'),
-        ('site_telegram', '#'),
-        ('site_whatsapp', '#'),
-        ('promo_banner1_title', 'تخفیف‌های دلی‌گلد'),
-        ('promo_banner1_sub', 'محصولات تخفیف‌دار'),
+        ('site_phone1', ''),
+        ('site_phone2', ''),
+        ('site_address', ''),
+        ('site_email', ''),
+        ('site_instagram', ''),
+        ('site_telegram', ''),
+        ('site_whatsapp', ''),
+        ('promo_banner1_title', ''),
+        ('promo_banner1_sub', ''),
         ('promo_banner1_href', '/products'),
-        ('promo_banner1_image', 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80'),
-        ('promo_banner2_title', 'طلای کم اُجرت'),
-        ('promo_banner2_sub', 'محصولات با کمترین اُجرت ساخت'),
+        ('promo_banner1_image', ''),
+        ('promo_banner2_title', ''),
+        ('promo_banner2_sub', ''),
         ('promo_banner2_href', '/products'),
-        ('promo_banner2_image', 'https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80');
+        ('promo_banner2_image', '');
+    `,
+  },
+  {
+    name: "011_fix_promo_keys",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b1_title', value FROM settings WHERE key = 'promo_banner1_title';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b1_sub', value FROM settings WHERE key = 'promo_banner1_sub';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b1_href', value FROM settings WHERE key = 'promo_banner1_href';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b1_image', value FROM settings WHERE key = 'promo_banner1_image';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b2_title', value FROM settings WHERE key = 'promo_banner2_title';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b2_sub', value FROM settings WHERE key = 'promo_banner2_sub';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b2_href', value FROM settings WHERE key = 'promo_banner2_href';
+      INSERT OR IGNORE INTO settings (key, value)
+        SELECT 'promo_b2_image', value FROM settings WHERE key = 'promo_banner2_image';
     `,
   },
 ];
