@@ -59,12 +59,14 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ color: "#888", fontSize: "13px", display: "block", marginBottom: "6px" }}>ایمیل</label>
+              <label style={{ color: "#888", fontSize: "13px", display: "block", marginBottom: "6px" }}>ایمیل ادمین</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                placeholder="admin@dellygold.com"
                 required
+                autoFocus
                 autoComplete="email"
                 style={{ width: "100%", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px", padding: "10px 12px", color: "#fff", fontSize: "14px", outline: "none", direction: "ltr" }}
               />
