@@ -2,22 +2,27 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, LogIn, UserPlus, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, LogIn, UserPlus, ChevronLeft, Phone } from "lucide-react";
 
 type Tab = "login" | "register";
 
 function LoginForm() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<Tab>((searchParams.get("tab") as Tab) || "login");
+  const [tab, setTab]         = useState<Tab>((searchParams.get("tab") as Tab) || "login");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError]     = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPass, setLoginPass] = useState("");
-  const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regPass, setRegPass] = useState("");
+
+  // Login fields
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginPass,  setLoginPass]  = useState("");
+
+  // Register fields
+  const [regName,  setRegName]  = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPass,  setRegPass]  = useState("");
+
   const redirect = searchParams.get("redirect") || "/";
 
   useEffect(() => {
@@ -29,7 +34,10 @@ function LoginForm() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: loginEmail, password: loginPass }) });
+      const res = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: loginPhone, password: loginPass }),
+      });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "خطا در ورود"); return; }
       router.push(redirect); router.refresh();
@@ -39,17 +47,26 @@ function LoginForm() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: regName, email: regEmail, password: regPass }) });
+      const res = await fetch("/api/auth/register", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: regName, phone: regPhone, password: regPass }),
+      });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "خطا در ثبت‌نام"); return; }
       router.push(redirect); router.refresh();
     } catch { setError("خطای شبکه"); } finally { setLoading(false); }
   }
 
-  const inp: React.CSSProperties = { width: "100%", backgroundColor: "#fff", border: "1px solid #ddd", borderRadius: "8px", padding: "11px 14px", color: "#222", fontSize: "14px", outline: "none", fontFamily: "inherit" };
+  const inp: React.CSSProperties = {
+    width: "100%", backgroundColor: "#fff", border: "1px solid #ddd",
+    borderRadius: "8px", padding: "11px 14px", color: "#222",
+    fontSize: "14px", outline: "none", fontFamily: "inherit",
+  };
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f8f8f8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+
+      {/* Logo */}
       <Link href="/" style={{ textDecoration: "none", marginBottom: "28px", textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
           <div style={{ width: "28px", height: "28px", border: "2px solid #c8a12a", transform: "rotate(45deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -63,6 +80,7 @@ function LoginForm() {
       </Link>
 
       <div style={{ width: "100%", maxWidth: "420px", backgroundColor: "#fff", border: "1px solid #e8e8e8", borderRadius: "14px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "1px solid #ebebeb" }}>
           {(["login", "register"] as Tab[]).map(t => (
@@ -75,20 +93,39 @@ function LoginForm() {
 
         <div style={{ padding: "26px" }}>
           {error && (
-            <div style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "7px", padding: "10px 14px", color: "#dc2626", fontSize: "13px", marginBottom: "16px" }}>{error}</div>
+            <div style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "7px", padding: "10px 14px", color: "#dc2626", fontSize: "13px", marginBottom: "16px" }}>
+              {error}
+            </div>
           )}
 
-          {tab === "login" ? (
+          {/* ── Login form ── */}
+          {tab === "login" && (
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
-                <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="example@email.com" required autoFocus style={{ ...inp, direction: "ltr" }} onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
+                <label style={{ color: "#666", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
+                  <Phone size={12} color="#c8a12a" /> شماره موبایل
+                </label>
+                <input
+                  type="tel" inputMode="numeric" value={loginPhone}
+                  onChange={e => setLoginPhone(e.target.value)}
+                  placeholder="09123456789" required autoFocus
+                  style={{ ...inp, direction: "ltr", letterSpacing: "1px" }}
+                  onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                  onBlur={e => (e.target.style.borderColor = "#ddd")}
+                />
               </div>
               <div style={{ marginBottom: "22px" }}>
                 <label style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
                 <div style={{ position: "relative" }}>
-                  <input type={showPass ? "text" : "password"} value={loginPass} onChange={e => setLoginPass(e.target.value)} required style={{ ...inp, direction: "ltr", paddingLeft: "40px" }} onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
-                  <button type="button" onClick={() => setShowPass(p => !p)} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#bbb", cursor: "pointer" }}>
+                  <input
+                    type={showPass ? "text" : "password"} value={loginPass}
+                    onChange={e => setLoginPass(e.target.value)} required
+                    style={{ ...inp, direction: "ltr", paddingLeft: "40px" }}
+                    onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                    onBlur={e => (e.target.style.borderColor = "#ddd")}
+                  />
+                  <button type="button" onClick={() => setShowPass(p => !p)}
+                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#bbb", cursor: "pointer" }}>
                     {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
@@ -99,24 +136,54 @@ function LoginForm() {
               </button>
               <p style={{ textAlign: "center", marginTop: "14px", color: "#888", fontSize: "13px" }}>
                 حساب ندارید؟{" "}
-                <button type="button" onClick={() => { setTab("register"); setError(""); }} style={{ background: "none", border: "none", color: "#c8a12a", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "700" }}>ثبت‌نام کنید</button>
+                <button type="button" onClick={() => { setTab("register"); setError(""); }}
+                  style={{ background: "none", border: "none", color: "#c8a12a", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "700" }}>
+                  ثبت‌نام کنید
+                </button>
               </p>
             </form>
-          ) : (
+          )}
+
+          {/* ── Register form ── */}
+          {tab === "register" && (
             <form onSubmit={handleRegister}>
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "6px" }}>نام کامل</label>
-                <input type="text" value={regName} onChange={e => setRegName(e.target.value)} required autoFocus style={inp} onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
+                <input
+                  type="text" value={regName} onChange={e => setRegName(e.target.value)}
+                  required autoFocus placeholder="نام و نام خانوادگی"
+                  style={inp}
+                  onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                  onBlur={e => (e.target.style.borderColor = "#ddd")}
+                />
               </div>
               <div style={{ marginBottom: "14px" }}>
-                <label style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "6px" }}>ایمیل</label>
-                <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} required style={{ ...inp, direction: "ltr" }} onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
+                <label style={{ color: "#666", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px", marginBottom: "6px" }}>
+                  <Phone size={12} color="#c8a12a" /> شماره موبایل
+                </label>
+                <input
+                  type="tel" inputMode="numeric" value={regPhone}
+                  onChange={e => setRegPhone(e.target.value)}
+                  required placeholder="09123456789"
+                  style={{ ...inp, direction: "ltr", letterSpacing: "1px" }}
+                  onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                  onBlur={e => (e.target.style.borderColor = "#ddd")}
+                />
+                <p style={{ color: "#bbb", fontSize: "11px", marginTop: "4px" }}>شماره موبایل شناسه ورود شما خواهد بود</p>
               </div>
               <div style={{ marginBottom: "22px" }}>
                 <label style={{ color: "#666", fontSize: "12px", display: "block", marginBottom: "6px" }}>رمز عبور</label>
                 <div style={{ position: "relative" }}>
-                  <input type={showPass ? "text" : "password"} value={regPass} onChange={e => setRegPass(e.target.value)} required placeholder="حداقل ۸ کاراکتر" style={{ ...inp, direction: "ltr", paddingLeft: "40px" }} onFocus={e => (e.target.style.borderColor = "#c8a12a")} onBlur={e => (e.target.style.borderColor = "#ddd")} />
-                  <button type="button" onClick={() => setShowPass(p => !p)} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#bbb", cursor: "pointer" }}>
+                  <input
+                    type={showPass ? "text" : "password"} value={regPass}
+                    onChange={e => setRegPass(e.target.value)}
+                    required placeholder="حداقل ۸ کاراکتر"
+                    style={{ ...inp, direction: "ltr", paddingLeft: "40px" }}
+                    onFocus={e => (e.target.style.borderColor = "#c8a12a")}
+                    onBlur={e => (e.target.style.borderColor = "#ddd")}
+                  />
+                  <button type="button" onClick={() => setShowPass(p => !p)}
+                    style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#bbb", cursor: "pointer" }}>
                     {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
@@ -128,7 +195,10 @@ function LoginForm() {
               </button>
               <p style={{ textAlign: "center", marginTop: "14px", color: "#888", fontSize: "13px" }}>
                 حساب دارید؟{" "}
-                <button type="button" onClick={() => { setTab("login"); setError(""); }} style={{ background: "none", border: "none", color: "#c8a12a", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "700" }}>وارد شوید</button>
+                <button type="button" onClick={() => { setTab("login"); setError(""); }}
+                  style={{ background: "none", border: "none", color: "#c8a12a", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: "700" }}>
+                  وارد شوید
+                </button>
               </p>
             </form>
           )}
@@ -144,7 +214,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "#f8f8f8", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#c8a12a" }}>در حال بارگذاری...</div></div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", backgroundColor: "#f8f8f8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#c8a12a" }}>در حال بارگذاری...</div>
+      </div>
+    }>
       <LoginForm />
     </Suspense>
   );

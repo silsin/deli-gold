@@ -44,6 +44,7 @@ export interface User {
   password: string;
   name: string;
   phone: string | null;
+  phone_login: string | null;
   address: string | null;
   role: "ADMIN" | "CUSTOMER";
   created_at: string;
@@ -54,12 +55,15 @@ export const users = {
   findByEmail(email: string): User | undefined {
     return getDb().prepare("SELECT * FROM users WHERE email = ?").get(email) as User | undefined;
   },
+  findByPhone(phone: string): User | undefined {
+    return getDb().prepare("SELECT * FROM users WHERE phone_login = ?").get(phone) as User | undefined;
+  },
   findById(id: string): Omit<User, "password"> | undefined {
     return getDb()
-      .prepare("SELECT id, email, name, phone, address, role, created_at, updated_at FROM users WHERE id = ?")
+      .prepare("SELECT id, email, name, phone, phone_login, address, role, created_at, updated_at FROM users WHERE id = ?")
       .get(id) as Omit<User, "password"> | undefined;
   },
-  update(id: string, data: { name?: string; phone?: string; address?: string }) {
+  update(id: string, data: { name?: string; phone?: string; address?: string; email?: string }) {
     const fields = Object.entries(data)
       .filter(([, v]) => v !== undefined)
       .map(([k]) => `${k} = ?`).join(", ");
@@ -67,11 +71,11 @@ export const users = {
     if (!fields) return;
     getDb().prepare(`UPDATE users SET ${fields}, updated_at = datetime('now') WHERE id = ?`).run(...values, id);
   },
-  create(data: { name: string; email: string; password: string; role?: string }): User {
+  create(data: { name: string; email: string; password: string; role?: string; phone_login?: string }): User {
     const id = generateId();
     getDb()
-      .prepare("INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)")
-      .run(id, data.email, data.password, data.name, data.role ?? "CUSTOMER");
+      .prepare("INSERT INTO users (id, email, password, name, role, phone_login) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(id, data.email, data.password, data.name, data.role ?? "CUSTOMER", data.phone_login ?? null);
     return getDb().prepare("SELECT * FROM users WHERE id = ?").get(id) as User;
   },
   list(opts: { search?: string; limit?: number; offset?: number } = {}) {
@@ -80,15 +84,15 @@ export const users = {
     if (search) {
       const s = `%${search}%`;
       return {
-        rows: db.prepare(`SELECT id, email, name, phone, role, created_at,
+        rows: db.prepare(`SELECT id, email, name, phone, phone_login, role, created_at,
           (SELECT COUNT(*) FROM orders WHERE user_id = users.id) AS order_count
-          FROM users WHERE name LIKE ? OR email LIKE ?
-          ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(s, s, limit, offset) as (Omit<User, "password"> & { order_count: number })[],
-        total: (db.prepare("SELECT COUNT(*) as cnt FROM users WHERE name LIKE ? OR email LIKE ?").get(s, s) as { cnt: number }).cnt,
+          FROM users WHERE name LIKE ? OR email LIKE ? OR phone_login LIKE ?
+          ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(s, s, s, limit, offset) as (Omit<User, "password"> & { order_count: number })[],
+        total: (db.prepare("SELECT COUNT(*) as cnt FROM users WHERE name LIKE ? OR email LIKE ? OR phone_login LIKE ?").get(s, s, s) as { cnt: number }).cnt,
       };
     }
     return {
-      rows: db.prepare(`SELECT id, email, name, phone, role, created_at,
+      rows: db.prepare(`SELECT id, email, name, phone, phone_login, role, created_at,
         (SELECT COUNT(*) FROM orders WHERE user_id = users.id) AS order_count
         FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(limit, offset) as (Omit<User, "password"> & { order_count: number })[],
       total: (db.prepare("SELECT COUNT(*) as cnt FROM users").get() as { cnt: number }).cnt,

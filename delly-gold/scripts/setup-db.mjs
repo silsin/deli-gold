@@ -231,6 +231,13 @@ const migrations = [
         ('promo_strip_links', '[{"label":"جدیدترین محصولات","href":"/products"},{"label":"جدیدترین گردنبندها","href":"/products?category=necklaces"},{"label":"خرید اقساطی طلا","href":"/contact"},{"label":"جدیدترین کالکشن‌ها","href":"/collections"},{"label":"پرفروش‌ترین محصولات","href":"/products"},{"label":"جدیدترین دستبندها","href":"/products?category=bracelets"},{"label":"جدیدترین گوشواره‌ها","href":"/products?category=earrings"},{"label":"محصولات ویژه","href":"/products"}]');
     `,
   },
+  {
+    name: "013_phone_auth",
+    sql: `
+      ALTER TABLE users ADD COLUMN phone_login TEXT;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_login ON users(phone_login) WHERE phone_login IS NOT NULL;
+    `,
+  },
 ];
 
 let appliedCount = 0;

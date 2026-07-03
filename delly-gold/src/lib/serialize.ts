@@ -62,6 +62,7 @@ type UserRow = {
   email: string;
   name: string;
   phone?: string | null;
+  phone_login?: string | null;
   role: string;
   created_at: string;
   order_count?: number;
@@ -73,7 +74,11 @@ export function serializeUser(row: UserRow) {
     email: row.email,
     name: row.name,
     phone: row.phone ?? null,
+    phone_login: row.phone_login ?? null,
     role: row.role,
+    created_at: row.created_at,
+    order_count: row.order_count ?? 0,
+    // legacy camelCase kept for any existing code
     createdAt: row.created_at,
     _count: { orders: row.order_count ?? 0 },
   };

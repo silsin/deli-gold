@@ -5,8 +5,8 @@ import { Search } from "lucide-react";
 
 interface User {
   id: string; name: string; email: string; phone: string | null;
-  role: string; createdAt: string;
-  _count: { orders: number };
+  phone_login: string | null; role: string; created_at: string;
+  order_count: number;
 }
 
 export default function AdminUsersPage() {
@@ -40,7 +40,7 @@ export default function AdminUsersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ backgroundColor: "#161616" }}>
-                {["نام", "ایمیل", "شماره", "نقش", "سفارش‌ها", "تاریخ عضویت"].map(h => (
+                {["نام", "موبایل", "ایمیل", "نقش", "سفارش‌ها", "تاریخ عضویت"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", color: "#888", fontSize: "12px", textAlign: "right", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -53,17 +53,24 @@ export default function AdminUsersPage() {
               ) : users.map(u => (
                 <tr key={u.id} style={{ borderTop: "1px solid #222" }}>
                   <td style={{ padding: "12px 16px", color: "#fff", fontSize: "13px" }}>{u.name}</td>
-                  <td style={{ padding: "12px 16px", color: "#888", fontSize: "12px", direction: "ltr" }}>{u.email}</td>
-                  <td style={{ padding: "12px 16px", color: "#888", fontSize: "12px" }}>{u.phone || "—"}</td>
+                  <td style={{ padding: "12px 16px", color: "#d4af37", fontSize: "13px", direction: "ltr", fontWeight: "600" }}>
+                    {u.phone_login || u.phone || "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px", color: "#888", fontSize: "12px", direction: "ltr" }}>
+                    {u.email?.includes("@phone.local") ? "—" : (u.email || "—")}
+                  </td>
                   <td style={{ padding: "12px 16px" }}>
                     <span style={{ backgroundColor: u.role === "ADMIN" ? "rgba(212,175,55,0.15)" : "rgba(59,130,246,0.15)", color: u.role === "ADMIN" ? "#d4af37" : "#3b82f6", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }}>
                       {u.role === "ADMIN" ? "ادمین" : "مشتری"}
                     </span>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "#888", fontSize: "13px", textAlign: "center" }}>{u._count.orders}</td>
+                  <td style={{ padding: "12px 16px", color: "#888", fontSize: "13px", textAlign: "center" }}>{u.order_count ?? 0}</td>
                   <td style={{ padding: "12px 16px", color: "#666", fontSize: "12px", whiteSpace: "nowrap" }}>
-                    {new Date(u.createdAt).toLocaleDateString("fa-IR")}
+                    {new Date(u.created_at).toLocaleDateString("fa-IR")}
                   </td>
+                </tr>
+              ))}
+                    </span>
                 </tr>
               ))}
             </tbody>

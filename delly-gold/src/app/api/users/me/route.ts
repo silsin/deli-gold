@@ -22,17 +22,22 @@ export async function PATCH(req: NextRequest) {
     if ("error" in result) return error(result.error, result.status);
 
     const body = await req.json();
-    const { name, phone, address } = body;
+    const { name, address, email } = body;
 
     if (name !== undefined && !String(name).trim()) {
       return error("نام نمی‌تواند خالی باشد");
     }
 
+    // Validate email if provided (optional field)
+    if (email !== undefined && email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return error("فرمت ایمیل نامعتبر است");
+    }
+
     users.update(result.user.userId, {
-      ...(name !== undefined ? { name: String(name).trim() } : {}),
-      ...(phone !== undefined ? { phone: String(phone).trim() || null } : {}),
-      ...(address !== undefined ? { address: String(address).trim() || null } : {}),
-    } as { name?: string; phone?: string; address?: string });
+      ...(name    !== undefined ? { name:    String(name).trim() }         : {}),
+      ...(address !== undefined ? { address: String(address).trim() || "" } : {}),
+      ...(email   !== undefined ? { email:   String(email).trim() }         : {}),
+    });
 
     const updated = users.findById(result.user.userId);
     return ok(updated);
