@@ -48,6 +48,24 @@ export async function GET(req: NextRequest) {
     if (!settings.promo_b2_href)       settings.promo_b2_href = "/products";
     if (!settings.promo_b2_image)      settings.promo_b2_image = "";
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
+    if (!settings.nav_links)           settings.nav_links = JSON.stringify([
+      {"label":"هدیه","href":"/products"},{"label":"کالکشن","href":"/collections"},
+      {"label":"تخفیف‌دار","href":"/products"},{"label":"✨ پرو مجازی","href":"/tryon"},
+      {"label":"گردنبند","href":"/products?category=necklaces"},{"label":"گوشواره","href":"/products?category=earrings"},
+      {"label":"انگشتر","href":"/products?category=rings"},{"label":"دستبند","href":"/products?category=bracelets"},
+      {"label":"ست و نیم‌ست","href":"/products"},{"label":"پابند","href":"/products"},
+      {"label":"جاسوئیچی","href":"/products"},{"label":"بچه‌گانه","href":"/products"},{"label":"سکه","href":"/products"}
+    ]);
+    if (!settings.promo_strip_links)   settings.promo_strip_links = JSON.stringify([
+      {"label":"جدیدترین محصولات","href":"/products"},
+      {"label":"جدیدترین گردنبندها","href":"/products?category=necklaces"},
+      {"label":"خرید اقساطی طلا","href":"/contact"},
+      {"label":"جدیدترین کالکشن‌ها","href":"/collections"},
+      {"label":"پرفروش‌ترین محصولات","href":"/products"},
+      {"label":"جدیدترین دستبندها","href":"/products?category=bracelets"},
+      {"label":"جدیدترین گوشواره‌ها","href":"/products?category=earrings"},
+      {"label":"محصولات ویژه","href":"/products"}
+    ]);
 
     return ok(settings);
   } catch (e) {

@@ -223,6 +223,14 @@ const migrations = [
         SELECT 'promo_b2_image', value FROM settings WHERE key = 'promo_banner2_image';
     `,
   },
+  {
+    name: "012_nav_links",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('nav_links', '[{"label":"هدیه","href":"/products"},{"label":"کالکشن","href":"/collections"},{"label":"تخفیف‌دار","href":"/products"},{"label":"✨ پرو مجازی","href":"/tryon"},{"label":"گردنبند","href":"/products?category=necklaces"},{"label":"گوشواره","href":"/products?category=earrings"},{"label":"انگشتر","href":"/products?category=rings"},{"label":"دستبند","href":"/products?category=bracelets"},{"label":"ست و نیم‌ست","href":"/products"},{"label":"پابند","href":"/products"},{"label":"جاسوئیچی","href":"/products"},{"label":"بچه‌گانه","href":"/products"},{"label":"سکه","href":"/products"}]'),
+        ('promo_strip_links', '[{"label":"جدیدترین محصولات","href":"/products"},{"label":"جدیدترین گردنبندها","href":"/products?category=necklaces"},{"label":"خرید اقساطی طلا","href":"/contact"},{"label":"جدیدترین کالکشن‌ها","href":"/collections"},{"label":"پرفروش‌ترین محصولات","href":"/products"},{"label":"جدیدترین دستبندها","href":"/products?category=bracelets"},{"label":"جدیدترین گوشواره‌ها","href":"/products?category=earrings"},{"label":"محصولات ویژه","href":"/products"}]');
+    `,
+  },
 ];
 
 let appliedCount = 0;

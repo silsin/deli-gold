@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-const items = [
+interface StripLink { label: string; href: string; }
+
+const DEFAULTS: StripLink[] = [
   { label: "جدیدترین محصولات",    href: "/products" },
   { label: "جدیدترین گردنبندها",  href: "/products?category=necklaces" },
   { label: "خرید اقساطی طلا",     href: "/contact" },
@@ -13,10 +16,29 @@ const items = [
 ];
 
 export default function PromoStrip() {
+  const [items, setItems] = useState<StripLink[]>(DEFAULTS);
+
+  useEffect(() => {
+    fetch("/api/admin/settings").then(r => r.json()).then(d => {
+      if (!d.success) return;
+      if (d.data.promo_strip_links) {
+        try {
+          const parsed = JSON.parse(d.data.promo_strip_links);
+          if (Array.isArray(parsed) && parsed.length > 0) setItems(parsed);
+        } catch {}
+      }
+    }).catch(() => {});
+  }, []);
+
+  if (items.length === 0) return null;
+
+  // Duplicate for seamless scroll
+  const doubled = [...items, ...items];
+
   return (
     <div style={{ backgroundColor: "#c8a12a", overflow: "hidden", height: "36px", display: "flex", alignItems: "center" }}>
       <div className="ps-track" style={{ display: "flex", whiteSpace: "nowrap" }}>
-        {[...items, ...items].map((item, i) => (
+        {doubled.map((item, i) => (
           <Link key={i} href={item.href} style={{
             display: "inline-flex", alignItems: "center",
             color: "#fff", textDecoration: "none",
