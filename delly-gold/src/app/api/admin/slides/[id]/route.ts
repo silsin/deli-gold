@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const body = await req.json();
     const data: Record<string, unknown> = {};
-    const allowed = ["sort_order","tag","title1","title2","title3","subtitle","cta_label","cta_href","cta2_label","cta2_href","cta3_label","cta3_href","content_position","image","bg_color","accent","active"];
+    const allowed = ["sort_order","tag","title1","title2","title3","subtitle","cta_label","cta_href","cta2_label","cta2_href","cta3_label","cta3_href","content_position","image_fit","image","bg_color","accent","active"];
     for (const k of allowed) {
       if (body[k] !== undefined) data[k] = k === "active" ? (body[k] ? 1 : 0) : body[k];
     }

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       cta3_label:        body.cta3_label        ?? "",
       cta3_href:         body.cta3_href         ?? "",
       content_position:  body.content_position  ?? "right",
+      image_fit:         body.image_fit         ?? "cover",
       image:             body.image,
       bg_color:          body.bg_color          ?? "#f2ebe0",
       accent:            body.accent            ?? "#c8a12a",

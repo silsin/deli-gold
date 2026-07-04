@@ -12,6 +12,7 @@ interface Slide {
   cta2_label: string; cta2_href: string;
   cta3_label: string; cta3_href: string;
   content_position: string;
+  image_fit: string;
   image: string; bg_color: string; accent: string; active: number;
 }
 
@@ -23,6 +24,7 @@ const emptyForm: Omit<Slide, "id" | "sort_order"> & { sort_order: string } = {
   cta2_label: "",               cta2_href: "/contact",
   cta3_label: "",               cta3_href: "",
   content_position: "right",
+  image_fit: "cover",
   image: "", bg_color: "#f2ebe0", accent: "#c8a12a",
   active: 1, sort_order: "0",
 };
@@ -65,6 +67,7 @@ export default function AdminSlidesPage() {
       cta2_label: s.cta2_label, cta2_href: s.cta2_href,
       cta3_label: s.cta3_label ?? "", cta3_href: s.cta3_href ?? "",
       content_position: s.content_position ?? "right",
+      image_fit: s.image_fit ?? "cover",
       image: s.image, bg_color: s.bg_color, accent: s.accent,
       active: s.active, sort_order: String(s.sort_order),
     });
@@ -232,6 +235,42 @@ export default function AdminSlidesPage() {
                   {/* Or paste URL */}
                   <input style={{ ...inp, marginTop: "8px" }} placeholder="یا آدرس URL تصویر را وارد کنید"
                     value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} />
+                </div>
+
+                {/* Image fit */}
+                <div style={{ marginBottom: "18px" }}>
+                  <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px", fontWeight: "600" }}>
+                    نحوه نمایش تصویر
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "7px" }}>
+                    {[
+                      { val: "cover",   label: "پوشش کامل",   desc: "کل قاب را می‌پوشاند، برش می‌خورد" },
+                      { val: "contain", label: "نمایش کامل",  desc: "تمام تصویر نمایش داده می‌شود" },
+                      { val: "fill",    label: "کشیده شده",   desc: "تصویر کشیده می‌شود تا پر شود" },
+                      { val: "none",    label: "اندازه اصلی", desc: "اندازه واقعی تصویر" },
+                      { val: "scale-down", label: "کوچک‌تر", desc: "contain یا none، هر کدام کوچک‌تر" },
+                    ].map(opt => {
+                      const active = form.image_fit === opt.val;
+                      return (
+                        <button key={opt.val} type="button"
+                          onClick={() => setForm(f => ({ ...f, image_fit: opt.val }))}
+                          style={{ padding: "9px 6px", borderRadius: "7px", border: `1px solid ${active ? "#d4af37" : "#333"}`, backgroundColor: active ? "rgba(212,175,55,0.12)" : "#121212", cursor: "pointer", fontFamily: "inherit", textAlign: "center" }}>
+                          <p style={{ color: active ? "#d4af37" : "#ccc", fontSize: "11px", fontWeight: "700", marginBottom: "3px" }}>{opt.label}</p>
+                          <p style={{ color: "#555", fontSize: "9px", lineHeight: 1.4 }}>{opt.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Live preview of fit mode */}
+                  {form.image && (
+                    <div style={{ marginTop: "10px", backgroundColor: "#0a0a0a", borderRadius: "6px", border: "1px solid #2a2a2a", height: "100px", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                      <img src={form.image} alt="preview"
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: form.image_fit as React.CSSProperties["objectFit"] }} />
+                      <span style={{ position: "absolute", bottom: "4px", right: "6px", backgroundColor: "rgba(0,0,0,0.7)", color: "#d4af37", fontSize: "9px", padding: "2px 6px", borderRadius: "4px" }}>
+                        {form.image_fit}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Titles */}

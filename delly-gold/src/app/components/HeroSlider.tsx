@@ -11,6 +11,7 @@ interface Slide {
   cta2_label: string; cta2_href: string;
   cta3_label: string; cta3_href: string;
   content_position: string;
+  image_fit: string;
   image: string; bg_color: string; accent: string;
 }
 
@@ -236,7 +237,16 @@ export default function HeroSlider() {
 
               {/* Full-width background image */}
               {s.image && (
-                <img className="hs-img" src={s.image} alt={titles.join(" ")} />
+                <img
+                  className="hs-img"
+                  src={s.image}
+                  alt={titles.join(" ")}
+                  style={{
+                    objectFit: (s.image_fit || "cover") as React.CSSProperties["objectFit"],
+                    // Ken Burns zoom only makes sense for cover/fill
+                    animation: (s.image_fit === "cover" || s.image_fit === "fill") ? undefined : "none",
+                  }}
+                />
               )}
               {!s.image && (
                 <div style={{ position: "absolute", inset: 0, backgroundColor: s.bg_color || "#2a1a0a" }} />

@@ -246,6 +246,10 @@ const migrations = [
       ALTER TABLE hero_slides ADD COLUMN content_position TEXT NOT NULL DEFAULT 'right';
     `,
   },
+  {
+    name: "015_slide_image_fit",
+    sql: `ALTER TABLE hero_slides ADD COLUMN image_fit TEXT NOT NULL DEFAULT 'cover';`,
+  },
 ];
 
 let appliedCount = 0;
