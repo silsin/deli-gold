@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { ok, error, serverError } from "@/lib/response";
 import { getDb } from "@/lib/db";
 import { THEME_PALETTES, FONT_SIZE_MIN, FONT_SIZE_MAX } from "@/lib/theme";
+import { TYPO_SECTIONS, getDefaultTypoSettings } from "@/lib/typography";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -48,6 +49,12 @@ export async function GET(req: NextRequest) {
     if (!settings.promo_b2_href)       settings.promo_b2_href = "/products";
     if (!settings.promo_b2_image)      settings.promo_b2_image = "";
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
+
+    // Typography defaults
+    const typoDefaults = getDefaultTypoSettings();
+    for (const [k, v] of Object.entries(typoDefaults)) {
+      if (!settings[k]) settings[k] = v;
+    }
     if (!settings.nav_links)           settings.nav_links = JSON.stringify([
       {"label":"هدیه","href":"/products"},{"label":"کالکشن","href":"/collections"},
       {"label":"تخفیف‌دار","href":"/products"},{"label":"✨ پرو مجازی","href":"/tryon"},

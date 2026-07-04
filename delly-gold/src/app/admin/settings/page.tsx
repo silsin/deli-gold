@@ -11,6 +11,13 @@ import {
   FONT_SIZE_MAX,
   parseThemeSettings,
 } from "@/lib/theme";
+import {
+  FONT_OPTIONS,
+  TYPO_SECTIONS,
+  getDefaultTypoSettings,
+  getFontFamily,
+  buildGoogleFontsUrl,
+} from "@/lib/typography";
 
 interface GoldData {
   price: number;
@@ -79,6 +86,12 @@ export default function AdminSettingsPage() {
   const bannerRef1 = useRef<HTMLInputElement>(null);
   const bannerRef2 = useRef<HTMLInputElement>(null);
 
+  // Typography
+  const defaults = getDefaultTypoSettings();
+  const [typo, setTypo] = useState<Record<string, string>>(defaults);
+  const [savingTypo, setSavingTypo] = useState(false);
+  const [savedTypo, setSavedTypo] = useState(false);
+
   async function uploadBannerImage(bannerNum: 1 | 2, file: File) {
     setUploadingBanner(bannerNum);
     try {
@@ -132,6 +145,13 @@ export default function AdminSettingsPage() {
           if (d.data.promo_b2_sub)   setPb2Sub(d.data.promo_b2_sub);
           if (d.data.promo_b2_href)  setPb2Href(d.data.promo_b2_href);
           if (d.data.promo_b2_image) setPb2Img(d.data.promo_b2_image);
+          // Typography
+          const typoUpdate: Record<string, string> = { ...getDefaultTypoSettings() };
+          for (const s of TYPO_SECTIONS) {
+            if (d.data[`${s.key}_font`]) typoUpdate[`${s.key}_font`] = d.data[`${s.key}_font`];
+            if (d.data[`${s.key}_size`]) typoUpdate[`${s.key}_size`] = d.data[`${s.key}_size`];
+          }
+          setTypo(typoUpdate);
         }
       });
 
@@ -210,6 +230,34 @@ export default function AdminSettingsPage() {
     });
     if (res.ok) { setSiteSaved(true); setTimeout(() => setSiteSaved(false), 3000); }
     setSavingSite(false);
+  }
+
+  async function handleSaveTypography() {
+    setSavingTypo(true); setSavedTypo(false);
+    await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(typo),
+    });
+    // Apply immediately to the page
+    const root = document.documentElement;
+    for (const s of TYPO_SECTIONS) {
+      const fontId = typo[`${s.key}_font`] || s.defaultFont;
+      const size   = typo[`${s.key}_size`] || String(s.defaultSize);
+      root.style.setProperty(s.cssFont, getFontFamily(fontId));
+      root.style.setProperty(s.cssSize, `${size}px`);
+    }
+    // Reload fonts
+    const url = buildGoogleFontsUrl(TYPO_SECTIONS.map(s => typo[`${s.key}_font`] || s.defaultFont));
+    if (url) {
+      const existing = document.getElementById("dynamic-gfonts");
+      if (existing) existing.remove();
+      const link = document.createElement("link");
+      link.id = "dynamic-gfonts"; link.rel = "stylesheet"; link.href = url;
+      document.head.appendChild(link);
+    }
+    setSavedTypo(true); setTimeout(() => setSavedTypo(false), 3000);
+    setSavingTypo(false);
   }
 
   async function handleSaveBanners() {
@@ -573,6 +621,97 @@ export default function AdminSettingsPage() {
           style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingBanners ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingBanners ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
           {savingBanners ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
           {savingBanners ? "در حال ذخیره..." : "ذخیره بنرها"}
+        </button>
+      </div>
+
+      {/* ── Typography ── */}
+      <div style={{ ...cardStyle, marginTop: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <Type size={18} color="#d4af37" />
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>تایپوگرافی و فونت</h3>
+        </div>
+        <p style={{ color: "#666", fontSize: "12px", marginBottom: "22px" }}>
+          فونت و اندازه متن را برای هر بخش از سایت جداگانه تنظیم کنید. تغییرات بلافاصله اعمال می‌شوند.
+        </p>
+
+        {TYPO_SECTIONS.map(section => {
+          const fontKey = `${section.key}_font`;
+          const sizeKey = `${section.key}_size`;
+          const currentFont = typo[fontKey] || section.defaultFont;
+          const currentSize = parseInt(typo[sizeKey] || String(section.defaultSize), 10);
+          const fontObj = FONT_OPTIONS.find(f => f.id === currentFont) ?? FONT_OPTIONS[0];
+
+          return (
+            <div key={section.key} style={{ marginBottom: "24px", padding: "16px", backgroundColor: "#121212", borderRadius: "10px", border: "1px solid #2a2a2a" }}>
+              {/* Section header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <div>
+                  <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700" }}>{section.label}</p>
+                  <p style={{ color: "#555", fontSize: "10px", marginTop: "2px" }}>{section.description}</p>
+                </div>
+                <span style={{ color: "#444", fontSize: "10px", direction: "ltr" }}>{section.cssFont}</span>
+              </div>
+
+              {/* Font picker */}
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>انتخاب فونت</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "5px" }}>
+                  {FONT_OPTIONS.map(font => {
+                    const isSelected = currentFont === font.id;
+                    return (
+                      <button key={font.id} type="button"
+                        onClick={() => setTypo(t => ({ ...t, [fontKey]: font.id }))}
+                        style={{
+                          padding: "7px 6px", borderRadius: "6px",
+                          border: `1px solid ${isSelected ? "#d4af37" : "#2a2a2a"}`,
+                          backgroundColor: isSelected ? "rgba(212,175,55,0.12)" : "#1a1a1a",
+                          cursor: "pointer", fontFamily: "inherit", textAlign: "right",
+                        }}>
+                        <p style={{ color: isSelected ? "#d4af37" : "#ccc", fontSize: "11px", fontWeight: "600", marginBottom: "2px" }}>{font.label}</p>
+                        <p style={{ color: "#555", fontSize: "9px", direction: "ltr", textAlign: "left" }}>{font.id.replace(/\+/g, " ")}</p>
+                        {!font.persian && <span style={{ color: "#444", fontSize: "8px" }}>⚠ لاتین</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Size slider */}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                <label style={{ color: "#888", fontSize: "11px", flexShrink: 0 }}>اندازه:</label>
+                <input type="range" min={section.minSize} max={section.maxSize} value={currentSize}
+                  onChange={e => setTypo(t => ({ ...t, [sizeKey]: e.target.value }))}
+                  style={{ flex: 1, accentColor: "#d4af37" }} />
+                <span style={{ color: "#d4af37", fontSize: "13px", fontWeight: "700", minWidth: "40px", direction: "ltr" }}>
+                  {currentSize}px
+                </span>
+                <input type="number" min={section.minSize} max={section.maxSize} value={currentSize}
+                  onChange={e => setTypo(t => ({ ...t, [sizeKey]: e.target.value }))}
+                  style={{ width: "60px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "5px", padding: "4px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }} />
+              </div>
+
+              {/* Live preview */}
+              <div style={{ backgroundColor: "#0a0a0a", borderRadius: "6px", padding: "12px 16px", border: "1px solid #1e1e1e" }}>
+                <p style={{ color: "#555", fontSize: "9px", marginBottom: "6px" }}>پیش‌نمایش:</p>
+                <p style={{
+                  fontFamily: fontObj.family,
+                  fontSize: `${Math.min(currentSize, 32)}px`,
+                  color: "#e0d4a0",
+                  lineHeight: 1.4,
+                  wordBreak: "break-word",
+                }}>
+                  {section.sample}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+
+        {savedTypo && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ تایپوگرافی ذخیره شد و اعمال گردید</div>}
+        <button onClick={handleSaveTypography} disabled={savingTypo}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingTypo ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingTypo ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {savingTypo ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingTypo ? "در حال ذخیره..." : "ذخیره و اعمال فونت‌ها"}
         </button>
       </div>
 
