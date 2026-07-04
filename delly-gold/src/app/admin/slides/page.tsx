@@ -7,8 +7,11 @@ import AdminGuard from "../AdminGuard";
 interface Slide {
   id: string; sort_order: number; tag: string;
   title1: string; title2: string; title3: string;
-  subtitle: string; cta_label: string; cta_href: string;
+  subtitle: string;
+  cta_label: string; cta_href: string;
   cta2_label: string; cta2_href: string;
+  cta3_label: string; cta3_href: string;
+  content_position: string;
   image: string; bg_color: string; accent: string; active: number;
 }
 
@@ -17,7 +20,9 @@ const emptyForm: Omit<Slide, "id" | "sort_order"> & { sort_order: string } = {
   title1: "", title2: "", title3: "",
   subtitle: "",
   cta_label: "مشاهده محصولات", cta_href: "/products",
-  cta2_label: "خرید اقساطی",   cta2_href: "/contact",
+  cta2_label: "",               cta2_href: "/contact",
+  cta3_label: "",               cta3_href: "",
+  content_position: "right",
   image: "", bg_color: "#f2ebe0", accent: "#c8a12a",
   active: 1, sort_order: "0",
 };
@@ -55,8 +60,11 @@ export default function AdminSlidesPage() {
     setEditId(s.id);
     setForm({
       tag: s.tag, title1: s.title1, title2: s.title2, title3: s.title3,
-      subtitle: s.subtitle, cta_label: s.cta_label, cta_href: s.cta_href,
+      subtitle: s.subtitle,
+      cta_label: s.cta_label, cta_href: s.cta_href,
       cta2_label: s.cta2_label, cta2_href: s.cta2_href,
+      cta3_label: s.cta3_label ?? "", cta3_href: s.cta3_href ?? "",
+      content_position: s.content_position ?? "right",
       image: s.image, bg_color: s.bg_color, accent: s.accent,
       active: s.active, sort_order: String(s.sort_order),
     });
@@ -249,26 +257,63 @@ export default function AdminSlidesPage() {
                   <input style={{ ...inp, direction: "ltr" }} value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} />
                 </div>
 
-                {/* CTAs */}
-                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>دکمه‌ها</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
-                  <div>
-                    <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>متن دکمه اول</label>
-                    <input style={inp} value={form.cta_label} onChange={e => setForm(f => ({ ...f, cta_label: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک دکمه اول</label>
-                    <input style={{ ...inp, direction: "ltr" }} value={form.cta_href} onChange={e => setForm(f => ({ ...f, cta_href: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>متن دکمه دوم</label>
-                    <input style={inp} value={form.cta2_label} onChange={e => setForm(f => ({ ...f, cta2_label: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک دکمه دوم</label>
-                    <input style={{ ...inp, direction: "ltr" }} value={form.cta2_href} onChange={e => setForm(f => ({ ...f, cta2_href: e.target.value }))} />
+                {/* CTAs + Position */}
+                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>دکمه‌ها و موقعیت متن</p>
+
+                {/* Content position */}
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>موقعیت متن روی اسلاید</label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {[
+                      { val: "right",  label: "راست" },
+                      { val: "center", label: "وسط" },
+                      { val: "left",   label: "چپ" },
+                    ].map(pos => (
+                      <button key={pos.val} type="button"
+                        onClick={() => setForm(f => ({ ...f, content_position: pos.val }))}
+                        style={{ flex: 1, padding: "7px", borderRadius: "6px", border: `1px solid ${form.content_position === pos.val ? "#d4af37" : "#333"}`, backgroundColor: form.content_position === pos.val ? "rgba(212,175,55,0.15)" : "#121212", color: form.content_position === pos.val ? "#d4af37" : "#888", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
+                        {pos.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
+
+                {/* 3 buttons */}
+                {[
+                  { n: "دکمه اول (اصلی)", lk: "cta_label", hk: "cta_href", hint: "پر رنگ — طلایی", required: false },
+                  { n: "دکمه دوم (ثانوی)", lk: "cta2_label", hk: "cta2_href", hint: "شیشه‌ای — اگر خالی باشد پنهان می‌شود" },
+                  { n: "دکمه سوم (اضافی)", lk: "cta3_label", hk: "cta3_href", hint: "حاشیه‌دار — اگر خالی باشد پنهان می‌شود" },
+                ].map(btn => (
+                  <div key={btn.lk} style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <p style={{ color: "#aaa", fontSize: "11px", fontWeight: "600" }}>{btn.n}</p>
+                      <span style={{ color: "#555", fontSize: "10px" }}>{btn.hint}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                      <div>
+                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>متن دکمه</label>
+                        <input style={inp}
+                          value={String((form as unknown as Record<string, unknown>)[btn.lk] ?? "")}
+                          onChange={e => setForm(f => ({ ...f, [btn.lk]: e.target.value }))}
+                          placeholder={btn.lk === "cta_label" ? "مشاهده محصولات" : "اختیاری — خالی = پنهان"} />
+                      </div>
+                      <div>
+                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>لینک</label>
+                        <input style={{ ...inp, direction: "ltr" }}
+                          value={String((form as unknown as Record<string, unknown>)[btn.hk] ?? "")}
+                          onChange={e => setForm(f => ({ ...f, [btn.hk]: e.target.value }))}
+                          placeholder="/products" />
+                      </div>
+                    </div>
+                    {/* clear button */}
+                    {String((form as unknown as Record<string, unknown>)[btn.lk] ?? "") && (
+                      <button type="button" onClick={() => setForm(f => ({ ...f, [btn.lk]: "", [btn.hk]: "" }))}
+                        style={{ marginTop: "6px", background: "none", border: "none", color: "#ef4444", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
+                        × پاک کردن این دکمه
+                      </button>
+                    )}
+                  </div>
+                ))}
 
                 {/* Colors + order */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "18px" }}>

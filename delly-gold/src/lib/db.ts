@@ -257,6 +257,8 @@ export interface HeroSlide {
   title1: string; title2: string; title3: string;
   subtitle: string; cta_label: string; cta_href: string;
   cta2_label: string; cta2_href: string;
+  cta3_label: string; cta3_href: string;
+  content_position: string;
   image: string; bg_color: string; accent: string;
   active: number; created_at: string;
 }
@@ -278,10 +280,12 @@ export const heroSlides = {
   create(data: Omit<HeroSlide, "id" | "created_at">) {
     const id = generateId();
     getDb().prepare(`
-      INSERT INTO hero_slides (id,sort_order,tag,title1,title2,title3,subtitle,cta_label,cta_href,cta2_label,cta2_href,image,bg_color,accent,active)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      INSERT INTO hero_slides (id,sort_order,tag,title1,title2,title3,subtitle,cta_label,cta_href,cta2_label,cta2_href,cta3_label,cta3_href,content_position,image,bg_color,accent,active)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(id, data.sort_order, data.tag, data.title1, data.title2, data.title3, data.subtitle,
        data.cta_label, data.cta_href, data.cta2_label, data.cta2_href,
+       data.cta3_label ?? "", data.cta3_href ?? "",
+       data.content_position ?? "right",
        data.image, data.bg_color, data.accent, data.active);
     return heroSlides.findById(id)!;
   },

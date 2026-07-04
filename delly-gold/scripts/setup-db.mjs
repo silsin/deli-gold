@@ -238,6 +238,14 @@ const migrations = [
       CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_login ON users(phone_login) WHERE phone_login IS NOT NULL;
     `,
   },
+  {
+    name: "014_slide_buttons",
+    sql: `
+      ALTER TABLE hero_slides ADD COLUMN cta3_label TEXT NOT NULL DEFAULT '';
+      ALTER TABLE hero_slides ADD COLUMN cta3_href  TEXT NOT NULL DEFAULT '';
+      ALTER TABLE hero_slides ADD COLUMN content_position TEXT NOT NULL DEFAULT 'right';
+    `,
+  },
 ];
 
 let appliedCount = 0;
