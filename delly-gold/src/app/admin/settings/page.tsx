@@ -654,22 +654,25 @@ export default function AdminSettingsPage() {
 
               {/* Font picker */}
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>انتخاب فونت</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "5px" }}>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>انتخاب فونت فارسی</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px" }}>
                   {FONT_OPTIONS.map(font => {
                     const isSelected = currentFont === font.id;
                     return (
                       <button key={font.id} type="button"
                         onClick={() => setTypo(t => ({ ...t, [fontKey]: font.id }))}
                         style={{
-                          padding: "7px 6px", borderRadius: "6px",
+                          padding: "9px 8px", borderRadius: "7px",
                           border: `1px solid ${isSelected ? "#d4af37" : "#2a2a2a"}`,
                           backgroundColor: isSelected ? "rgba(212,175,55,0.12)" : "#1a1a1a",
-                          cursor: "pointer", fontFamily: "inherit", textAlign: "right",
+                          cursor: "pointer", fontFamily: font.family, textAlign: "center",
+                          transition: "border-color 0.15s, background-color 0.15s",
                         }}>
-                        <p style={{ color: isSelected ? "#d4af37" : "#ccc", fontSize: "11px", fontWeight: "600", marginBottom: "2px" }}>{font.label}</p>
-                        <p style={{ color: "#555", fontSize: "9px", direction: "ltr", textAlign: "left" }}>{font.id.replace(/\+/g, " ")}</p>
-                        {!font.persian && <span style={{ color: "#444", fontSize: "8px" }}>⚠ لاتین</span>}
+                        {/* Font name rendered IN that font */}
+                        <p style={{ color: isSelected ? "#d4af37" : "#e0e0e0", fontSize: "14px", fontWeight: "700", marginBottom: "3px", fontFamily: font.family }}>
+                          {font.label}
+                        </p>
+                        <p style={{ color: "#555", fontSize: "9px", fontFamily: "'Vazirmatn',sans-serif" }}>{font.style}</p>
                       </button>
                     );
                   })}
