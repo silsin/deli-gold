@@ -63,8 +63,7 @@ export default function HeroSlider() {
   if (loaded && slides.length === 0) {
     return (
       <section style={{ width: "100%", height: "420px", backgroundColor: "#f8f5ee", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "12px" }}>
-        <p style={{ color: "#bbb", fontSize: "14px" }}>هیچ اسلایدی تنظیم نشده</p>
-        <a href="/admin/slides" style={{ color: "#c8a12a", fontSize: "12px", textDecoration: "underline" }}>افزودن اسلاید از پنل مدیریت</a>
+        <p style={{ color: "#bbb", fontSize: "14px" }}>به‌زودی</p>
       </section>
     );
   }

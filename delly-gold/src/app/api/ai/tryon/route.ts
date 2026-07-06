@@ -1,27 +1,8 @@
 import { NextRequest } from "next/server";
-import { error, serverError } from "@/lib/response";
+import { InferenceClient, InferenceClientHubApiError, InferenceClientProviderApiError } from "@huggingface/inference";
+import { error } from "@/lib/response";
 import { NextResponse } from "next/server";
 import { getHuggingfaceToken } from "@/lib/settings";
-
-/**
- * POST /api/ai/tryon
- * Body JSON:
- *   userImageBase64: string   (data:image/...;base64,...)
- *   jewelryImageUrl: string   (URL of the product image)
- *   jewelryName: string
- *   jewelryType: string       (ring | necklace | bracelet | earring)
- *   style: string             (realistic | elegant | artistic)
- *
- * Strategy:
- *   1. Convert user image + jewelry image to base64
- *   2. Send to HF img2img model (stabilityai/stable-diffusion-xl-refiner-1.0
- *      or black-forest-labs/FLUX.1-schnell) with a precise prompt describing
- *      placing the jewelry on the person
- *   3. Return generated image as base64
- *
- * Free model used: stabilityai/stable-diffusion-xl-base-1.0 (img2img via inputs)
- * For true img2img with init image, we use the diffusers pipeline format.
- */
 
 const typePrompts: Record<string, string> = {
   ring:     "wearing this exact gold ring on their finger, the ring is clearly visible on the hand",
@@ -37,13 +18,44 @@ const stylePrompts: Record<string, string> = {
   artistic:  "artistic portrait photography, beautiful composition, editorial style",
 };
 
+const IMG2IMG_MODEL = "stabilityai/stable-diffusion-xl-base-1.0";
+const TEXT2IMG_MODEL = "black-forest-labs/FLUX.1-schnell";
+
+function getHfErrorStatus(err: unknown): number {
+  if (err instanceof InferenceClientHubApiError || err instanceof InferenceClientProviderApiError) {
+    return err.httpResponse.status;
+  }
+  return 500;
+}
+
+function publicAiError(status: number, reason?: "not_configured"): string {
+  if (reason === "not_configured") {
+    return "قابلیت پرو مجازی هوشمند در حال حاضر غیرفعال است. لطفاً با پشتیبانی تماس بگیرید.";
+  }
+  if (status === 429) {
+    return "درخواست‌های زیادی ارسال شده. لطفاً چند دقیقه صبر کنید و دوباره امتحان کنید.";
+  }
+  if (status === 402) {
+    return "سرویس شلوغ است. لطفاً چند دقیقه بعد دوباره امتحان کنید.";
+  }
+  if (status === 503) {
+    return "سیستم در حال آماده‌سازی است. حدود ۳۰ ثانیه صبر کنید و دوباره امتحان کنید.";
+  }
+  return "خطا در تولید تصویر. لطفاً دوباره امتحان کنید.";
+}
+
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  const mime = blob.type || "image/jpeg";
+  return `data:${mime};base64,${base64}`;
+}
+
 export async function POST(req: NextRequest) {
   const HF_TOKEN = getHuggingfaceToken();
   if (!HF_TOKEN) {
-    return error(
-      "کلید API هوش مصنوعی تنظیم نشده. لطفاً در پنل ادمین → تنظیمات → پرو مجازی، توکن Hugging Face را وارد کنید.",
-      503
-    );
+    console.warn("AI try-on: Hugging Face token not configured in admin settings");
+    return error(publicAiError(503, "not_configured"), 503);
   }
 
   try {
@@ -56,78 +68,61 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!userImageBase64) {
-      return error("تصویر کاربر ارسال نشده است");
+      return error("لطفاً یک تصویر از خودتان آپلود کنید.");
     }
 
-    // Strip the data: prefix if present, get raw base64
     const rawBase64 = userImageBase64.includes(",")
       ? userImageBase64.split(",")[1]
       : userImageBase64;
 
     const typePrompt  = typePrompts[jewelryType] || typePrompts.default;
     const stylePrompt = stylePrompts[style] || stylePrompts.realistic;
-
     const prompt = `A person ${typePrompt} called "${jewelryName}", ${stylePrompt}, the person's face and body remain exactly the same, only the jewelry is added, highly detailed, sharp focus`;
     const negativePrompt = "blurry, distorted, ugly, low quality, deformed face, wrong anatomy, watermark, text, cartoon, painting";
 
-    // Use HF Inference API with image input (img2img)
-    // Model: stabilityai/stable-diffusion-xl-base-1.0 supports image input
-    const hfRes = await fetch(
-      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${HF_TOKEN}`,
-          "Content-Type": "application/json",
-          "x-wait-for-model": "true",
+    const client = new InferenceClient(HF_TOKEN);
+    const imageBytes = Buffer.from(rawBase64, "base64");
+    const inputBlob = new Blob([imageBytes], { type: "image/jpeg" });
+
+    let imageBlob: Blob;
+
+    try {
+      imageBlob = await client.imageToImage({
+        model: IMG2IMG_MODEL,
+        inputs: inputBlob,
+        parameters: {
+          prompt,
+          negative_prompt: negativePrompt,
+          strength: 0.65,
+          num_inference_steps: 30,
+          guidance_scale: 8,
         },
-        body: JSON.stringify({
+        provider: "auto",
+      });
+    } catch (img2imgErr) {
+      console.warn("HF img2img failed, falling back to text-to-image:", img2imgErr);
+      imageBlob = await client.textToImage(
+        {
+          model: TEXT2IMG_MODEL,
           inputs: prompt,
           parameters: {
-            negative_prompt: negativePrompt,
-            num_inference_steps: 30,
-            guidance_scale: 8.0,
-            strength: 0.65,       // how much to change the original (0=no change, 1=full change)
-            image: rawBase64,     // init image for img2img
-            width: 512,
-            height: 512,
+            num_inference_steps: 4,
           },
-        }),
-      }
-    );
-
-    if (!hfRes.ok) {
-      const errText = await hfRes.text().catch(() => "");
-      console.error("HF API error:", hfRes.status, errText);
-
-      if (hfRes.status === 503) {
-        return error(
-          "مدل هوش مصنوعی در حال بارگذاری است (حدود ۲۰ ثانیه). دوباره امتحان کنید.",
-          503
-        );
-      }
-      if (hfRes.status === 429) {
-        return error("محدودیت نرخ درخواست. چند دقیقه صبر کنید.", 429);
-      }
-      if (hfRes.status === 401) {
-        return error("توکن API نامعتبر است. لطفاً توکن Hugging Face را در پنل ادمین بررسی کنید.", 401);
-      }
-      return error(`خطا در سرویس هوش مصنوعی: ${hfRes.status}`, 500);
+          provider: "auto",
+        },
+        { outputType: "blob" }
+      );
     }
 
-    const imageBuffer = await hfRes.arrayBuffer();
-    const base64Result = Buffer.from(imageBuffer).toString("base64");
-    const contentType = hfRes.headers.get("content-type") || "image/jpeg";
+    const image = await blobToDataUrl(imageBlob);
 
     return NextResponse.json({
       success: true,
-      data: {
-        image: `data:${contentType};base64,${base64Result}`,
-        prompt,
-      },
+      data: { image },
     });
   } catch (e) {
     console.error("AI tryon error:", e);
-    return serverError();
+    const status = getHfErrorStatus(e);
+    return error(publicAiError(status), status >= 400 && status < 600 ? status : 500);
   }
 }

@@ -142,7 +142,7 @@ export default function Footer() {
                   {c.text}
                 </div>
               )) : (
-                <p style={{ color: "#ccc", fontSize: "12px" }}>از پنل مدیریت تنظیم کنید</p>
+                <p style={{ color: "#ccc", fontSize: "12px" }}>به‌زودی</p>
               )}
             </div>
           </div>

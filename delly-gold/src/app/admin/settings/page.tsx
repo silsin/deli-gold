@@ -468,7 +468,7 @@ export default function AdminSettingsPage() {
           <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" style={{ color: "#d4af37" }}>
             huggingface.co/settings/tokens
           </a>
-          {" "}دریافت کنید و برای فعال‌سازی قابلیت پرو مجازی وارد کنید.
+          {" "}بسازید. هنگام ساخت توکن، حتماً دسترسی <strong style={{ color: "#ccc" }}>Make calls to Inference Providers</strong> را فعال کنید.
         </p>
 
         <div style={{ marginBottom: "20px" }}>

@@ -305,7 +305,7 @@ export default function TryOnPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setAiError(data.error || "خطا در تولید تصویر");
+        setAiError(data.error || "خطا در تولید تصویر. لطفاً دوباره امتحان کنید.");
       } else {
         setAiImage(data.data.image);
       }
@@ -622,13 +622,6 @@ export default function TryOnPage() {
                 </div>
               )}
 
-              <div style={{ marginTop: "12px", backgroundColor: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "12px 14px" }}>
-                <p style={{ color: "#92400e", fontSize: "12px", fontWeight: "700", marginBottom: "4px" }}>⚙️ فعال‌سازی هوش مصنوعی</p>
-                <p style={{ color: "#78350f", fontSize: "11px", lineHeight: "1.7" }}>
-                  توکن رایگان از{" "}<a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" style={{ color: "#c8a12a", fontWeight: "700" }}>huggingface.co</a>{" "}
-                  دریافت کنید و در پنل ادمین → تنظیمات → پرو مجازی وارد کنید.
-                </p>
-              </div>
             </div>
 
             {/* AI controls panel */}
