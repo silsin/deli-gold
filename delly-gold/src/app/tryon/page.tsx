@@ -8,6 +8,7 @@ import {
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useCart } from "../components/CartContext";
+import { buildTryonComposite, detectJewelryTypeFromCategory } from "@/lib/tryonComposite";
 
 interface Product {
   id: string; name: string; slug: string; price: number;
@@ -269,16 +270,6 @@ export default function TryOnPage() {
     stopAiCamera();
   }
 
-  // Detect jewelry type from category name
-  function detectJewelryType(p: Product): string {
-    const cat = (p.category_name || "").toLowerCase();
-    if (cat.includes("گردنبند") || cat.includes("necklace") || cat.includes("chain")) return "necklace";
-    if (cat.includes("انگشتر") || cat.includes("ring")) return "ring";
-    if (cat.includes("دستبند") || cat.includes("bracelet") || cat.includes("bangle")) return "bracelet";
-    if (cat.includes("گوشواره") || cat.includes("earring")) return "earring";
-    return "default";
-  }
-
   // ── AI generation ──────────────────────────────────────────
   async function generateAI() {
     if (selectedProducts.size === 0) { setAiError("حداقل یک محصول انتخاب کنید"); return; }
@@ -287,18 +278,24 @@ export default function TryOnPage() {
     setAiLoading(true); setAiError(""); setAiImage(null);
 
     const picked = products.filter(p => selectedProducts.has(p.id));
-    const firstProduct = picked[0];
-    const jewelryType = detectJewelryType(firstProduct);
     const jewelryName = picked.map(p => p.name).join(" و ");
 
     try {
+      const compositeImageBase64 = await buildTryonComposite(
+        aiUserPhoto,
+        picked.map(p => ({
+          url: prodImg(p),
+          type: detectJewelryTypeFromCategory(p.category_name),
+        })),
+      );
+
       const res = await fetch("/api/ai/tryon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          compositeImageBase64,
           userImageBase64: aiUserPhoto,
           jewelryName,
-          jewelryType,
           style: aiStyle,
           extraPrompt: aiPromptExtra,
         }),
@@ -310,7 +307,7 @@ export default function TryOnPage() {
         setAiImage(data.data.image);
       }
     } catch {
-      setAiError("خطای شبکه. دوباره تلاش کنید");
+      setAiError("خطا در ترکیب تصاویر. لطفاً دوباره امتحان کنید.");
     } finally {
       setAiLoading(false);
     }
