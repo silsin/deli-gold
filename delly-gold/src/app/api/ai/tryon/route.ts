@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
 import { error, serverError } from "@/lib/response";
 import { NextResponse } from "next/server";
-
-const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN;
+import { getHuggingfaceToken } from "@/lib/settings";
 
 /**
  * POST /api/ai/tryon
@@ -39,9 +38,10 @@ const stylePrompts: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
+  const HF_TOKEN = getHuggingfaceToken();
   if (!HF_TOKEN) {
     return error(
-      "کلید API هوش مصنوعی تنظیم نشده. لطفاً HUGGINGFACE_API_TOKEN را در .env تنظیم کنید.",
+      "کلید API هوش مصنوعی تنظیم نشده. لطفاً در پنل ادمین → تنظیمات → پرو مجازی، توکن Hugging Face را وارد کنید.",
       503
     );
   }
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
         return error("محدودیت نرخ درخواست. چند دقیقه صبر کنید.", 429);
       }
       if (hfRes.status === 401) {
-        return error("توکن API نامعتبر است. لطفاً HUGGINGFACE_API_TOKEN را بررسی کنید.", 401);
+        return error("توکن API نامعتبر است. لطفاً توکن Hugging Face را در پنل ادمین بررسی کنید.", 401);
       }
       return error(`خطا در سرویس هوش مصنوعی: ${hfRes.status}`, 500);
     }

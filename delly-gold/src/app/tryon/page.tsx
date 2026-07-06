@@ -626,8 +626,7 @@ export default function TryOnPage() {
                 <p style={{ color: "#92400e", fontSize: "12px", fontWeight: "700", marginBottom: "4px" }}>⚙️ فعال‌سازی هوش مصنوعی</p>
                 <p style={{ color: "#78350f", fontSize: "11px", lineHeight: "1.7" }}>
                   توکن رایگان از{" "}<a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" style={{ color: "#c8a12a", fontWeight: "700" }}>huggingface.co</a>{" "}
-                  دریافت کنید و در <code style={{ backgroundColor: "#fef3c7", padding: "1px 4px", borderRadius: "3px" }}>.env</code> قرار دهید:<br />
-                  <code style={{ backgroundColor: "#fef3c7", padding: "2px 6px", borderRadius: "3px", fontSize: "10px" }}>HUGGINGFACE_API_TOKEN=hf_xxxxx</code>
+                  دریافت کنید و در پنل ادمین → تنظیمات → پرو مجازی وارد کنید.
                 </p>
               </div>
             </div>

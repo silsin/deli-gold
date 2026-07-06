@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X } from "lucide-react";
+import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X, MessageCircle, Sparkles } from "lucide-react";
 import {
   applyTheme,
   THEME_PALETTES,
@@ -71,6 +71,17 @@ export default function AdminSettingsPage() {
   const [savingSite, setSavingSite] = useState(false);
   const [siteSaved, setSiteSaved] = useState(false);
 
+  // tawk.to live chat
+  const [tawkPropertyId, setTawkPropertyId] = useState("");
+  const [tawkWidgetId, setTawkWidgetId] = useState("default");
+  const [savingTawk, setSavingTawk] = useState(false);
+  const [tawkSaved, setTawkSaved] = useState(false);
+
+  // Hugging Face (virtual try-on AI)
+  const [huggingfaceToken, setHuggingfaceToken] = useState("");
+  const [savingHf, setSavingHf] = useState(false);
+  const [hfSaved, setHfSaved] = useState(false);
+
   // Promo banners
   const [pb1Title, setPb1Title] = useState("");
   const [pb1Sub, setPb1Sub]   = useState("");
@@ -136,6 +147,9 @@ export default function AdminSettingsPage() {
           if (d.data.site_telegram)     setTelegram(d.data.site_telegram);
           if (d.data.site_whatsapp)     setWhatsapp(d.data.site_whatsapp);
           if (d.data.site_brand_desc)   setBrandDesc(d.data.site_brand_desc);
+          setTawkPropertyId(d.data.tawk_property_id ?? "");
+          setTawkWidgetId(d.data.tawk_widget_id ?? "default");
+          setHuggingfaceToken(d.data.huggingface_api_token ?? "");
           // Promo banners
           if (d.data.promo_b1_title) setPb1Title(d.data.promo_b1_title);
           if (d.data.promo_b1_sub)   setPb1Sub(d.data.promo_b1_sub);
@@ -209,6 +223,41 @@ export default function AdminSettingsPage() {
       setTimeout(() => setThemeSaved(false), 3000);
     }
     setSavingTheme(false);
+  }
+
+  async function handleSaveHuggingface() {
+    setSavingHf(true);
+    setHfSaved(false);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        huggingface_api_token: huggingfaceToken.trim(),
+      }),
+    });
+    if (res.ok) {
+      setHfSaved(true);
+      setTimeout(() => setHfSaved(false), 3000);
+    }
+    setSavingHf(false);
+  }
+
+  async function handleSaveTawk() {
+    setSavingTawk(true);
+    setTawkSaved(false);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tawk_property_id: tawkPropertyId.trim(),
+        tawk_widget_id: tawkWidgetId.trim() || "default",
+      }),
+    });
+    if (res.ok) {
+      setTawkSaved(true);
+      setTimeout(() => setTawkSaved(false), 3000);
+    }
+    setSavingTawk(false);
   }
 
   async function handleSaveSiteInfo() {
@@ -353,6 +402,104 @@ export default function AdminSettingsPage() {
           {savingSite ? "در حال ذخیره..." : "ذخیره اطلاعات تماس"}
         </button>
       </div>
+
+      {/* ── Live Chat (tawk.to) ── */}
+      <div style={{ ...cardStyle, marginBottom: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+          <MessageCircle size={18} color="#d4af37" />
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>چت آنلاین (tawk.to)</h3>
+        </div>
+
+        <p style={{ color: "#888", fontSize: "13px", marginBottom: "16px", lineHeight: 1.6 }}>
+          پس از ثبت‌نام در{" "}
+          <a href="https://www.tawk.to" target="_blank" rel="noopener noreferrer" style={{ color: "#d4af37" }}>
+            tawk.to
+          </a>
+          ، از بخش Administration → Channels → Chat Widget شناسه Property ID و Widget ID را کپی کنید.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>Property ID</label>
+            <input
+              value={tawkPropertyId}
+              onChange={e => setTawkPropertyId(e.target.value)}
+              style={inp}
+              placeholder="مثال: 1234567890abcdef"
+            />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>Widget ID</label>
+            <input
+              value={tawkWidgetId}
+              onChange={e => setTawkWidgetId(e.target.value)}
+              style={inp}
+              placeholder="default"
+            />
+          </div>
+        </div>
+
+        {tawkSaved && (
+          <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>
+            ✓ تنظیمات چت آنلاین ذخیره شد
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSaveTawk}
+          disabled={savingTawk}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingTawk ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingTawk ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+        >
+          {savingTawk ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingTawk ? "در حال ذخیره..." : "ذخیره چت آنلاین"}
+        </button>
+      </div>
+
+      {/* ── Hugging Face (Virtual Try-On AI) ── */}
+      <div style={{ ...cardStyle, marginBottom: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+          <Sparkles size={18} color="#d4af37" />
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>پرو مجازی (Hugging Face)</h3>
+        </div>
+
+        <p style={{ color: "#888", fontSize: "13px", marginBottom: "16px", lineHeight: 1.6 }}>
+          توکن رایگان از{" "}
+          <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" style={{ color: "#d4af37" }}>
+            huggingface.co/settings/tokens
+          </a>
+          {" "}دریافت کنید و برای فعال‌سازی قابلیت پرو مجازی وارد کنید.
+        </p>
+
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>API Token</label>
+          <input
+            type="password"
+            value={huggingfaceToken}
+            onChange={e => setHuggingfaceToken(e.target.value)}
+            style={inp}
+            placeholder="hf_xxxxxxxxxxxxxxxx"
+            autoComplete="off"
+          />
+        </div>
+
+        {hfSaved && (
+          <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>
+            ✓ توکن Hugging Face ذخیره شد
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSaveHuggingface}
+          disabled={savingHf}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingHf ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingHf ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+        >
+          {savingHf ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingHf ? "در حال ذخیره..." : "ذخیره توکن هوش مصنوعی"}
+        </button>
+      </div>
+
       <div style={{ ...cardStyle, marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
           <Palette size={18} color="#d4af37" />

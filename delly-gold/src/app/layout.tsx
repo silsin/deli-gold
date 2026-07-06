@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "./components/CartContext";
 import ThemeLoader from "./components/ThemeLoader";
+import TawkToChat from "./components/TawkToChat";
 
 export const metadata: Metadata = {
   title: "دلی گلد | زیبایی، ماندگار مثل طلا",
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body>
         <ThemeLoader />
         <CartProvider>{children}</CartProvider>
+        <TawkToChat />
       </body>
     </html>
   );

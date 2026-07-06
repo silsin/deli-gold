@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, getAuthUser } from "@/lib/auth";
 import { ok, error, serverError } from "@/lib/response";
 import { getDb } from "@/lib/db";
 import { THEME_PALETTES, FONT_SIZE_MIN, FONT_SIZE_MAX } from "@/lib/theme";
@@ -49,6 +49,8 @@ export async function GET(req: NextRequest) {
     if (!settings.promo_b2_href)       settings.promo_b2_href = "/products";
     if (!settings.promo_b2_image)      settings.promo_b2_image = "";
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
+    if (!settings.tawk_property_id)    settings.tawk_property_id = "";
+    if (!settings.tawk_widget_id)      settings.tawk_widget_id = "default";
 
     // Typography defaults
     const typoDefaults = getDefaultTypoSettings();
@@ -73,6 +75,14 @@ export async function GET(req: NextRequest) {
       {"label":"جدیدترین گوشواره‌ها","href":"/products?category=earrings"},
       {"label":"محصولات ویژه","href":"/products"}
     ]);
+
+    const user = getAuthUser(req);
+    const isAdmin = user?.role === "ADMIN";
+    if (isAdmin) {
+      if (!settings.huggingface_api_token) settings.huggingface_api_token = "";
+    } else {
+      delete settings.huggingface_api_token;
+    }
 
     return ok(settings);
   } catch (e) {
