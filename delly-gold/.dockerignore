@@ -11,7 +11,7 @@ prisma/dev.db-wal
 *.db
 
 # Environment files (pass via docker-compose or secrets)
-.env
+#.env
 .env.local
 .env.*.local
 
