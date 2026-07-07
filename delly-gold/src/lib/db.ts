@@ -100,6 +100,62 @@ export const users = {
   },
 };
 
+// ── OTP codes ────────────────────────────────────────────────────────────────
+
+export interface OtpCode {
+  id: string;
+  phone: string;
+  code_hash: string;
+  attempts: number;
+  expires_at: string;
+  created_at: string;
+}
+
+export const otpCodes = {
+  invalidateForPhone(phone: string) {
+    getDb().prepare("DELETE FROM otp_codes WHERE phone = ?").run(phone);
+  },
+  create(data: { phone: string; code_hash: string; expires_at: string }): OtpCode {
+    const id = generateId();
+    const created_at = new Date().toISOString();
+    getDb()
+      .prepare("INSERT INTO otp_codes (id, phone, code_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)")
+      .run(id, data.phone, data.code_hash, data.expires_at, created_at);
+    return getDb().prepare("SELECT * FROM otp_codes WHERE id = ?").get(id) as OtpCode;
+  },
+  findLatestValid(phone: string): OtpCode | undefined {
+    const row = getDb()
+      .prepare("SELECT * FROM otp_codes WHERE phone = ? ORDER BY created_at DESC LIMIT 1")
+      .get(phone) as OtpCode | undefined;
+    if (!row || new Date(row.expires_at).getTime() <= Date.now()) return undefined;
+    return row;
+  },
+  incrementAttempts(id: string) {
+    getDb().prepare("UPDATE otp_codes SET attempts = attempts + 1 WHERE id = ?").run(id);
+  },
+  delete(id: string) {
+    getDb().prepare("DELETE FROM otp_codes WHERE id = ?").run(id);
+  },
+  countRecentSends(phone: string): number {
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    return (
+      getDb()
+        .prepare("SELECT COUNT(*) as cnt FROM otp_codes WHERE phone = ? AND created_at >= ?")
+        .get(phone, hourAgo) as { cnt: number }
+    ).cnt;
+  },
+  lastSentAt(phone: string): string | null {
+    const row = getDb()
+      .prepare("SELECT created_at FROM otp_codes WHERE phone = ? ORDER BY created_at DESC LIMIT 1")
+      .get(phone) as { created_at: string } | undefined;
+    return row?.created_at ?? null;
+  },
+  purgeExpired() {
+    const now = new Date().toISOString();
+    getDb().prepare("DELETE FROM otp_codes WHERE expires_at <= ?").run(now);
+  },
+};
+
 // ── Categories ───────────────────────────────────────────────────────────────
 
 export interface Category {

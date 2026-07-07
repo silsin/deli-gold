@@ -250,6 +250,21 @@ const migrations = [
     name: "015_slide_image_fit",
     sql: `ALTER TABLE hero_slides ADD COLUMN image_fit TEXT NOT NULL DEFAULT 'cover';`,
   },
+  {
+    name: "016_otp_codes",
+    sql: `
+      CREATE TABLE IF NOT EXISTS otp_codes (
+        id         TEXT PRIMARY KEY,
+        phone      TEXT NOT NULL,
+        code_hash  TEXT NOT NULL,
+        attempts   INTEGER NOT NULL DEFAULT 0,
+        expires_at TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_otp_codes_phone ON otp_codes(phone);
+      CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
+    `,
+  },
 ];
 
 let appliedCount = 0;
