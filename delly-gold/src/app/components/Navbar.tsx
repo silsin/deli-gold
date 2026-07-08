@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartContext";
 
 interface AuthUser { id: string; name: string; email: string; role: string; }
-interface GoldPrice { price: number; }
 
 const IgIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -45,7 +44,6 @@ export default function Navbar() {
   const [userOpen, setUserOpen]     = useState(false);
   const [authUser, setAuthUser]     = useState<AuthUser | null>(null);
   const [authDone, setAuthDone]     = useState(false);
-  const [gold, setGold]             = useState<GoldPrice | null>(null);
   const [phone, setPhone]           = useState("");
   const [wa, setWa]                 = useState("");
   const [ig, setIg]                 = useState("");
@@ -66,12 +64,6 @@ export default function Navbar() {
   useEffect(() => { checkAuth(); }, [checkAuth, pathname]);
 
   useEffect(() => {
-    const fetchGold = () => {
-      fetch("/api/admin/gold-price", { cache: "no-store" })
-        .then(r => r.json()).then(d => { if (d.success) setGold(d.data); }).catch(() => {});
-    };
-    fetchGold();
-    const iv = setInterval(fetchGold, 60_000);
     fetch("/api/admin/settings").then(r => r.json()).then(d => {
       if (!d.success) return;
       if (d.data.site_phone1)      setPhone(d.data.site_phone1);
@@ -81,7 +73,6 @@ export default function Navbar() {
         try { const parsed = JSON.parse(d.data.nav_links); if (Array.isArray(parsed) && parsed.length > 0) setCatLinks(parsed); } catch {}
       }
     }).catch(() => {});
-    return () => clearInterval(iv);
   }, []);
 
   function handleSearch(e: React.FormEvent) {
@@ -153,23 +144,6 @@ export default function Navbar() {
                 {menuOpen ? <X size={18} /> : <Menu size={18} />}
               </button>
             </div>
-          </div>
-
-          {/* CENTER: gold price pill */}
-          <div className="nav-gold-pill" style={{
-            backgroundColor: "#c8a12a",
-            borderRadius: "28px",
-            padding: "7px 22px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(200,161,42,0.3)",
-          }}>
-            <span style={{ color: "#fff", fontSize: "12px", fontWeight: "600" }}>قیمت طلا:</span>
-            <span style={{ color: "#fff", fontSize: "13px", fontWeight: "900", direction: "ltr" }}>
-              {gold ? `${gold.price.toLocaleString("fa-IR")} تومان` : "..."}
-            </span>
           </div>
 
           {/* RIGHT: logo + desktop actions */}
@@ -295,12 +269,6 @@ export default function Navbar() {
       {/* ── Mobile slide-down menu ── */}
       {menuOpen && (
         <div style={{ backgroundColor: "#fff", borderTop: "1px solid #ebebeb", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}>
-          {gold && (
-            <div style={{ backgroundColor: "#c8a12a", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ color: "#fff", fontSize: "13px", fontWeight: "900", direction: "ltr" }}>{gold.price.toLocaleString("fa-IR")} تومان</span>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: "600" }}>قیمت طلا:</span>
-            </div>
-          )}
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {authUser ? (
               <>
@@ -353,7 +321,6 @@ export default function Navbar() {
         .nav-social-icon   { display: flex !important; }
         .nav-phone-link    { display: flex !important; }
         .nav-desktop-actions { display: flex !important; }
-        .nav-gold-pill     { display: flex !important; }
         .nav-mobile-icons  { display: none !important; }
         .cat-nav-row       { display: block !important; }
 
@@ -361,7 +328,6 @@ export default function Navbar() {
           .nav-social-icon   { display: none !important; }
           .nav-phone-link    { display: none !important; }
           .nav-desktop-actions { display: none !important; }
-          .nav-gold-pill     { display: none !important; }
           .nav-mobile-icons  { display: flex !important; }
           .cat-nav-row       { display: none !important; }
         }

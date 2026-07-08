@@ -1,17 +1,21 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+
+interface GoldPrice { price: number; }
 
 export default function AnnouncementBar() {
-  const [announcement, setAnn] = useState("با اعتماد شما، ۱۱ سال طلایی ساختیم.");
+  const [gold, setGold] = useState<GoldPrice | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/settings").then(r => r.json()).then(d => {
-      if (d.success && d.data.site_announcement) setAnn(d.data.site_announcement);
-    }).catch(() => {});
+    const fetchGold = () => {
+      fetch("/api/admin/gold-price", { cache: "no-store" })
+        .then(r => r.json()).then(d => { if (d.success) setGold(d.data); }).catch(() => {});
+    };
+    fetchGold();
+    const iv = setInterval(fetchGold, 60_000);
+    return () => clearInterval(iv);
   }, []);
 
-  // Parse announcement: wrap numbers+word "طلایی" or "طلا" adjacent to numbers in gold
-  // Simple: just render as-is with heart decoration
   return (
     <div style={{
       background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 40%, #7b1a1a 100%)",
@@ -28,9 +32,13 @@ export default function AnnouncementBar() {
           <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
         </svg>
 
-        {/* Announcement text — highlight gold-related words */}
         <span style={{ color: "#fff", fontSize: "12px", fontWeight: "500", letterSpacing: "0.3px" }}>
-          <AnnouncementText text={announcement} />
+          <span>قیمت </span>
+          <span style={{ color: "#f0c040", fontWeight: "800", fontSize: "13px" }}>طلا</span>
+          <span>: </span>
+          <span style={{ color: "#f0c040", fontWeight: "800", fontSize: "13px", direction: "ltr", display: "inline-block" }}>
+            {gold ? `${gold.price.toLocaleString("fa-IR")} تومان` : "..."}
+          </span>
         </span>
 
         {/* Right heart */}
@@ -40,23 +48,5 @@ export default function AnnouncementBar() {
         <span style={{ color: "#c8a12a", fontSize: "14px", opacity: 0.9 }}>✦</span>
       </div>
     </div>
-  );
-}
-
-function AnnouncementText({ text }: { text: string }) {
-  // Highlight words that should be gold: numbers followed by "سال", "طلایی", "طلا"
-  // Strategy: split on gold-worthy tokens using regex
-  const parts = text.split(/(\d+\s*سال\s*طلایی|\d+\s*سال|طلایی|طلا)/g);
-  return (
-    <>
-      {parts.map((part, i) => {
-        const isGold = /(\d+\s*سال\s*طلایی|\d+\s*سال|طلایی|طلا)/.test(part);
-        return (
-          <span key={i} style={isGold ? { color: "#f0c040", fontWeight: "800", fontSize: "13px" } : {}}>
-            {part}
-          </span>
-        );
-      })}
-    </>
   );
 }
