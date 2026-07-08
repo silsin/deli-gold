@@ -1,16 +1,22 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ShoppingCart, Menu, X, LogOut, Package, LogIn, User, ChevronDown, Search } from "lucide-react";
+import { ShoppingCart, Menu, X, LogOut, Package, LogIn, User, ChevronDown, Search, Download } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartContext";
+import { resolveSocialHref } from "@/lib/social-links";
+import { filterTryonNavLinks, isTryonEnabled } from "@/lib/tryon-settings";
 
 interface AuthUser { id: string; name: string; email: string; role: string; }
 
-const IgIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/>
-    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+const TgIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.014 9.496c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.877.725z"/>
+  </svg>
+);
+const BaleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.02 5.5c.08 0 .15.03.2.09.05.06.07.14.05.22l-1.1 5.18c-.08.36-.3.45-.6.28l-1.64-1.21-.79.76a.35.35 0 01-.33.16l.12-1.67 3.04-2.75a.12.12 0 00-.02-.2l-3.76 2.37-1.62-.5c-.35-.11-.36-.35.07-.52l4.7-1.81c.29-.11.55.07.48.39z"/>
   </svg>
 );
 const WaIcon = () => (
@@ -45,8 +51,10 @@ export default function Navbar() {
   const [authUser, setAuthUser]     = useState<AuthUser | null>(null);
   const [authDone, setAuthDone]     = useState(false);
   const [phone, setPhone]           = useState("");
+  const [telegram, setTelegram]     = useState("");
+  const [bale, setBale]             = useState("");
   const [wa, setWa]                 = useState("");
-  const [ig, setIg]                 = useState("");
+  const [installUrl, setInstallUrl] = useState("");
   const [catLinks, setCatLinks]     = useState<NavLink[]>(DEFAULT_CAT_LINKS);
 
   const uT = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,16 +72,28 @@ export default function Navbar() {
   useEffect(() => { checkAuth(); }, [checkAuth, pathname]);
 
   useEffect(() => {
-    fetch("/api/admin/settings").then(r => r.json()).then(d => {
+    fetch("/api/admin/settings", { cache: "no-store" }).then(r => r.json()).then(d => {
       if (!d.success) return;
-      if (d.data.site_phone1)      setPhone(d.data.site_phone1);
-      if (d.data.site_whatsapp)    setWa(d.data.site_whatsapp);
-      if (d.data.site_instagram)   setIg(d.data.site_instagram);
+      setPhone(d.data.site_phone1 ?? "");
+      setTelegram(resolveSocialHref("telegram", d.data.site_telegram));
+      setBale(resolveSocialHref("bale", d.data.site_bale));
+      setWa(resolveSocialHref("whatsapp", d.data.site_whatsapp));
+      setInstallUrl(resolveSocialHref("install", d.data.site_install_url));
+      const tryonOn = isTryonEnabled(d.data.tryon_enabled);
+      let links = DEFAULT_CAT_LINKS;
       if (d.data.nav_links) {
-        try { const parsed = JSON.parse(d.data.nav_links); if (Array.isArray(parsed) && parsed.length > 0) setCatLinks(parsed); } catch {}
+        try { const parsed = JSON.parse(d.data.nav_links); if (Array.isArray(parsed) && parsed.length > 0) links = parsed; } catch {}
       }
+      setCatLinks(filterTryonNavLinks(links, tryonOn));
     }).catch(() => {});
   }, []);
+
+  const socialIcons = [
+    { href: telegram,  label: "Telegram",  icon: <TgIcon />,       hover: "#29a0dc" },
+    { href: bale,      label: "Bale",      icon: <BaleIcon />,     hover: "#0cca7f" },
+    { href: wa,        label: "WhatsApp",  icon: <WaIcon />,       hover: "#25d366" },
+    { href: installUrl, label: "Install",  icon: <Download size={18} />, hover: "#c8a12a" },
+  ].filter(s => s.href);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -100,25 +120,17 @@ export default function Navbar() {
 
           {/* LEFT: social icons + phone — desktop only */}
           <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
-            {wa && (
-              <a href={wa} aria-label="WhatsApp" target="_blank" rel="noopener noreferrer" className="nav-social-icon"
+            {socialIcons.map(sc => (
+              <a key={sc.label} href={sc.href} aria-label={sc.label} target={sc.href.startsWith("/") ? undefined : "_blank"} rel={sc.href.startsWith("/") ? undefined : "noopener noreferrer"} className="nav-social-icon"
                 style={{ color: "#999", display: "flex", transition: "color 0.2s" }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#25d366"}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = sc.hover}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#999"}>
-                <WaIcon />
+                {sc.icon}
               </a>
-            )}
-            {ig && (
-              <a href={ig} aria-label="Instagram" target="_blank" rel="noopener noreferrer" className="nav-social-icon"
-                style={{ color: "#999", display: "flex", transition: "color 0.2s" }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#e1306c"}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#999"}>
-                <IgIcon />
-              </a>
-            )}
+            ))}
             {phone && (
               <a href={`tel:${phone.replace(/[^0-9+]/g, "")}`} className="nav-phone-link"
-                style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "13px", direction: "ltr", borderRight: (wa || ig) ? "1px solid #e8e8e8" : "none", paddingRight: (wa || ig) ? "14px" : "0", marginRight: "2px" }}>
+                style={{ display: "flex", alignItems: "center", gap: "5px", color: "#555", textDecoration: "none", fontSize: "13px", direction: "ltr", borderRight: socialIcons.length > 0 ? "1px solid #e8e8e8" : "none", paddingRight: socialIcons.length > 0 ? "14px" : "0", marginRight: "2px" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.72A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.09-1.09a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>
                 {phone}
               </a>

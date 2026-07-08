@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Send, Phone, MapPin, Mail } from "lucide-react";
+import { Send, Phone, MapPin, Mail, Download } from "lucide-react";
 import Link from "next/link";
+import { resolveSocialHref } from "@/lib/social-links";
 
 const Ig = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -10,7 +11,11 @@ const Ig = () => (
     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
   </svg>
 );
-const Tg = () => (
+const Bale = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.02 5.5c.08 0 .15.03.2.09.05.06.07.14.05.22l-1.1 5.18c-.08.36-.3.45-.6.28l-1.64-1.21-.79.76a.35.35 0 01-.33.16l.12-1.67 3.04-2.75a.12.12 0 00-.02-.2l-3.76 2.37-1.62-.5c-.35-.11-.36-.35.07-.52l4.7-1.81c.29-.11.55.07.48.39z"/>
+  </svg>
+);
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.014 9.496c-.148.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.877.725z"/>
   </svg>
@@ -45,14 +50,16 @@ const footerLinks = {
 interface SiteSettings {
   site_phone1: string; site_phone2: string;
   site_address: string; site_email: string;
-  site_instagram: string; site_telegram: string; site_whatsapp: string;
+  site_instagram: string; site_telegram: string; site_bale: string;
+  site_whatsapp: string; site_install_url: string;
   site_brand_desc: string;
 }
 
 const DEFAULTS: SiteSettings = {
   site_phone1: "", site_phone2: "",
   site_address: "", site_email: "",
-  site_instagram: "#", site_telegram: "#", site_whatsapp: "#",
+  site_instagram: "", site_telegram: "", site_bale: "",
+  site_whatsapp: "", site_install_url: "",
   site_brand_desc: "دلی گلد؛ ارائه‌دهنده بهترین طلاها با تضمین کیفیت و اعتماد",
 };
 
@@ -60,16 +67,18 @@ export default function Footer() {
   const [s, setS] = useState<SiteSettings>(DEFAULTS);
 
   useEffect(() => {
-    fetch("/api/admin/settings").then(r => r.json()).then(d => {
+    fetch("/api/admin/settings", { cache: "no-store" }).then(r => r.json()).then(d => {
       if (d.success) setS({ ...DEFAULTS, ...d.data });
     }).catch(() => {});
   }, []);
 
   const socials = [
-    { icon: <Ig />, label: "Instagram", href: s.site_instagram },
-    { icon: <Tg />, label: "Telegram",  href: s.site_telegram },
-    { icon: <Wa />, label: "WhatsApp",  href: s.site_whatsapp },
-  ];
+    { icon: <Ig />, label: "Instagram", href: resolveSocialHref("instagram", s.site_instagram) },
+    { icon: <Tg />, label: "Telegram",  href: resolveSocialHref("telegram", s.site_telegram) },
+    { icon: <Bale />, label: "Bale",    href: resolveSocialHref("bale", s.site_bale) },
+    { icon: <Wa />, label: "WhatsApp",  href: resolveSocialHref("whatsapp", s.site_whatsapp) },
+    { icon: <Download size={15} />, label: "Install", href: resolveSocialHref("install", s.site_install_url) },
+  ].filter(sc => sc.href);
 
   const contacts = [
     s.site_phone1  && { icon: <Phone  size={13}/>, text: s.site_phone1 },

@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
     if (!settings.site_email)          settings.site_email = "";
     if (!settings.site_instagram)      settings.site_instagram = "";
     if (!settings.site_telegram)       settings.site_telegram = "";
+    if (!settings.site_bale)           settings.site_bale = "";
     if (!settings.site_whatsapp)       settings.site_whatsapp = "";
+    if (!settings.site_install_url)    settings.site_install_url = "";
     if (!settings.site_brand_desc)     settings.site_brand_desc = "";
     if (!settings.promo_b1_title)      settings.promo_b1_title = "";
     if (!settings.promo_b1_sub)        settings.promo_b1_sub = "";
@@ -51,6 +53,7 @@ export async function GET(req: NextRequest) {
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
     if (!settings.tawk_property_id)    settings.tawk_property_id = "";
     if (!settings.tawk_widget_id)      settings.tawk_widget_id = "default";
+    if (!settings.tryon_enabled)       settings.tryon_enabled = "1";
 
     // Typography defaults
     const typoDefaults = getDefaultTypoSettings();

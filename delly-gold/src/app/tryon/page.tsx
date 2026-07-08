@@ -9,6 +9,7 @@ import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useCart } from "../components/CartContext";
 import { buildTryonComposite, detectJewelryTypeFromCategory } from "@/lib/tryonComposite";
+import { isTryonEnabled } from "@/lib/tryon-settings";
 
 interface Product {
   id: string; name: string; slug: string; price: number;
@@ -67,8 +68,20 @@ export default function TryOnPage() {
   const aVideoRef = useRef<HTMLVideoElement>(null);
   const aStreamRef = useRef<MediaStream | null>(null);
   const [aiCameraOn, setAiCameraOn]     = useState(false);
+  const [tryonReady, setTryonReady]     = useState(false);
+  const [tryonOn, setTryonOn]           = useState(true);
 
   const { add } = useCart();
+
+  useEffect(() => {
+    fetch("/api/admin/settings", { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) setTryonOn(isTryonEnabled(d.data.tryon_enabled));
+        setTryonReady(true);
+      })
+      .catch(() => setTryonReady(true));
+  }, []);
 
   useEffect(() => {
     fetch("/api/products?limit=20")
@@ -337,6 +350,21 @@ export default function TryOnPage() {
 
   return (
     <PageLayout>
+      {!tryonReady ? (
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "80px 16px", textAlign: "center", color: "#888" }}>
+          در حال بارگذاری...
+        </div>
+      ) : !tryonOn ? (
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "80px 16px", textAlign: "center" }}>
+          <Sparkles size={48} color="#c8a12a" style={{ margin: "0 auto 16px", display: "block" }} />
+          <h1 style={{ color: "#222", fontSize: "22px", fontWeight: "800", marginBottom: "10px" }}>پرو مجازی در دسترس نیست</h1>
+          <p style={{ color: "#888", fontSize: "14px", marginBottom: "24px" }}>این قابلیت در حال حاضر غیرفعال شده است.</p>
+          <Link href="/products" style={{ display: "inline-block", backgroundColor: "#c8a12a", color: "#fff", textDecoration: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "700", fontSize: "14px" }}>
+            مشاهده محصولات
+          </Link>
+        </div>
+      ) : (
+      <>
       {/* Breadcrumb */}
       <div style={{ backgroundColor: "#f8f8f8", borderBottom: "1px solid #ebebeb", padding: "10px 0" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", gap: 6, fontSize: 12, color: "#aaa" }}>
@@ -717,6 +745,8 @@ export default function TryOnPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @media(max-width:900px){ .tryon-grid{ grid-template-columns: 1fr !important; } }
       `}</style>
+      </>
+      )}
     </PageLayout>
   );
 }

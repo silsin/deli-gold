@@ -66,7 +66,9 @@ export default function AdminSettingsPage() {
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState("");
   const [telegram, setTelegram] = useState("");
+  const [bale, setBale] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [installUrl, setInstallUrl] = useState("");
   const [brandDesc, setBrandDesc] = useState("");
   const [savingSite, setSavingSite] = useState(false);
   const [siteSaved, setSiteSaved] = useState(false);
@@ -79,6 +81,7 @@ export default function AdminSettingsPage() {
 
   // Hugging Face (virtual try-on AI)
   const [huggingfaceToken, setHuggingfaceToken] = useState("");
+  const [tryonEnabled, setTryonEnabled] = useState(true);
   const [savingHf, setSavingHf] = useState(false);
   const [hfSaved, setHfSaved] = useState(false);
 
@@ -143,13 +146,16 @@ export default function AdminSettingsPage() {
           if (d.data.site_phone2)       setPhone2(d.data.site_phone2);
           if (d.data.site_address)      setAddress(d.data.site_address);
           if (d.data.site_email)        setEmail(d.data.site_email);
-          if (d.data.site_instagram)    setInstagram(d.data.site_instagram);
-          if (d.data.site_telegram)     setTelegram(d.data.site_telegram);
-          if (d.data.site_whatsapp)     setWhatsapp(d.data.site_whatsapp);
+          setInstagram(d.data.site_instagram ?? "");
+          setTelegram(d.data.site_telegram ?? "");
+          setBale(d.data.site_bale ?? "");
+          setWhatsapp(d.data.site_whatsapp ?? "");
+          setInstallUrl(d.data.site_install_url ?? "");
           if (d.data.site_brand_desc)   setBrandDesc(d.data.site_brand_desc);
           setTawkPropertyId(d.data.tawk_property_id ?? "");
           setTawkWidgetId(d.data.tawk_widget_id ?? "default");
           setHuggingfaceToken(d.data.huggingface_api_token ?? "");
+          setTryonEnabled((d.data.tryon_enabled ?? "1") !== "0");
           // Promo banners
           if (d.data.promo_b1_title) setPb1Title(d.data.promo_b1_title);
           if (d.data.promo_b1_sub)   setPb1Sub(d.data.promo_b1_sub);
@@ -233,6 +239,7 @@ export default function AdminSettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         huggingface_api_token: huggingfaceToken.trim(),
+        tryon_enabled: tryonEnabled ? "1" : "0",
       }),
     });
     if (res.ok) {
@@ -273,7 +280,9 @@ export default function AdminSettingsPage() {
         site_email: email,
         site_instagram: instagram,
         site_telegram: telegram,
+        site_bale: bale,
         site_whatsapp: whatsapp,
+        site_install_url: installUrl,
         site_brand_desc: brandDesc,
       }),
     });
@@ -382,17 +391,23 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
           {[
-            { label: "اینستاگرام", icon: "📸", val: instagram, set: setInstagram },
-            { label: "تلگرام",     icon: "✈️", val: telegram,  set: setTelegram  },
-            { label: "واتساپ",     icon: "💬", val: whatsapp,  set: setWhatsapp  },
+            { label: "اینستاگرام", icon: "📸", val: instagram, set: setInstagram, ph: "https://instagram.com/..." },
+            { label: "تلگرام",     icon: "✈️", val: telegram,  set: setTelegram,  ph: "@username یا https://t.me/..." },
+            { label: "بله",        icon: "💚", val: bale,      set: setBale,      ph: "@username یا https://ble.ir/..." },
+            { label: "واتساپ",     icon: "💬", val: whatsapp,  set: setWhatsapp,  ph: "0912... یا https://wa.me/..." },
           ].map(f => (
             <div key={f.label}>
               <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{f.icon} {f.label}</label>
-              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder="https://..." />
+              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder={f.ph} />
             </div>
           ))}
+        </div>
+
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>📲 لینک نصب اپ (آیکن بالای سایت)</label>
+          <input value={installUrl} onChange={e => setInstallUrl(e.target.value)} style={inp} placeholder="https://... یا /install" />
         </div>
 
         {siteSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ اطلاعات سایت ذخیره شد</div>}
@@ -471,6 +486,43 @@ export default function AdminSettingsPage() {
           {" "}بسازید. هنگام ساخت توکن، حتماً دسترسی <strong style={{ color: "#ccc" }}>Make calls to Inference Providers</strong> را فعال کنید.
         </p>
 
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", marginBottom: "20px", padding: "14px 16px", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "8px" }}>
+          <div>
+            <p style={{ color: "#fff", fontSize: "14px", fontWeight: "600", marginBottom: "4px" }}>نمایش پرو مجازی در سایت</p>
+            <p style={{ color: "#666", fontSize: "12px", lineHeight: 1.5 }}>با غیرفعال کردن، لینک منو و صفحه پرو مجازی برای مشتریان مخفی می‌شود.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={tryonEnabled}
+            aria-label="نمایش پرو مجازی در سایت"
+            onClick={() => setTryonEnabled(v => !v)}
+            style={{
+              flexShrink: 0,
+              width: "52px",
+              height: "28px",
+              borderRadius: "14px",
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: tryonEnabled ? "#10b981" : "#444",
+              position: "relative",
+              transition: "background-color 0.2s",
+            }}
+          >
+            <span style={{
+              position: "absolute",
+              top: "3px",
+              left: tryonEnabled ? "27px" : "3px",
+              width: "22px",
+              height: "22px",
+              borderRadius: "50%",
+              backgroundColor: "#fff",
+              transition: "left 0.2s",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+            }} />
+          </button>
+        </div>
+
         <div style={{ marginBottom: "20px" }}>
           <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>API Token</label>
           <input
@@ -485,7 +537,7 @@ export default function AdminSettingsPage() {
 
         {hfSaved && (
           <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>
-            ✓ توکن Hugging Face ذخیره شد
+            ✓ تنظیمات پرو مجازی ذخیره شد
           </div>
         )}
 
@@ -496,7 +548,7 @@ export default function AdminSettingsPage() {
           style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingHf ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingHf ? "not-allowed" : "pointer", fontFamily: "inherit" }}
         >
           {savingHf ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
-          {savingHf ? "در حال ذخیره..." : "ذخیره توکن هوش مصنوعی"}
+          {savingHf ? "در حال ذخیره..." : "ذخیره تنظیمات پرو مجازی"}
         </button>
       </div>
 
