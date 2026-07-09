@@ -4,6 +4,7 @@ import { ok, error, serverError } from "@/lib/response";
 import { getDb } from "@/lib/db";
 import { THEME_PALETTES, FONT_SIZE_MIN, FONT_SIZE_MAX } from "@/lib/theme";
 import { TYPO_SECTIONS, getDefaultTypoSettings } from "@/lib/typography";
+import { parsePriceBarStyle, priceBarStyleToSettings } from "@/lib/price-bar-settings";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -54,6 +55,8 @@ export async function GET(req: NextRequest) {
     if (!settings.tawk_property_id)    settings.tawk_property_id = "";
     if (!settings.tawk_widget_id)      settings.tawk_widget_id = "default";
     if (!settings.tryon_enabled)       settings.tryon_enabled = "1";
+    const pb = parsePriceBarStyle(settings);
+    Object.assign(settings, priceBarStyleToSettings(pb));
 
     // Typography defaults
     const typoDefaults = getDefaultTypoSettings();

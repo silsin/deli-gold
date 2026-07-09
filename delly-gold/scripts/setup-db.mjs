@@ -183,6 +183,11 @@ const migrations = [
   {
     name: "010_site_settings_extended",
     sql: `
+      CREATE TABLE IF NOT EXISTS settings (
+        key        TEXT PRIMARY KEY,
+        value      TEXT NOT NULL,
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
       INSERT OR IGNORE INTO settings (key, value) VALUES
         ('site_announcement', 'با اعتماد شما، سال‌ها طلایی ساختیم.'),
         ('site_phone1', ''),

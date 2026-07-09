@@ -18,6 +18,12 @@ import {
   getFontFamily,
   buildGoogleFontsUrl,
 } from "@/lib/typography";
+import {
+  DEFAULT_PRICE_BAR_STYLE,
+  parsePriceBarStyle,
+  priceBarStyleToSettings,
+  type PriceBarStyle,
+} from "@/lib/price-bar-settings";
 
 interface GoldData {
   price: number;
@@ -50,6 +56,9 @@ export default function AdminSettingsPage() {
   const [fixedFee, setFixedFee] = useState("0");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [priceBar, setPriceBar] = useState<PriceBarStyle>(DEFAULT_PRICE_BAR_STYLE);
+  const [savingPriceBar, setSavingPriceBar] = useState(false);
+  const [priceBarSaved, setPriceBarSaved] = useState(false);
   const [goldData, setGoldData] = useState<GoldData | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
   const [themePalette, setThemePalette] = useState(DEFAULT_PALETTE_ID);
@@ -136,6 +145,7 @@ export default function AdminSettingsPage() {
         if (d.success) {
           setMarkup(d.data.gold_markup_percent ?? "5");
           setFixedFee(d.data.gold_fixed_fee ?? "0");
+          setPriceBar(parsePriceBarStyle(d.data));
           const theme = parseThemeSettings(d.data);
           setThemePalette(theme.theme_palette);
           setFontMobile(theme.font_size_mobile);
@@ -209,6 +219,25 @@ export default function AdminSettingsPage() {
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
     setSaving(false);
+  }
+
+  async function handleSavePriceBar() {
+    setSavingPriceBar(true);
+    setPriceBarSaved(false);
+    const res = await fetch("/api/admin/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(priceBarStyleToSettings(priceBar)),
+    });
+    if (res.ok) {
+      setPriceBarSaved(true);
+      setTimeout(() => setPriceBarSaved(false), 3000);
+    }
+    setSavingPriceBar(false);
+  }
+
+  function updatePriceBar<K extends keyof PriceBarStyle>(key: K, value: PriceBarStyle[K]) {
+    setPriceBar(prev => ({ ...prev, [key]: value }));
   }
 
   async function handleSaveTheme() {
@@ -720,6 +749,91 @@ export default function AdminSettingsPage() {
         {goldData?.fallback && (
           <p style={{ color: "#f59e0b", fontSize: "11px", marginTop: "8px" }}>⚠️ قیمت پیش‌فرض — سرویس خارجی در دسترس نیست</p>
         )}
+      </div>
+
+      <div style={{ ...cardStyle, padding: "20px", marginBottom: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+          <TrendingUp size={16} color="#d4af37" />
+          <h3 style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>ظاهر نوار قیمت بالای سایت</h3>
+        </div>
+        <p style={{ color: "#666", fontSize: "12px", marginBottom: "14px", lineHeight: 1.6 }}>
+          متن و رنگ هر بخش را جداگانه تنظیم کنید. عدد قیمت همیشه قبل از «تومان» نمایش داده می‌شود.
+        </p>
+
+        <div style={{
+          background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 40%, #7b1a1a 100%)",
+          borderRadius: "8px",
+          padding: "12px 16px",
+          marginBottom: "18px",
+          textAlign: "center",
+        }}>
+          <span style={{ fontSize: "12px", fontWeight: "500" }}>
+            <span style={{ color: priceBar.labelColor }}>{priceBar.labelText} </span>
+            <span style={{ color: priceBar.goldColor, fontWeight: "800" }}>{priceBar.goldText}</span>
+            <span style={{ color: priceBar.labelColor }}>: </span>
+            <span dir="ltr" style={{ display: "inline-flex", flexDirection: "row", gap: "4px", unicodeBidi: "isolate", fontWeight: "800" }}>
+              <span style={{ color: priceBar.amountColor }}>{finalPrice.toLocaleString("fa-IR")}</span>
+              <span style={{ color: priceBar.currencyColor }}>{priceBar.currencyText}</span>
+            </span>
+          </span>
+        </div>
+
+        {[
+          { key: "labelText" as const, colorKey: "labelColor" as const, title: "متن اول (مثلاً قیمت)", hasText: true },
+          { key: "goldText" as const, colorKey: "goldColor" as const, title: "متن دوم (مثلاً طلا)", hasText: true },
+          { key: null, colorKey: "amountColor" as const, title: "رنگ عدد قیمت", hasText: false },
+          { key: "currencyText" as const, colorKey: "currencyColor" as const, title: "متن واحد (مثلاً تومان)", hasText: true },
+        ].map((row, i) => (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: row.hasText ? "1fr 110px 48px" : "1fr 110px 48px", gap: "10px", alignItems: "end", marginBottom: "12px" }}>
+            <div>
+              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{row.title}</label>
+              {row.hasText && row.key ? (
+                <input
+                  value={priceBar[row.key]}
+                  onChange={e => updatePriceBar(row.key!, e.target.value)}
+                  style={{ ...inp, direction: "rtl" }}
+                />
+              ) : (
+                <div style={{ ...inp, color: "#555", display: "flex", alignItems: "center" }}>از API قیمت لحظه‌ای</div>
+              )}
+            </div>
+            <div>
+              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>رنگ</label>
+              <input
+                value={priceBar[row.colorKey]}
+                onChange={e => updatePriceBar(row.colorKey, e.target.value)}
+                style={inp}
+                placeholder="#ffffff"
+              />
+            </div>
+            <div>
+              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>&nbsp;</label>
+              <input
+                type="color"
+                value={/^#[0-9a-fA-F]{6}$/.test(priceBar[row.colorKey]) ? priceBar[row.colorKey] : "#ffffff"}
+                onChange={e => updatePriceBar(row.colorKey, e.target.value)}
+                style={{ width: "48px", height: "42px", padding: "2px", border: "1px solid #333", borderRadius: "6px", backgroundColor: "#121212", cursor: "pointer" }}
+                aria-label={`انتخاب ${row.title}`}
+              />
+            </div>
+          </div>
+        ))}
+
+        {priceBarSaved && (
+          <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>
+            ✓ ظاهر نوار قیمت ذخیره شد
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSavePriceBar}
+          disabled={savingPriceBar}
+          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingPriceBar ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingPriceBar ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+        >
+          {savingPriceBar ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
+          {savingPriceBar ? "در حال ذخیره..." : "ذخیره ظاهر نوار قیمت"}
+        </button>
       </div>
 
       <div style={cardStyle}>

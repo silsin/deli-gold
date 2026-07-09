@@ -9,6 +9,7 @@ import { randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 
 let _db: DatabaseSync | null = null;
+let _schemaReady = false;
 
 function resolveDbPath(): string {
   const url = process.env.DATABASE_URL || "file:./prisma/dev.db";
@@ -21,6 +22,29 @@ function resolveDbPath(): string {
   );
 }
 
+/** Create tables used at runtime if migrations were not applied yet. */
+function ensureSchema(db: DatabaseSync) {
+  if (_schemaReady) return;
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key        TEXT PRIMARY KEY,
+      value      TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS otp_codes (
+      id         TEXT PRIMARY KEY,
+      phone      TEXT NOT NULL,
+      code_hash  TEXT NOT NULL,
+      attempts   INTEGER NOT NULL DEFAULT 0,
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_otp_codes_phone ON otp_codes(phone);
+    CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
+  `);
+  _schemaReady = true;
+}
+
 export function getDb(): DatabaseSync {
   if (!_db) {
     const dbPath = resolveDbPath();
@@ -28,6 +52,7 @@ export function getDb(): DatabaseSync {
     _db = new DatabaseSync(dbPath);
     _db.exec("PRAGMA journal_mode=WAL");
     _db.exec("PRAGMA foreign_keys=ON");
+    ensureSchema(_db);
   }
   return _db;
 }
