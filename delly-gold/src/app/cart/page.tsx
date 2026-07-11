@@ -2,12 +2,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ShoppingCart, ChevronLeft, MapPin, FileText, CheckCircle } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, ChevronLeft, CheckCircle } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import { useCart } from "../components/CartContext";
+import CheckoutShippingForm, {
+  EMPTY_SHIPPING_FORM,
+  validateShippingForm,
+  firstShippingError,
+  type OrderShippingInput,
+} from "../components/CheckoutShippingForm";
 
 interface UserProfile {
   name: string;
+  email: string;
+  phone: string | null;
+  phone_login: string | null;
   address: string | null;
 }
 
@@ -15,8 +24,8 @@ export default function CartPage() {
   const { items, count, total, remove, update, clear } = useCart();
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
+  const [shipping, setShipping] = useState<OrderShippingInput>(EMPTY_SHIPPING_FORM);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof OrderShippingInput, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -28,7 +37,17 @@ export default function CartPage() {
       .then(d => {
         if (d.success) {
           setUser(d.data);
-          if (d.data.address) setAddress(d.data.address);
+          const fullName = (d.data.name ?? "").trim();
+          const parts = fullName.split(/\s+/);
+          setShipping(prev => ({
+            ...prev,
+            recipientFirstName: parts[0] ?? prev.recipientFirstName,
+            recipientLastName: parts.slice(1).join(" ") || prev.recipientLastName,
+            recipientEmail: d.data.email ?? prev.recipientEmail,
+            recipientPhone: d.data.phone_login ?? d.data.phone ?? prev.recipientPhone,
+            deliveryPhone: d.data.phone_login ?? d.data.phone ?? prev.deliveryPhone,
+            address: d.data.address ?? prev.address,
+          }));
         }
       })
       .catch(() => {});
@@ -37,8 +56,16 @@ export default function CartPage() {
   async function handleCheckout(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     if (!user) { router.push("/login?redirect=/cart"); return; }
-    if (!address.trim()) { setError("آدرس تحویل الزامی است"); return; }
+
+    const errors = validateShippingForm(shipping);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError(firstShippingError(errors) ?? "لطفاً فیلدهای الزامی را تکمیل کنید");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/orders", {
@@ -46,8 +73,8 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
-          address: address.trim(),
-          note: note.trim() || undefined,
+          ...shipping,
+          note: shipping.note?.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -159,58 +186,23 @@ export default function CartPage() {
 
               {step === "checkout" && (
                 <form onSubmit={handleCheckout} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 20 }}>
-                    <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                      <MapPin size={16} color="var(--theme-accent)" /> اطلاعات تحویل
-                    </h3>
-
-                    {!user && (
-                      <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
-                        <p style={{ color: "var(--theme-accent)", fontSize: 13 }}>
-                          برای ثبت سفارش باید{" "}
-                          <Link href="/login?redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>وارد شوید</Link>
-                          {" "}یا{" "}
-                          <Link href="/login?tab=register&redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>ثبت‌نام کنید</Link>
-                        </p>
-                      </div>
-                    )}
-
-                    {user && (
-                      <p style={{ color: "var(--theme-text-muted)", fontSize: 13, marginBottom: 14 }}>
-                        خوش آمدید، <span style={{ color: "var(--theme-text)", fontWeight: 600 }}>{user.name}</span>
+                  {!user && (
+                    <div style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 20%, transparent)", borderRadius: 8, padding: "12px 16px" }}>
+                      <p style={{ color: "var(--theme-accent)", fontSize: 13 }}>
+                        برای ثبت سفارش باید{" "}
+                        <Link href="/login?redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>وارد شوید</Link>
+                        {" "}یا{" "}
+                        <Link href="/login?tab=register&redirect=/cart" style={{ color: "var(--theme-accent)", fontWeight: 700 }}>ثبت‌نام کنید</Link>
                       </p>
-                    )}
-
-                    <div style={{ marginBottom: 14 }}>
-                      <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "block", marginBottom: 6 }}>آدرس کامل تحویل *</label>
-                      <textarea
-                        value={address}
-                        onChange={e => setAddress(e.target.value)}
-                        placeholder="استان، شهر، خیابان، پلاک، واحد..."
-                        rows={3}
-                        required
-                        style={{ width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "10px 12px", color: "var(--theme-text)", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical", lineHeight: 1.6 }}
-                        onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
-                        onBlur={e => (e.target.style.borderColor = "var(--theme-border)")}
-                      />
                     </div>
+                  )}
 
-                    <div>
-                      <label style={{ color: "var(--theme-text-muted)", fontSize: 12, display: "block", marginBottom: 6 }}>
-                        <FileText size={12} style={{ display: "inline", marginLeft: 4 }} />
-                        یادداشت سفارش (اختیاری)
-                      </label>
-                      <textarea
-                        value={note}
-                        onChange={e => setNote(e.target.value)}
-                        placeholder="توضیحات اضافی برای سفارش..."
-                        rows={2}
-                        style={{ width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "10px 12px", color: "var(--theme-text)", fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical" }}
-                        onFocus={e => (e.target.style.borderColor = "var(--theme-accent)")}
-                        onBlur={e => (e.target.style.borderColor = "var(--theme-border)")}
-                      />
-                    </div>
-                  </div>
+                  <CheckoutShippingForm
+                    form={shipping}
+                    onChange={setShipping}
+                    fieldErrors={fieldErrors}
+                    userName={user?.name}
+                  />
 
                   {/* Order summary in checkout step */}
                   <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16 }}>
@@ -230,7 +222,7 @@ export default function CartPage() {
                   )}
 
                   <div style={{ display: "flex", gap: 10 }}>
-                    <button type="button" onClick={() => { setStep("cart"); setError(""); }}
+                    <button type="button" onClick={() => { setStep("cart"); setError(""); setFieldErrors({}); }}
                       style={{ flex: 1, backgroundColor: "transparent", color: "var(--theme-text-muted)", border: "1px solid var(--theme-border)", borderRadius: 8, padding: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", fontSize: 14 }}>
                       ← ویرایش سبد
                     </button>
@@ -272,6 +264,7 @@ export default function CartPage() {
                     if (!user) { router.push("/login?redirect=/cart"); return; }
                     setStep("checkout");
                     setError("");
+                    setFieldErrors({});
                   }}
                   style={{ width: "100%", backgroundColor: "var(--theme-accent)", color: "#000", border: "none", borderRadius: 8, padding: "13px", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
                   ادامه خرید
@@ -295,6 +288,7 @@ export default function CartPage() {
       <style>{`
         @media (max-width: 768px) {
           .cart-grid { grid-template-columns: 1fr !important; }
+          .checkout-shipping-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </PageLayout>

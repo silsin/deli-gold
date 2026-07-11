@@ -270,6 +270,19 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
     `,
   },
+  {
+    name: "017_order_shipping_fields",
+    sql: `
+      ALTER TABLE orders ADD COLUMN recipient_first_name TEXT;
+      ALTER TABLE orders ADD COLUMN recipient_last_name TEXT;
+      ALTER TABLE orders ADD COLUMN recipient_phone TEXT;
+      ALTER TABLE orders ADD COLUMN recipient_email TEXT;
+      ALTER TABLE orders ADD COLUMN province TEXT;
+      ALTER TABLE orders ADD COLUMN county TEXT;
+      ALTER TABLE orders ADD COLUMN postal_code TEXT;
+      ALTER TABLE orders ADD COLUMN delivery_phone TEXT;
+    `,
+  },
 ];
 
 let appliedCount = 0;

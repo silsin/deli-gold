@@ -3,8 +3,21 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 
 interface Order {
-  id: string; total: number; status: string; address: string; createdAt: string;
-  user: { name: string; email: string };
+  id: string;
+  total: number;
+  status: string;
+  address: string;
+  note: string | null;
+  createdAt: string;
+  recipientFirstName: string;
+  recipientLastName: string;
+  recipientPhone: string;
+  recipientEmail: string;
+  province: string;
+  county: string;
+  postalCode: string;
+  deliveryPhone: string;
+  user: { name: string; email: string; phone?: string | null };
   items: { id: string; quantity: number; price: number; product: { name: string } }[];
 }
 
@@ -16,6 +29,22 @@ const statusOptions = [
   { value: "DELIVERED",  label: "تحویل داده شده",     color: "#10b981" },
   { value: "CANCELLED",  label: "لغو شده",            color: "#ef4444" },
 ];
+
+function deliverySummary(order: Order) {
+  if (order.province && order.county) {
+    return `${order.province} · ${order.county}`;
+  }
+  return order.address || "—";
+}
+
+function DetailRow({ label, value, ltr }: { label: string; value: string; ltr?: boolean }) {
+  if (!value) return null;
+  return (
+    <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>
+      {label}: <span style={{ color: "#fff", direction: ltr ? "ltr" : "inherit", display: "inline-block" }}>{value}</span>
+    </p>
+  );
+}
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -82,18 +111,19 @@ export default function AdminOrdersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ backgroundColor: "#161616" }}>
-                {["شناسه", "مشتری", "مبلغ", "آدرس", "وضعیت", "تاریخ", "جزئیات"].map(h => (
+                {["شناسه", "مشتری", "دریافت‌کننده", "مبلغ", "مقصد", "وضعیت", "تاریخ", "جزئیات"].map(h => (
                   <th key={h} style={{ padding: "10px 16px", color: "#888", fontSize: "12px", textAlign: "right", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#555" }}>در حال بارگذاری...</td></tr>
+                <tr><td colSpan={8} style={{ padding: "32px", textAlign: "center", color: "#555" }}>در حال بارگذاری...</td></tr>
               ) : orders.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#555" }}>سفارشی ثبت نشده</td></tr>
+                <tr><td colSpan={8} style={{ padding: "32px", textAlign: "center", color: "#555" }}>سفارشی ثبت نشده</td></tr>
               ) : orders.map(order => {
                 const st = getStatus(order.status);
+                const recipient = [order.recipientFirstName, order.recipientLastName].filter(Boolean).join(" ") || "—";
                 return (
                   <tr key={order.id} style={{ borderTop: "1px solid #222" }}>
                     <td style={{ padding: "12px 16px", color: "#888", fontSize: "11px", fontFamily: "monospace" }}>{order.id.slice(0, 8)}</td>
@@ -101,10 +131,11 @@ export default function AdminOrdersPage() {
                       <p style={{ color: "#fff", fontSize: "13px" }}>{order.user?.name ?? "—"}</p>
                       <p style={{ color: "#666", fontSize: "11px" }}>{order.user?.email ?? ""}</p>
                     </td>
+                    <td style={{ padding: "12px 16px", color: "#ccc", fontSize: "12px", whiteSpace: "nowrap" }}>{recipient}</td>
                     <td style={{ padding: "12px 16px", color: "#d4af37", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
                       {order.total.toLocaleString("fa-IR")} ت
                     </td>
-                    <td style={{ padding: "12px 16px", color: "#888", fontSize: "12px", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.address}</td>
+                    <td style={{ padding: "12px 16px", color: "#888", fontSize: "12px", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{deliverySummary(order)}</td>
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{ backgroundColor: `${st?.color}20`, color: st?.color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }}>{st?.label}</span>
                     </td>
@@ -124,10 +155,9 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Order detail modal */}
       {selected && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "20px" }}>
-          <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", width: "100%", maxWidth: "560px", maxHeight: "90vh", overflowY: "auto" }}>
+          <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", width: "100%", maxWidth: "620px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #2a2a2a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>جزئیات سفارش</h3>
               <button onClick={closeDetail} style={{ color: "#888", background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}>×</button>
@@ -140,9 +170,25 @@ export default function AdminOrdersPage() {
               ) : (
               <>
               <div style={{ marginBottom: "16px" }}>
-                <p style={{ color: "#888", fontSize: "12px" }}>مشتری: <span style={{ color: "#fff" }}>{selected.user?.name ?? "—"}</span></p>
-                <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>ایمیل: <span style={{ color: "#fff", direction: "ltr" }}>{selected.user?.email ?? ""}</span></p>
-                <p style={{ color: "#888", fontSize: "12px", marginTop: "4px" }}>آدرس: <span style={{ color: "#fff" }}>{selected.address}</span></p>
+                <p style={{ color: "#888", fontSize: "12px" }}>مشتری (حساب): <span style={{ color: "#fff" }}>{selected.user?.name ?? "—"}</span></p>
+                <DetailRow label="ایمیل حساب" value={selected.user?.email ?? ""} ltr />
+              </div>
+
+              <h4 style={{ color: "#d4af37", fontSize: "13px", marginBottom: "8px" }}>مشخصات فرد دریافت‌کننده</h4>
+              <div style={{ backgroundColor: "#121212", borderRadius: "8px", padding: "12px 14px", marginBottom: "14px" }}>
+                <DetailRow label="نام" value={[selected.recipientFirstName, selected.recipientLastName].filter(Boolean).join(" ")} />
+                <DetailRow label="تلفن" value={selected.recipientPhone} ltr />
+                <DetailRow label="ایمیل" value={selected.recipientEmail} ltr />
+              </div>
+
+              <h4 style={{ color: "#d4af37", fontSize: "13px", marginBottom: "8px" }}>مشخصات محل دریافت</h4>
+              <div style={{ backgroundColor: "#121212", borderRadius: "8px", padding: "12px 14px", marginBottom: "14px" }}>
+                <DetailRow label="استان" value={selected.province} />
+                <DetailRow label="شهرستان" value={selected.county} />
+                <DetailRow label="کد پستی" value={selected.postalCode} ltr />
+                <DetailRow label="تلفن" value={selected.deliveryPhone} ltr />
+                <DetailRow label="نشانی" value={selected.address} />
+                {selected.note && <DetailRow label="توضیحات" value={selected.note} />}
               </div>
 
               <h4 style={{ color: "#d4af37", fontSize: "13px", marginBottom: "10px" }}>اقلام سفارش</h4>

@@ -13,6 +13,14 @@ type OrderRow = {
   user_name?: string | null;
   user_email?: string | null;
   user_phone?: string | null;
+  recipient_first_name?: string | null;
+  recipient_last_name?: string | null;
+  recipient_phone?: string | null;
+  recipient_email?: string | null;
+  province?: string | null;
+  county?: string | null;
+  postal_code?: string | null;
+  delivery_phone?: string | null;
 };
 
 type OrderItemRow = {
@@ -23,6 +31,19 @@ type OrderItemRow = {
   product_images?: string | null;
 };
 
+function shippingFields(row: OrderRow) {
+  return {
+    recipientFirstName: row.recipient_first_name ?? "",
+    recipientLastName: row.recipient_last_name ?? "",
+    recipientPhone: row.recipient_phone ?? "",
+    recipientEmail: row.recipient_email ?? "",
+    province: row.province ?? "",
+    county: row.county ?? "",
+    postalCode: row.postal_code ?? "",
+    deliveryPhone: row.delivery_phone ?? "",
+  };
+}
+
 export function serializeOrder(row: OrderRow) {
   return {
     id: row.id,
@@ -32,6 +53,7 @@ export function serializeOrder(row: OrderRow) {
     note: row.note ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? row.created_at,
+    ...shippingFields(row),
     user: {
       name: row.user_name ?? "—",
       email: row.user_email ?? "",

@@ -20,7 +20,17 @@ interface OrderItem {
 interface Order {
   id: string; status: string; total: number;
   address: string | null; note: string | null;
-  created_at: string; items?: OrderItem[];
+  createdAt?: string;
+  created_at?: string;
+  recipientFirstName?: string;
+  recipientLastName?: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  province?: string;
+  county?: string;
+  postalCode?: string;
+  deliveryPhone?: string;
+  items?: OrderItem[];
 }
 
 const STATUS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -38,7 +48,11 @@ function getImg(images: string): string | null {
   try { const a = JSON.parse(images); return a[0] || null; } catch { return null; }
 }
 function formatDate(d: string) {
+  if (!d) return "—";
   return new Date(d).toLocaleDateString("fa-IR", { year: "numeric", month: "long", day: "numeric" });
+}
+function orderDate(order: Order) {
+  return formatDate(order.createdAt ?? order.created_at ?? "");
 }
 
 // ── Invoice Modal ──────────────────────────────────────────────────────────
@@ -60,7 +74,7 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
               <span style={{ color: st.color }}>{st.icon}</span>
               <span style={{ color: st.color, fontSize: 12, fontWeight: 600 }}>{st.label}</span>
             </div>
-            <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{formatDate(order.created_at)}</span>
+            <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{orderDate(order)}</span>
           </div>
           {order.items?.map(item => (
             <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--theme-border)" }}>
@@ -74,13 +88,32 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
               <p style={{ color: "var(--theme-accent)", fontSize: 13, fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</p>
             </div>
           ))}
-          {order.address && (
-            <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
-              <MapPin size={14} color="var(--theme-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 3 }}>آدرس تحویل</p>
-                <p style={{ color: "var(--theme-text-muted)", fontSize: 13, lineHeight: 1.6 }}>{order.address}</p>
-              </div>
+          {(order.province || order.address) && (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 8, fontWeight: 600 }}>اطلاعات تحویل</p>
+              {(order.recipientFirstName || order.recipientLastName) && (
+                <p style={{ color: "var(--theme-text)", fontSize: 13, marginBottom: 4 }}>
+                  {[order.recipientFirstName, order.recipientLastName].filter(Boolean).join(" ")}
+                </p>
+              )}
+              {order.recipientPhone && (
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: 4, direction: "ltr", textAlign: "right" }}>{order.recipientPhone}</p>
+              )}
+              {(order.province || order.county) && (
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: 4 }}>
+                  {[order.province, order.county].filter(Boolean).join(" · ")}
+                  {order.postalCode ? ` · کد پستی: ${order.postalCode}` : ""}
+                </p>
+              )}
+              {order.address && (
+                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                  <MapPin size={14} color="var(--theme-accent)" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <p style={{ color: "var(--theme-text-muted)", fontSize: 13, lineHeight: 1.6 }}>{order.address}</p>
+                </div>
+              )}
+              {order.note && (
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginTop: 8 }}>توضیحات: {order.note}</p>
+              )}
             </div>
           )}
           <div style={{ marginTop: 16, backgroundColor: "color-mix(in srgb,var(--theme-accent) 8%,transparent)", border: "1px solid color-mix(in srgb,var(--theme-accent) 20%,transparent)", borderRadius: 10, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -300,7 +333,7 @@ export default function AccountPage() {
                     <div key={order.id} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, overflow: "hidden" }}>
                       <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                         <span style={{ color: "var(--theme-text-muted)", fontSize: 12, fontFamily: "monospace", flex: 1, minWidth: 0 }}>#{order.id.slice(0, 10)}</span>
-                        <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{formatDate(order.created_at)}</span>
+                        <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{orderDate(order)}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: `${st.color}18`, border: `1px solid ${st.color}40`, borderRadius: 20, padding: "3px 10px" }}>
                           <span style={{ color: st.color }}>{st.icon}</span>
                           <span style={{ color: st.color, fontSize: 11, fontWeight: 600 }}>{st.label}</span>

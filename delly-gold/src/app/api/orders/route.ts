@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { orders, products as productsDb } from "@/lib/db";
 import { requireAuth, requireAdmin } from "@/lib/auth";
 import { serializeOrder, serializeOrderDetail } from "@/lib/serialize";
+import { validateOrderShipping } from "@/lib/order-shipping";
 import { ok, created, error, serverError } from "@/lib/response";
 
 export async function GET(req: NextRequest) {
@@ -25,9 +26,14 @@ export async function POST(req: NextRequest) {
   try {
     const result = requireAuth(req);
     if ("error" in result) return error(result.error, result.status);
-    const { items, address, note } = await req.json();
+    const body = await req.json();
+    const { items } = body;
     if (!items?.length) return error("سبد خرید خالی است");
-    if (!address?.trim()) return error("آدرس تحویل الزامی است");
+
+    const shippingResult = validateOrderShipping(body);
+    if (!shippingResult.ok) return error(shippingResult.error);
+    const shipping = shippingResult.data;
+
     let total = 0;
     const orderItems: { productId: string; quantity: number; price: number }[] = [];
     for (const item of items) {
@@ -38,7 +44,21 @@ export async function POST(req: NextRequest) {
       total += product.price * item.quantity;
       orderItems.push({ productId: item.productId, quantity: item.quantity, price: product.price });
     }
-    const order = orders.create({ userId: result.user.userId, total, address: address.trim(), note, items: orderItems });
+    const order = orders.create({
+      userId: result.user.userId,
+      total,
+      address: shipping.address,
+      note: shipping.note,
+      recipientFirstName: shipping.recipient_first_name,
+      recipientLastName: shipping.recipient_last_name,
+      recipientPhone: shipping.recipient_phone,
+      recipientEmail: shipping.recipient_email,
+      province: shipping.province,
+      county: shipping.county,
+      postalCode: shipping.postal_code,
+      deliveryPhone: shipping.delivery_phone,
+      items: orderItems,
+    });
     return created(serializeOrderDetail(order));
   } catch (e) { console.error(e); return serverError(); }
 }

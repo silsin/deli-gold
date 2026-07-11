@@ -42,7 +42,28 @@ function ensureSchema(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_otp_codes_phone ON otp_codes(phone);
     CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
   `);
+  ensureOrderShippingColumns(db);
   _schemaReady = true;
+}
+
+function ensureOrderShippingColumns(db: DatabaseSync) {
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='orders'").get();
+  if (!table) return;
+  const existing = db.prepare("PRAGMA table_info(orders)").all() as { name: string }[];
+  const names = new Set(existing.map(c => c.name));
+  const cols: [string, string][] = [
+    ["recipient_first_name", "TEXT"],
+    ["recipient_last_name", "TEXT"],
+    ["recipient_phone", "TEXT"],
+    ["recipient_email", "TEXT"],
+    ["province", "TEXT"],
+    ["county", "TEXT"],
+    ["postal_code", "TEXT"],
+    ["delivery_phone", "TEXT"],
+  ];
+  for (const [col, type] of cols) {
+    if (!names.has(col)) db.exec(`ALTER TABLE orders ADD COLUMN ${col} ${type}`);
+  }
 }
 
 export function getDb(): DatabaseSync {
@@ -281,6 +302,14 @@ export const products = {
 export interface Order {
   id: string; status: string; total: number; address: string | null;
   note: string | null; user_id: string; created_at: string; updated_at: string;
+  recipient_first_name?: string | null;
+  recipient_last_name?: string | null;
+  recipient_phone?: string | null;
+  recipient_email?: string | null;
+  province?: string | null;
+  county?: string | null;
+  postal_code?: string | null;
+  delivery_phone?: string | null;
 }
 
 export interface OrderItem {
@@ -312,11 +341,33 @@ export const orders = {
     ).all(id) as (OrderItem & { product_name: string; product_images: string })[];
     return { ...order, items };
   },
-  create(data: { userId: string; total: number; address: string; note?: string; items: { productId: string; quantity: number; price: number }[] }) {
+  create(data: {
+    userId: string;
+    total: number;
+    address: string;
+    note?: string | null;
+    recipientFirstName: string;
+    recipientLastName: string;
+    recipientPhone: string;
+    recipientEmail: string;
+    province: string;
+    county: string;
+    postalCode: string;
+    deliveryPhone: string;
+    items: { productId: string; quantity: number; price: number }[];
+  }) {
     const db = getDb();
     const id = generateId();
-    db.prepare("INSERT INTO orders (id, status, total, address, note, user_id) VALUES (?, ?, ?, ?, ?, ?)").run(
-      id, "PENDING", data.total, data.address, data.note ?? null, data.userId
+    db.prepare(`
+      INSERT INTO orders (
+        id, status, total, address, note, user_id,
+        recipient_first_name, recipient_last_name, recipient_phone, recipient_email,
+        province, county, postal_code, delivery_phone
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, "PENDING", data.total, data.address, data.note ?? null, data.userId,
+      data.recipientFirstName, data.recipientLastName, data.recipientPhone, data.recipientEmail,
+      data.province, data.county, data.postalCode, data.deliveryPhone,
     );
     for (const item of data.items) {
       db.prepare("INSERT INTO order_items (id, quantity, price, order_id, product_id) VALUES (?, ?, ?, ?, ?)").run(
