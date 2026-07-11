@@ -1,8 +1,59 @@
-import PriceBarAmount from "./PriceBarAmount";
 import {
   priceBarJustifyContent,
+  type PriceBarPartId,
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
+
+function renderPart(
+  part: PriceBarPartId,
+  style: PriceBarStyle,
+  amount: string,
+  fontSize: string,
+) {
+  switch (part) {
+    case "label":
+      return (
+        <span key="label" style={{ color: style.labelColor }}>
+          {style.labelText}
+        </span>
+      );
+    case "gold":
+      return (
+        <span key="gold" style={{ color: style.goldColor, fontWeight: 800, fontSize: "13px" }}>
+          {style.goldText}
+        </span>
+      );
+    case "amount":
+      return (
+        <span
+          key="amount"
+          dir="ltr"
+          style={{
+            display: "inline-flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "4px",
+            direction: "ltr",
+            unicodeBidi: "isolate",
+            fontWeight: 800,
+            fontSize,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span style={{ color: style.labelColor }}>:</span>
+          <span style={{ color: style.amountColor }}>{amount}</span>
+        </span>
+      );
+    case "currency":
+      return (
+        <span key="currency" style={{ color: style.currencyColor, fontWeight: 800, fontSize }}>
+          {style.currencyText}
+        </span>
+      );
+    default:
+      return null;
+  }
+}
 
 export default function PriceBarContent({
   style,
@@ -47,11 +98,10 @@ export default function PriceBarContent({
             fontSize,
             fontWeight: "500",
             letterSpacing: "0.3px",
+            flexWrap: "wrap",
           }}
         >
-          <span style={{ color: style.labelColor }}>{style.labelText}</span>
-          <span style={{ color: style.goldColor, fontWeight: "800", fontSize: "13px" }}>{style.goldText}</span>
-          <PriceBarAmount amount={amount} style={style} fontSize={fontSize === "12px" ? "12px" : fontSize} />
+          {style.partOrder.map(part => renderPart(part, style, amount, fontSize))}
         </span>
 
         {showDecorations && (

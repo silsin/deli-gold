@@ -294,6 +294,13 @@ const migrations = [
         ('site_social_install_icon', '');
     `,
   },
+  {
+    name: "019_price_bar_part_order",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('price_bar_part_order', 'label,gold,amount,currency');
+    `,
+  },
 ];
 
 let appliedCount = 0;

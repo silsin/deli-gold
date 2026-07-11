@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X, MessageCircle, Sparkles } from "lucide-react";
+import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X, MessageCircle, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import {
   applyTheme,
   THEME_PALETTES,
@@ -23,6 +23,8 @@ import {
   parsePriceBarStyle,
   priceBarStyleToSettings,
   PRICE_BAR_ALIGN_OPTIONS,
+  PRICE_BAR_PART_LABELS,
+  movePriceBarPartOrder,
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
 import PriceBarContent from "@/app/components/PriceBarContent";
@@ -265,6 +267,13 @@ export default function AdminSettingsPage() {
     setPriceBar(prev => ({ ...prev, [key]: value }));
   }
 
+  function movePriceBarPart(index: number, direction: -1 | 1) {
+    setPriceBar(prev => ({
+      ...prev,
+      partOrder: movePriceBarPartOrder(prev.partOrder, index, direction),
+    }));
+  }
+
   async function handleSaveTheme() {
     setSavingTheme(true);
     setThemeSaved(false);
@@ -405,8 +414,90 @@ export default function AdminSettingsPage() {
           <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>نوار قیمت بالای سایت — متن و رنگ</h3>
         </div>
         <p style={{ color: "#666", fontSize: "12px", marginBottom: "14px", lineHeight: 1.6 }}>
-          نوار قرمز بالای صفحه اصلی. متن، رنگ و چیدمان هر بخش را تنظیم کنید. عدد قیمت همیشه قبل از «تومان» نمایش داده می‌شود.
+          نوار قرمز بالای صفحه اصلی. متن، رنگ، ترتیب و چیدمان هر بخش را تنظیم کنید.
         </p>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px" }}>ترتیب نمایش ۴ بخش</label>
+          <p style={{ color: "#555", fontSize: "11px", marginBottom: "10px", lineHeight: 1.5 }}>
+            با دکمه‌های بالا/پایین جای هر بخش را عوض کنید — مثلاً «متن اول» و «متن دوم» را جابه‌جا کنید.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {priceBar.partOrder.map((partId, index) => {
+              const previewText =
+                partId === "label" ? priceBar.labelText :
+                partId === "gold" ? priceBar.goldText :
+                partId === "amount" ? finalPrice.toLocaleString("fa-IR") :
+                priceBar.currencyText;
+
+              return (
+                <div
+                  key={partId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "10px 12px",
+                    backgroundColor: "#121212",
+                    border: "1px solid #2a2a2a",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <button
+                      type="button"
+                      aria-label="انتقال به بالا"
+                      disabled={index === 0}
+                      onClick={() => movePriceBarPart(index, -1)}
+                      style={{
+                        width: "28px",
+                        height: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: index === 0 ? "#1a1a1a" : "#222",
+                        border: "1px solid #333",
+                        borderRadius: "5px",
+                        color: index === 0 ? "#444" : "#aaa",
+                        cursor: index === 0 ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      <ChevronUp size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="انتقال به پایین"
+                      disabled={index === priceBar.partOrder.length - 1}
+                      onClick={() => movePriceBarPart(index, 1)}
+                      style={{
+                        width: "28px",
+                        height: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: index === priceBar.partOrder.length - 1 ? "#1a1a1a" : "#222",
+                        border: "1px solid #333",
+                        borderRadius: "5px",
+                        color: index === priceBar.partOrder.length - 1 ? "#444" : "#aaa",
+                        cursor: index === priceBar.partOrder.length - 1 ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700", marginBottom: "2px" }}>
+                      {index + 1}. {PRICE_BAR_PART_LABELS[partId]}
+                    </p>
+                    <p style={{ color: "#888", fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {previewText}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         <div style={{ marginBottom: "16px" }}>
           <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px" }}>تراز متن در نوار</label>
@@ -605,7 +696,6 @@ export default function AdminSettingsPage() {
                   </div>
                   {iconVal ? (
                     <>
-                      <img src={iconVal} alt="" style={{ width: "44px", height: "44px", objectFit: "contain", borderRadius: "6px", border: "1px solid #333", backgroundColor: "#fff" }} />
                       <button
                         type="button"
                         onClick={() => setSocialIcons(prev => ({ ...prev, [p.type]: "" }))}
