@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "./components/CartContext";
 import ThemeLoader from "./components/ThemeLoader";
-import TawkToChat from "./components/TawkToChat";
+import GapifyChat from "./components/GapifyChat";
 
 const kavenegarPushAppId = process.env.NEXT_PUBLIC_KAVENEGAR_PUSH_APP_ID;
 
@@ -30,7 +30,7 @@ export default function RootLayout({
       <body>
         <ThemeLoader />
         <CartProvider>{children}</CartProvider>
-        <TawkToChat />
+        <GapifyChat />
       </body>
     </html>
   );

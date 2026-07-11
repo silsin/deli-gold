@@ -52,8 +52,7 @@ export async function GET(req: NextRequest) {
     if (!settings.promo_b2_href)       settings.promo_b2_href = "/products";
     if (!settings.promo_b2_image)      settings.promo_b2_image = "";
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
-    if (!settings.tawk_property_id)    settings.tawk_property_id = "";
-    if (!settings.tawk_widget_id)      settings.tawk_widget_id = "default";
+    if (!settings.gapify_website_token) settings.gapify_website_token = "";
     if (!settings.tryon_enabled)       settings.tryon_enabled = "1";
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));

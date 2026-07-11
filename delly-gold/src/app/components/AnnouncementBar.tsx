@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { parsePriceBarStyle, DEFAULT_PRICE_BAR_STYLE, type PriceBarStyle } from "@/lib/price-bar-settings";
+import PriceBarAmount from "./PriceBarAmount";
 
 interface GoldPrice { price: number; }
 
@@ -40,25 +41,21 @@ export default function AnnouncementBar() {
           <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
         </svg>
 
-        <span style={{ fontSize: "12px", fontWeight: "500", letterSpacing: "0.3px" }}>
-          <span style={{ color: style.labelColor }}>{style.labelText} </span>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            flexDirection: "row",
+            direction: "rtl",
+            gap: "4px",
+            fontSize: "12px",
+            fontWeight: "500",
+            letterSpacing: "0.3px",
+          }}
+        >
+          <span style={{ color: style.labelColor }}>{style.labelText}</span>
           <span style={{ color: style.goldColor, fontWeight: "800", fontSize: "13px" }}>{style.goldText}</span>
-          <span style={{ color: style.labelColor }}>: </span>
-          <span
-            dir="ltr"
-            style={{
-              display: "inline-flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: "4px",
-              unicodeBidi: "isolate",
-              fontWeight: "800",
-              fontSize: "13px",
-            }}
-          >
-            <span style={{ color: style.amountColor }}>{amount}</span>
-            <span style={{ color: style.currencyColor }}>{style.currencyText}</span>
-          </span>
+          <PriceBarAmount amount={amount} style={style} />
         </span>
 
         <svg width="16" height="16" viewBox="0 0 24 24" fill="#c8a12a" opacity={0.85}>
