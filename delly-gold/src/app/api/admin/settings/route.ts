@@ -42,6 +42,11 @@ export async function GET(req: NextRequest) {
     if (!settings.site_bale)           settings.site_bale = "";
     if (!settings.site_whatsapp)       settings.site_whatsapp = "";
     if (!settings.site_install_url)    settings.site_install_url = "";
+    if (!settings.site_social_instagram_icon) settings.site_social_instagram_icon = "";
+    if (!settings.site_social_telegram_icon)  settings.site_social_telegram_icon = "";
+    if (!settings.site_social_bale_icon)      settings.site_social_bale_icon = "";
+    if (!settings.site_social_whatsapp_icon)  settings.site_social_whatsapp_icon = "";
+    if (!settings.site_social_install_icon)   settings.site_social_install_icon = "";
     if (!settings.site_brand_desc)     settings.site_brand_desc = "";
     if (!settings.promo_b1_title)      settings.promo_b1_title = "";
     if (!settings.promo_b1_sub)        settings.promo_b1_sub = "";

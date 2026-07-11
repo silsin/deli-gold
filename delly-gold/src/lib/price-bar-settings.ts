@@ -1,3 +1,5 @@
+export type PriceBarAlign = "right" | "center" | "left";
+
 export interface PriceBarStyle {
   labelText: string;
   labelColor: string;
@@ -6,7 +8,14 @@ export interface PriceBarStyle {
   amountColor: string;
   currencyText: string;
   currencyColor: string;
+  align: PriceBarAlign;
 }
+
+export const PRICE_BAR_ALIGN_OPTIONS: { id: PriceBarAlign; label: string }[] = [
+  { id: "right", label: "راست" },
+  { id: "center", label: "وسط" },
+  { id: "left", label: "چپ" },
+];
 
 export const DEFAULT_PRICE_BAR_STYLE: PriceBarStyle = {
   labelText: "قیمت",
@@ -16,7 +25,25 @@ export const DEFAULT_PRICE_BAR_STYLE: PriceBarStyle = {
   amountColor: "#f0c040",
   currencyText: "تومان",
   currencyColor: "#f0c040",
+  align: "center",
 };
+
+function parseAlign(value: string | undefined): PriceBarAlign {
+  if (value === "right" || value === "left" || value === "center") return value;
+  return DEFAULT_PRICE_BAR_STYLE.align;
+}
+
+/** Horizontal placement of price bar content on RTL pages. */
+export function priceBarJustifyContent(align: PriceBarAlign): "flex-start" | "center" | "flex-end" {
+  switch (align) {
+    case "right":
+      return "flex-start";
+    case "left":
+      return "flex-end";
+    default:
+      return "center";
+  }
+}
 
 export function parsePriceBarStyle(data: Record<string, string | undefined>): PriceBarStyle {
   return {
@@ -27,6 +54,7 @@ export function parsePriceBarStyle(data: Record<string, string | undefined>): Pr
     amountColor: data.price_bar_amount_color?.trim() || DEFAULT_PRICE_BAR_STYLE.amountColor,
     currencyText: data.price_bar_currency_text?.trim() || DEFAULT_PRICE_BAR_STYLE.currencyText,
     currencyColor: data.price_bar_currency_color?.trim() || DEFAULT_PRICE_BAR_STYLE.currencyColor,
+    align: parseAlign(data.price_bar_align),
   };
 }
 
@@ -39,5 +67,6 @@ export function priceBarStyleToSettings(style: PriceBarStyle): Record<string, st
     price_bar_amount_color: style.amountColor,
     price_bar_currency_text: style.currencyText,
     price_bar_currency_color: style.currencyColor,
+    price_bar_align: style.align,
   };
 }

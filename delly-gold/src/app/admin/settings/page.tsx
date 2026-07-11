@@ -22,9 +22,13 @@ import {
   DEFAULT_PRICE_BAR_STYLE,
   parsePriceBarStyle,
   priceBarStyleToSettings,
+  PRICE_BAR_ALIGN_OPTIONS,
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
-import PriceBarAmount from "@/app/components/PriceBarAmount";
+import PriceBarContent from "@/app/components/PriceBarContent";
+import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
+import type { SocialLinkType } from "@/lib/social-links";
+import SocialIcon from "@/app/components/SocialIcon";
 
 interface GoldData {
   price: number;
@@ -79,6 +83,11 @@ export default function AdminSettingsPage() {
   const [bale, setBale] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [installUrl, setInstallUrl] = useState("");
+  const [socialIcons, setSocialIcons] = useState<Record<SocialLinkType, string>>({
+    instagram: "", telegram: "", bale: "", whatsapp: "", install: "",
+  });
+  const [uploadingSocialIcon, setUploadingSocialIcon] = useState<SocialLinkType | null>(null);
+  const socialIconRefs = useRef<Partial<Record<SocialLinkType, HTMLInputElement | null>>>({});
   const [brandDesc, setBrandDesc] = useState("");
   const [savingSite, setSavingSite] = useState(false);
   const [siteSaved, setSiteSaved] = useState(false);
@@ -114,6 +123,20 @@ export default function AdminSettingsPage() {
   const [typo, setTypo] = useState<Record<string, string>>(defaults);
   const [savingTypo, setSavingTypo] = useState(false);
   const [savedTypo, setSavedTypo] = useState(false);
+
+  async function uploadSocialIcon(type: SocialLinkType, file: File) {
+    setUploadingSocialIcon(type);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.success) {
+        setSocialIcons(prev => ({ ...prev, [type]: data.data.url }));
+      }
+    } catch {}
+    finally { setUploadingSocialIcon(null); }
+  }
 
   async function uploadBannerImage(bannerNum: 1 | 2, file: File) {
     setUploadingBanner(bannerNum);
@@ -161,6 +184,9 @@ export default function AdminSettingsPage() {
           setBale(d.data.site_bale ?? "");
           setWhatsapp(d.data.site_whatsapp ?? "");
           setInstallUrl(d.data.site_install_url ?? "");
+          setSocialIcons(Object.fromEntries(
+            SOCIAL_PLATFORMS.map(p => [p.type, d.data[p.iconKey] ?? ""]),
+          ) as Record<SocialLinkType, string>);
           if (d.data.site_brand_desc)   setBrandDesc(d.data.site_brand_desc);
           setGapifyWebsiteToken(d.data.gapify_website_token ?? "");
           setHuggingfaceToken(d.data.huggingface_api_token ?? "");
@@ -311,6 +337,7 @@ export default function AdminSettingsPage() {
         site_whatsapp: whatsapp,
         site_install_url: installUrl,
         site_brand_desc: brandDesc,
+        ...Object.fromEntries(SOCIAL_PLATFORMS.map(p => [p.iconKey, socialIcons[p.type] ?? ""])),
       }),
     });
     if (res.ok) { setSiteSaved(true); setTimeout(() => setSiteSaved(false), 3000); }
@@ -378,31 +405,49 @@ export default function AdminSettingsPage() {
           <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>نوار قیمت بالای سایت — متن و رنگ</h3>
         </div>
         <p style={{ color: "#666", fontSize: "12px", marginBottom: "14px", lineHeight: 1.6 }}>
-          نوار قرمز بالای صفحه اصلی. متن و رنگ هر بخش را جداگانه تنظیم کنید. عدد قیمت همیشه قبل از «تومان» نمایش داده می‌شود.
+          نوار قرمز بالای صفحه اصلی. متن، رنگ و چیدمان هر بخش را تنظیم کنید. عدد قیمت همیشه قبل از «تومان» نمایش داده می‌شود.
         </p>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px" }}>تراز متن در نوار</label>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {PRICE_BAR_ALIGN_OPTIONS.map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => updatePriceBar("align", opt.id)}
+                style={{
+                  flex: 1,
+                  minWidth: "72px",
+                  backgroundColor: priceBar.align === opt.id ? "rgba(212,175,55,0.15)" : "#121212",
+                  border: `1px solid ${priceBar.align === opt.id ? "rgba(212,175,55,0.5)" : "#333"}`,
+                  color: priceBar.align === opt.id ? "#d4af37" : "#888",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  fontWeight: priceBar.align === opt.id ? 700 : 500,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div style={{
           background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 40%, #7b1a1a 100%)",
           borderRadius: "8px",
           padding: "12px 16px",
           marginBottom: "18px",
-          textAlign: "center",
         }}>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              flexDirection: "row",
-              direction: "rtl",
-              gap: "4px",
-              fontSize: "12px",
-              fontWeight: "500",
-            }}
-          >
-            <span style={{ color: priceBar.labelColor }}>{priceBar.labelText}</span>
-            <span style={{ color: priceBar.goldColor, fontWeight: "800" }}>{priceBar.goldText}</span>
-            <PriceBarAmount amount={finalPrice.toLocaleString("fa-IR")} style={priceBar} fontSize="12px" />
-          </span>
+          <PriceBarContent
+            style={priceBar}
+            amount={finalPrice.toLocaleString("fa-IR")}
+            fontSize="12px"
+            showDecorations={false}
+          />
         </div>
 
         {[
@@ -510,24 +555,97 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
-          {[
-            { label: "اینستاگرام", icon: "📸", val: instagram, set: setInstagram, ph: "https://instagram.com/..." },
-            { label: "تلگرام",     icon: "✈️", val: telegram,  set: setTelegram,  ph: "@username یا https://t.me/..." },
-            { label: "بله",        icon: "💚", val: bale,      set: setBale,      ph: "@username یا https://ble.ir/..." },
-            { label: "واتساپ",     icon: "💬", val: whatsapp,  set: setWhatsapp,  ph: "0912... یا https://wa.me/..." },
-          ].map(f => (
-            <div key={f.label}>
-              <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>{f.icon} {f.label}</label>
-              <input value={f.val} onChange={e => f.set(e.target.value)} style={inp} placeholder={f.ph} />
-            </div>
-          ))}
+        <p style={{ color: "#666", fontSize: "12px", marginBottom: "14px", lineHeight: 1.6 }}>
+          لینک و آیکن هر شبکه را جداگانه تنظیم کنید. اگر آیکن سفارشی نگذارید، آیکن پیش‌فرض نمایش داده می‌شود.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "14px" }}>
+          {SOCIAL_PLATFORMS.map(p => {
+            const urlVal =
+              p.type === "instagram" ? instagram :
+              p.type === "telegram" ? telegram :
+              p.type === "bale" ? bale :
+              p.type === "whatsapp" ? whatsapp :
+              installUrl;
+            const setUrl =
+              p.type === "instagram" ? setInstagram :
+              p.type === "telegram" ? setTelegram :
+              p.type === "bale" ? setBale :
+              p.type === "whatsapp" ? setWhatsapp :
+              setInstallUrl;
+            const iconVal = socialIcons[p.type] ?? "";
+
+            return (
+              <div key={p.type} style={{ padding: "14px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
+                <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700", marginBottom: "10px" }}>
+                  {p.emoji} {p.labelFa}
+                </p>
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک</label>
+                <input
+                  value={urlVal}
+                  onChange={e => setUrl(e.target.value)}
+                  style={{ ...inp, fontSize: "13px", padding: "8px 10px", marginBottom: "10px" }}
+                  placeholder={p.placeholder}
+                />
+                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>آیکن (PNG/SVG)</label>
+                <input
+                  ref={el => { socialIconRefs.current[p.type] = el; }}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadSocialIcon(p.type, f);
+                    e.target.value = "";
+                  }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  <div style={{ width: "44px", height: "44px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#888", flexShrink: 0 }}>
+                    <SocialIcon type={p.type} size={22} imageUrl={iconVal} />
+                  </div>
+                  {iconVal ? (
+                    <>
+                      <img src={iconVal} alt="" style={{ width: "44px", height: "44px", objectFit: "contain", borderRadius: "6px", border: "1px solid #333", backgroundColor: "#fff" }} />
+                      <button
+                        type="button"
+                        onClick={() => setSocialIcons(prev => ({ ...prev, [p.type]: "" }))}
+                        style={{ backgroundColor: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "6px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        حذف آیکن
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => socialIconRefs.current[p.type]?.click()}
+                        disabled={uploadingSocialIcon === p.type}
+                        style={{ backgroundColor: "#222", color: "#ccc", border: "1px solid #444", borderRadius: "6px", padding: "6px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        {uploadingSocialIcon === p.type ? "در حال آپلود..." : "تغییر تصویر"}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => socialIconRefs.current[p.type]?.click()}
+                      disabled={uploadingSocialIcon === p.type}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#222", color: "#aaa", border: "1px dashed #444", borderRadius: "6px", padding: "8px 12px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      <Upload size={13} />
+                      {uploadingSocialIcon === p.type ? "در حال آپلود..." : "آپلود آیکن سفارشی"}
+                    </button>
+                  )}
+                </div>
+                <input
+                  value={iconVal}
+                  onChange={e => setSocialIcons(prev => ({ ...prev, [p.type]: e.target.value }))}
+                  style={{ ...inp, fontSize: "12px", padding: "7px 10px", marginTop: "8px" }}
+                  placeholder="یا آدرس URL آیکن (مثلاً /bale-icon.svg)"
+                />
+              </div>
+            );
+          })}
         </div>
 
-        <div style={{ marginBottom: "20px" }}>
-          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>📲 لینک نصب اپ (آیکن بالای سایت)</label>
-          <input value={installUrl} onChange={e => setInstallUrl(e.target.value)} style={inp} placeholder="https://... یا /install" />
-        </div>
+        <div style={{ marginBottom: "20px" }} />
 
         {siteSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ اطلاعات سایت ذخیره شد</div>}
         <button onClick={handleSaveSiteInfo} disabled={savingSite}

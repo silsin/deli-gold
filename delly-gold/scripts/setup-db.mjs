@@ -283,6 +283,17 @@ const migrations = [
       ALTER TABLE orders ADD COLUMN delivery_phone TEXT;
     `,
   },
+  {
+    name: "018_social_icon_settings",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('site_social_instagram_icon', ''),
+        ('site_social_telegram_icon', ''),
+        ('site_social_bale_icon', ''),
+        ('site_social_whatsapp_icon', ''),
+        ('site_social_install_icon', '');
+    `,
+  },
 ];
 
 let appliedCount = 0;
