@@ -77,6 +77,7 @@ nav a, header a, .cat-nav-row a {
 /* Slider text */
 .hs-title-inner {
   font-family: var(--font-slider) !important;
+  font-size: var(--font-size-slider);
 }
 
 a { color: inherit; }
