@@ -73,9 +73,27 @@ export default function ContactPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSending(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSent(true);
-    setSending(false);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          subject: form.subject,
+          message: form.message,
+        }),
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setSent(true);
+      }
+    } catch {
+      // keep silent, UI stays on form
+    } finally {
+      setSending(false);
+    }
   }
 
   return (

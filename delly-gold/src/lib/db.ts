@@ -43,6 +43,7 @@ function ensureSchema(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
   `);
   ensureOrderShippingColumns(db);
+  ensureSupportTables(db);
   _schemaReady = true;
 }
 
@@ -64,6 +65,33 @@ function ensureOrderShippingColumns(db: DatabaseSync) {
   for (const [col, type] of cols) {
     if (!names.has(col)) db.exec(`ALTER TABLE orders ADD COLUMN ${col} ${type}`);
   }
+}
+
+function ensureSupportTables(db: DatabaseSync) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS support_tickets (
+      id         TEXT PRIMARY KEY,
+      status     TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN','CLOSED')),
+      name       TEXT NOT NULL,
+      email      TEXT NOT NULL,
+      phone      TEXT,
+      subject    TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+    CREATE INDEX IF NOT EXISTS idx_support_tickets_created ON support_tickets(created_at);
+
+    CREATE TABLE IF NOT EXISTS support_messages (
+      id         TEXT PRIMARY KEY,
+      ticket_id  TEXT NOT NULL,
+      sender     TEXT NOT NULL CHECK(sender IN ('CUSTOMER','ADMIN')),
+      body       TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_support_messages_ticket ON support_messages(ticket_id);
+  `);
 }
 
 export function getDb(): DatabaseSync {
@@ -450,5 +478,96 @@ export const stats = {
     return getDb().prepare(
       `SELECT o.*, u.name as user_name, u.email as user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id ORDER BY o.created_at DESC LIMIT ?`
     ).all(limit) as (Order & { user_name: string; user_email: string })[];
+  },
+};
+
+// ── Support tickets ───────────────────────────────────────────────────────────
+
+export interface SupportTicket {
+  id: string;
+  status: "OPEN" | "CLOSED";
+  name: string;
+  email: string;
+  phone: string | null;
+  subject: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  ticket_id: string;
+  sender: "CUSTOMER" | "ADMIN";
+  body: string;
+  created_at: string;
+}
+
+export const support = {
+  createTicket(data: { name: string; email: string; phone?: string; subject?: string; message: string }) {
+    const db = getDb();
+    const id = generateId();
+    db.prepare(
+      "INSERT INTO support_tickets (id, status, name, email, phone, subject) VALUES (?, 'OPEN', ?, ?, ?, ?)"
+    ).run(id, data.name, data.email, data.phone ?? null, data.subject ?? null);
+    db.prepare(
+      "INSERT INTO support_messages (id, ticket_id, sender, body) VALUES (?, ?, 'CUSTOMER', ?)"
+    ).run(generateId(), id, data.message);
+    return id;
+  },
+
+  listTickets(opts: { status?: "OPEN" | "CLOSED"; search?: string; limit?: number; offset?: number } = {}) {
+    const { status, search, limit = 20, offset = 0 } = opts;
+    const db = getDb();
+    const where: string[] = [];
+    const params: unknown[] = [];
+    if (status) {
+      where.push("t.status = ?");
+      params.push(status);
+    }
+    if (search) {
+      where.push("(t.name LIKE ? OR t.email LIKE ? OR t.phone LIKE ? OR t.subject LIKE ? OR t.id LIKE ?)");
+      const s = `%${search}%`;
+      params.push(s, s, s, s, s);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const rows = db.prepare(
+      `SELECT t.*,
+        (SELECT body FROM support_messages m WHERE m.ticket_id = t.id ORDER BY m.created_at ASC LIMIT 1) AS first_message,
+        (SELECT created_at FROM support_messages m WHERE m.ticket_id = t.id ORDER BY m.created_at DESC LIMIT 1) AS last_message_at,
+        (SELECT sender FROM support_messages m WHERE m.ticket_id = t.id ORDER BY m.created_at DESC LIMIT 1) AS last_sender
+       FROM support_tickets t
+       ${whereSql}
+       ORDER BY t.created_at DESC
+       LIMIT ? OFFSET ?`
+    ).all(...params, limit, offset) as (SupportTicket & {
+      first_message?: string | null;
+      last_message_at?: string | null;
+      last_sender?: string | null;
+    })[];
+    const total = (db.prepare(`SELECT COUNT(*) as cnt FROM support_tickets t ${whereSql}`).get(...params) as { cnt: number }).cnt;
+    return { rows, total };
+  },
+
+  getTicketDetail(id: string) {
+    const db = getDb();
+    const ticket = db.prepare("SELECT * FROM support_tickets WHERE id = ?").get(id) as SupportTicket | undefined;
+    if (!ticket) return undefined;
+    const messages = db.prepare("SELECT * FROM support_messages WHERE ticket_id = ? ORDER BY created_at ASC").all(id) as SupportMessage[];
+    return { ticket, messages };
+  },
+
+  reply(ticketId: string, body: string) {
+    const db = getDb();
+    db.prepare("INSERT INTO support_messages (id, ticket_id, sender, body) VALUES (?, ?, 'ADMIN', ?)").run(
+      generateId(),
+      ticketId,
+      body
+    );
+    db.prepare("UPDATE support_tickets SET updated_at = datetime('now') WHERE id = ?").run(ticketId);
+  },
+
+  setStatus(ticketId: string, status: "OPEN" | "CLOSED") {
+    const db = getDb();
+    db.prepare("UPDATE support_tickets SET status = ?, updated_at = datetime('now') WHERE id = ?").run(status, ticketId);
   },
 };

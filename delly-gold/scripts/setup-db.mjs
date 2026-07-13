@@ -309,6 +309,33 @@ const migrations = [
         ('contact_page_json', '{}');
     `,
   },
+  {
+    name: "021_support_tickets",
+    sql: `
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id         TEXT PRIMARY KEY,
+        status     TEXT NOT NULL DEFAULT 'OPEN' CHECK(status IN ('OPEN','CLOSED')),
+        name       TEXT NOT NULL,
+        email      TEXT NOT NULL,
+        phone      TEXT,
+        subject    TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_created ON support_tickets(created_at);
+
+      CREATE TABLE IF NOT EXISTS support_messages (
+        id         TEXT PRIMARY KEY,
+        ticket_id  TEXT NOT NULL,
+        sender     TEXT NOT NULL CHECK(sender IN ('CUSTOMER','ADMIN')),
+        body       TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_support_messages_ticket ON support_messages(ticket_id);
+    `,
+  },
 ];
 
 let appliedCount = 0;

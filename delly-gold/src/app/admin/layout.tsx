@@ -5,7 +5,7 @@ import Link from "next/link";
 import AdminGuard from "./AdminGuard";
 import {
   LayoutDashboard, Package, ShoppingBag, Users, Tag, Settings,
-  LogOut, Menu, X, ChevronLeft, Navigation,
+  LogOut, Menu, X, ChevronLeft, Navigation, MessageSquare,
 } from "lucide-react";
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { label: "اسلایدر",        href: "/admin/slides",      icon: Package },
   { label: "محصولات",        href: "/admin/products",    icon: Package },
   { label: "سفارش‌ها",       href: "/admin/orders",      icon: ShoppingBag },
+  { label: "تیکت‌ها",        href: "/admin/tickets",     icon: MessageSquare },
   { label: "کاربران",        href: "/admin/users",       icon: Users },
   { label: "دسته‌بندی‌ها",   href: "/admin/categories",  icon: Tag },
   { label: "منوها و لینک‌ها", href: "/admin/navigation",  icon: Navigation },
