@@ -5,6 +5,16 @@ import { getDb } from "@/lib/db";
 import { THEME_PALETTES, FONT_SIZE_MIN, FONT_SIZE_MAX } from "@/lib/theme";
 import { TYPO_SECTIONS, getDefaultTypoSettings } from "@/lib/typography";
 import { parsePriceBarStyle, priceBarStyleToSettings } from "@/lib/price-bar-settings";
+import {
+  ABOUT_PAGE_SETTING_KEY,
+  EMPTY_ABOUT_PAGE_SETTINGS,
+  serializeAboutPageSettings,
+} from "@/lib/about-page-settings";
+import {
+  CONTACT_PAGE_SETTING_KEY,
+  EMPTY_CONTACT_PAGE_SETTINGS,
+  serializeContactPageSettings,
+} from "@/lib/contact-page-settings";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -59,6 +69,12 @@ export async function GET(req: NextRequest) {
     if (!settings.trust_items)         settings.trust_items = JSON.stringify([]);
     if (!settings.gapify_website_token) settings.gapify_website_token = "";
     if (!settings.tryon_enabled)       settings.tryon_enabled = "1";
+    if (!settings[ABOUT_PAGE_SETTING_KEY]) {
+      settings[ABOUT_PAGE_SETTING_KEY] = serializeAboutPageSettings(EMPTY_ABOUT_PAGE_SETTINGS);
+    }
+    if (!settings[CONTACT_PAGE_SETTING_KEY]) {
+      settings[CONTACT_PAGE_SETTING_KEY] = serializeContactPageSettings(EMPTY_CONTACT_PAGE_SETTINGS);
+    }
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));
 

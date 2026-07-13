@@ -301,6 +301,14 @@ const migrations = [
         ('price_bar_part_order', 'label,gold,amount,currency');
     `,
   },
+  {
+    name: "020_about_contact_page_settings",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('about_page_json', '{}'),
+        ('contact_page_json', '{}');
+    `,
+  },
 ];
 
 let appliedCount = 0;

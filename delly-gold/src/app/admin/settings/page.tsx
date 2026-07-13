@@ -28,6 +28,9 @@ import {
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
 import PriceBarContent from "@/app/components/PriceBarContent";
+import SliderTextSettings from "@/app/admin/components/SliderTextSettings";
+import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
+import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
 import type { SocialLinkType } from "@/lib/social-links";
 import SocialIcon from "@/app/components/SocialIcon";
@@ -599,7 +602,13 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
-      {/* ── Site Info — FIRST ── */}
+      <SliderTextSettings />
+
+      <AboutPageSettings />
+
+      <ContactPageSettings />
+
+      {/* ── Site Info ── */}
       <div style={{ ...cardStyle, marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
           <Globe size={18} color="#d4af37" />

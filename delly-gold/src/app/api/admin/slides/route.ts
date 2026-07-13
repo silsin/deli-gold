@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       title2:            body.title2            ?? "",
       title3:            body.title3            ?? "",
       subtitle:          body.subtitle          ?? "",
-      cta_label:         body.cta_label         ?? "مشاهده محصولات",
+      cta_label:         body.cta_label         ?? "",
       cta_href:          body.cta_href          ?? "/products",
       cta2_label:        body.cta2_label        ?? "",
       cta2_href:         body.cta2_href         ?? "",

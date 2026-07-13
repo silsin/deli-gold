@@ -17,10 +17,10 @@ interface Slide {
 }
 
 const emptyForm: Omit<Slide, "id" | "sort_order"> & { sort_order: string } = {
-  tag: "DELLY GOLD · NEW COLLECTION",
+  tag: "",
   title1: "", title2: "", title3: "",
   subtitle: "",
-  cta_label: "مشاهده محصولات", cta_href: "/products",
+  cta_label: "", cta_href: "/products",
   cta2_label: "",               cta2_href: "/contact",
   cta3_label: "",               cta3_href: "",
   content_position: "right",
@@ -211,6 +211,109 @@ export default function AdminSlidesPage() {
               <div style={{ padding: "22px" }}>
                 {error && <div style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "10px", marginBottom: "14px", color: "#f87171", fontSize: "13px" }}>{error}</div>}
 
+                {/* Text preview */}
+                <div style={{
+                  background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 100%)",
+                  borderRadius: "8px",
+                  padding: "14px 16px",
+                  marginBottom: "18px",
+                  textAlign: "right",
+                }}>
+                  <p style={{ color: "#888", fontSize: "10px", marginBottom: "8px" }}>پیش‌نمایش متن</p>
+                  {form.tag && (
+                    <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "9px", letterSpacing: "1px", marginBottom: "6px" }}>{form.tag}</p>
+                  )}
+                  {[form.title1, form.title2, form.title3].filter(Boolean).map((line, i) => (
+                    <p key={i} style={{ color: i === 1 ? (form.accent || "#f0c040") : "#fff", fontSize: i === 1 ? "22px" : "18px", fontWeight: 900, lineHeight: 1.2, marginBottom: "2px" }}>
+                      {line}
+                    </p>
+                  ))}
+                  {form.subtitle && (
+                    <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "12px", marginTop: "8px", lineHeight: 1.6 }}>{form.subtitle}</p>
+                  )}
+                </div>
+
+                {/* Titles */}
+                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>متن اسلاید</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  {["title1", "title2", "title3"].map((key, i) => (
+                    <div key={key}>
+                      <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>خط {i + 1} {i === 1 && <span style={{ color: "#d4af37" }}>(طلایی)</span>}</label>
+                      <input style={inp} value={(form as Record<string, unknown>)[key] as string}
+                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>زیرعنوان</label>
+                  <input style={inp} value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} />
+                </div>
+
+                <div style={{ marginBottom: "18px" }}>
+                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>تگ (بالای عنوان)</label>
+                  <input style={{ ...inp, direction: "ltr" }} value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} />
+                </div>
+
+                {/* CTAs + Position */}
+                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>دکمه‌ها و موقعیت متن</p>
+
+                {/* Content position */}
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>موقعیت متن روی اسلاید</label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {[
+                      { val: "right",  label: "راست" },
+                      { val: "center", label: "وسط" },
+                      { val: "left",   label: "چپ" },
+                    ].map(pos => (
+                      <button key={pos.val} type="button"
+                        onClick={() => setForm(f => ({ ...f, content_position: pos.val }))}
+                        style={{ flex: 1, padding: "7px", borderRadius: "6px", border: `1px solid ${form.content_position === pos.val ? "#d4af37" : "#333"}`, backgroundColor: form.content_position === pos.val ? "rgba(212,175,55,0.15)" : "#121212", color: form.content_position === pos.val ? "#d4af37" : "#888", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
+                        {pos.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3 buttons */}
+                {[
+                  { n: "دکمه اول (اصلی)", lk: "cta_label", hk: "cta_href", hint: "پر رنگ — طلایی", required: false },
+                  { n: "دکمه دوم (ثانوی)", lk: "cta2_label", hk: "cta2_href", hint: "شیشه‌ای — اگر خالی باشد پنهان می‌شود" },
+                  { n: "دکمه سوم (اضافی)", lk: "cta3_label", hk: "cta3_href", hint: "حاشیه‌دار — اگر خالی باشد پنهان می‌شود" },
+                ].map(btn => (
+                  <div key={btn.lk} style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <p style={{ color: "#aaa", fontSize: "11px", fontWeight: "600" }}>{btn.n}</p>
+                      <span style={{ color: "#555", fontSize: "10px" }}>{btn.hint}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                      <div>
+                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>متن دکمه</label>
+                        <input style={inp}
+                          value={String((form as unknown as Record<string, unknown>)[btn.lk] ?? "")}
+                          onChange={e => setForm(f => ({ ...f, [btn.lk]: e.target.value }))}
+                          placeholder={btn.lk === "cta_label" ? "متن دکمه" : "اختیاری — خالی = پنهان"} />
+                      </div>
+                      <div>
+                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>لینک</label>
+                        <input style={{ ...inp, direction: "ltr" }}
+                          value={String((form as unknown as Record<string, unknown>)[btn.hk] ?? "")}
+                          onChange={e => setForm(f => ({ ...f, [btn.hk]: e.target.value }))}
+                          placeholder="/products" />
+                      </div>
+                    </div>
+                    {String((form as unknown as Record<string, unknown>)[btn.lk] ?? "") && (
+                      <button type="button" onClick={() => setForm(f => ({ ...f, [btn.lk]: "", [btn.hk]: "" }))}
+                        style={{ marginTop: "6px", background: "none", border: "none", color: "#ef4444", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
+                        × پاک کردن این دکمه
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", margin: "18px 0 10px" }}>تصویر و ظاهر</p>
+
                 {/* Image upload */}
                 <div style={{ marginBottom: "18px" }}>
                   <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px", fontWeight: "600" }}>تصویر اسلاید *</label>
@@ -272,87 +375,6 @@ export default function AdminSlidesPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Titles */}
-                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>عنوان‌ها</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
-                  {["title1", "title2", "title3"].map((key, i) => (
-                    <div key={key}>
-                      <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>خط {i + 1} {i === 1 && <span style={{ color: "#d4af37" }}>(طلایی)</span>}</label>
-                      <input style={inp} value={(form as Record<string, unknown>)[key] as string}
-                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>زیرعنوان</label>
-                  <input style={inp} value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))} />
-                </div>
-
-                {/* Tag */}
-                <div style={{ marginBottom: "12px" }}>
-                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>تگ (انگلیسی)</label>
-                  <input style={{ ...inp, direction: "ltr" }} value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))} />
-                </div>
-
-                {/* CTAs + Position */}
-                <p style={{ color: "#d4af37", fontSize: "11px", fontWeight: "700", letterSpacing: "1px", marginBottom: "10px" }}>دکمه‌ها و موقعیت متن</p>
-
-                {/* Content position */}
-                <div style={{ marginBottom: "14px" }}>
-                  <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>موقعیت متن روی اسلاید</label>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    {[
-                      { val: "right",  label: "راست" },
-                      { val: "center", label: "وسط" },
-                      { val: "left",   label: "چپ" },
-                    ].map(pos => (
-                      <button key={pos.val} type="button"
-                        onClick={() => setForm(f => ({ ...f, content_position: pos.val }))}
-                        style={{ flex: 1, padding: "7px", borderRadius: "6px", border: `1px solid ${form.content_position === pos.val ? "#d4af37" : "#333"}`, backgroundColor: form.content_position === pos.val ? "rgba(212,175,55,0.15)" : "#121212", color: form.content_position === pos.val ? "#d4af37" : "#888", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
-                        {pos.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3 buttons */}
-                {[
-                  { n: "دکمه اول (اصلی)", lk: "cta_label", hk: "cta_href", hint: "پر رنگ — طلایی", required: false },
-                  { n: "دکمه دوم (ثانوی)", lk: "cta2_label", hk: "cta2_href", hint: "شیشه‌ای — اگر خالی باشد پنهان می‌شود" },
-                  { n: "دکمه سوم (اضافی)", lk: "cta3_label", hk: "cta3_href", hint: "حاشیه‌دار — اگر خالی باشد پنهان می‌شود" },
-                ].map(btn => (
-                  <div key={btn.lk} style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <p style={{ color: "#aaa", fontSize: "11px", fontWeight: "600" }}>{btn.n}</p>
-                      <span style={{ color: "#555", fontSize: "10px" }}>{btn.hint}</span>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                      <div>
-                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>متن دکمه</label>
-                        <input style={inp}
-                          value={String((form as unknown as Record<string, unknown>)[btn.lk] ?? "")}
-                          onChange={e => setForm(f => ({ ...f, [btn.lk]: e.target.value }))}
-                          placeholder={btn.lk === "cta_label" ? "مشاهده محصولات" : "اختیاری — خالی = پنهان"} />
-                      </div>
-                      <div>
-                        <label style={{ color: "#666", fontSize: "10px", display: "block", marginBottom: "3px" }}>لینک</label>
-                        <input style={{ ...inp, direction: "ltr" }}
-                          value={String((form as unknown as Record<string, unknown>)[btn.hk] ?? "")}
-                          onChange={e => setForm(f => ({ ...f, [btn.hk]: e.target.value }))}
-                          placeholder="/products" />
-                      </div>
-                    </div>
-                    {/* clear button */}
-                    {String((form as unknown as Record<string, unknown>)[btn.lk] ?? "") && (
-                      <button type="button" onClick={() => setForm(f => ({ ...f, [btn.lk]: "", [btn.hk]: "" }))}
-                        style={{ marginTop: "6px", background: "none", border: "none", color: "#ef4444", fontSize: "10px", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
-                        × پاک کردن این دکمه
-                      </button>
-                    )}
-                  </div>
-                ))}
 
                 {/* Colors + order */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "18px" }}>
