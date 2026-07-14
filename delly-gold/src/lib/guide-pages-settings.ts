@@ -61,10 +61,18 @@ export const EMPTY_GUIDE_PAGE: GuidePageContent = {
 
 export type GuidePagesSettings = Record<GuidePageSlug, GuidePageContent>;
 
+function emptyGuidePage(): GuidePageContent {
+  return { ...EMPTY_GUIDE_PAGE, sections: [] };
+}
+
 export function emptyGuidePagesSettings(): GuidePagesSettings {
-  return Object.fromEntries(
-    GUIDE_PAGE_DEFINITIONS.map(def => [def.slug, { ...EMPTY_GUIDE_PAGE, sections: [] }]),
-  ) as GuidePagesSettings;
+  return {
+    buying: emptyGuidePage(),
+    shipping: emptyGuidePage(),
+    returns: emptyGuidePage(),
+    faq: emptyGuidePage(),
+    terms: emptyGuidePage(),
+  };
 }
 
 function normalizeSection(item: unknown): GuideSection | null {
