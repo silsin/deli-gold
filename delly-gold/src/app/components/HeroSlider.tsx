@@ -267,14 +267,13 @@ export default function HeroSlider() {
                   </div>
                 )}
 
-                {/* Title lines */}
+                {/* Title lines — size/font from CSS vars (--font-size-slider / --font-slider) */}
                 <div style={{ marginBottom: "16px" }}>
                   {titles.map((line, li) => (
                     <div key={li} className="hs-title-line">
                       <span
-                        className="hs-title-inner"
+                        className={`hs-title-inner${li === 1 ? " hs-title-accent" : ""}`}
                         style={{
-                          fontSize: li === 1 ? "clamp(36px,5vw,60px)" : "clamp(28px,4vw,48px)",
                           fontWeight: "900",
                           lineHeight: 1.15,
                           color: li === 1 ? (s.accent || "#c8a12a") : "#ffffff",
@@ -289,9 +288,9 @@ export default function HeroSlider() {
                   ))}
                 </div>
 
-                {/* Subtitle */}
+                {/* Subtitle — same typography section as slider title */}
                 {s.subtitle && (
-                  <p className="hs-subtitle" style={{ color: "rgba(255,255,255,0.75)", fontSize: "14px", lineHeight: "1.7", marginBottom: "28px" }}>
+                  <p className="hs-subtitle" style={{ color: "rgba(255,255,255,0.75)", lineHeight: "1.7", marginBottom: "28px" }}>
                     {s.subtitle}
                   </p>
                 )}

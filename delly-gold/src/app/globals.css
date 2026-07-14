@@ -74,10 +74,17 @@ nav a, header a, .cat-nav-row a {
   font-size: var(--font-size-product);
 }
 
-/* Slider text */
+/* Slider text — controlled by Typography → تیتر اسلایدر */
 .hs-title-inner {
   font-family: var(--font-slider) !important;
-  font-size: var(--font-size-slider);
+  font-size: var(--font-size-slider) !important;
+}
+.hs-title-inner.hs-title-accent {
+  font-size: calc(var(--font-size-slider) * 1.2) !important;
+}
+.hs-subtitle {
+  font-family: var(--font-slider) !important;
+  font-size: max(12px, calc(var(--font-size-slider) * 0.3)) !important;
 }
 
 a { color: inherit; }
