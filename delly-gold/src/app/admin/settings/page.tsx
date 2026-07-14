@@ -31,6 +31,7 @@ import PriceBarContent from "@/app/components/PriceBarContent";
 import SliderTextSettings from "@/app/admin/components/SliderTextSettings";
 import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
 import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
+import GuidePagesSettings from "@/app/admin/components/GuidePagesSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
 import type { SocialLinkType } from "@/lib/social-links";
 import SocialIcon from "@/app/components/SocialIcon";
@@ -603,6 +604,8 @@ export default function AdminSettingsPage() {
       </div>
 
       <SliderTextSettings />
+
+      <GuidePagesSettings />
 
       <AboutPageSettings />
 

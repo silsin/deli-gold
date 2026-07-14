@@ -15,6 +15,11 @@ import {
   EMPTY_CONTACT_PAGE_SETTINGS,
   serializeContactPageSettings,
 } from "@/lib/contact-page-settings";
+import {
+  GUIDE_PAGES_SETTING_KEY,
+  emptyGuidePagesSettings,
+  serializeGuidePagesSettings,
+} from "@/lib/guide-pages-settings";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -74,6 +79,9 @@ export async function GET(req: NextRequest) {
     }
     if (!settings[CONTACT_PAGE_SETTING_KEY]) {
       settings[CONTACT_PAGE_SETTING_KEY] = serializeContactPageSettings(EMPTY_CONTACT_PAGE_SETTINGS);
+    }
+    if (!settings[GUIDE_PAGES_SETTING_KEY]) {
+      settings[GUIDE_PAGES_SETTING_KEY] = serializeGuidePagesSettings(emptyGuidePagesSettings());
     }
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));

@@ -4,15 +4,13 @@ import { Send, Phone, MapPin, Mail } from "lucide-react";
 import Link from "next/link";
 import { buildSocialLinks } from "@/lib/social-platforms";
 import SocialIconLink from "./SocialIconLink";
+import { GUIDE_PAGE_DEFINITIONS } from "@/lib/guide-pages-settings";
 
 const footerLinks = {
-  "خرید از دلی گلد": [
-    { label: "راهنمای خرید",    href: "/about" },
-    { label: "راهنمای ارسال",   href: "/about" },
-    { label: "راهنمای بازگشت",  href: "/about" },
-    { label: "سوالات متداول",   href: "/contact" },
-    { label: "قوانین و مقررات", href: "/about" },
-  ],
+  "خرید از دلی گلد": GUIDE_PAGE_DEFINITIONS.map(def => ({
+    label: def.label,
+    href: def.href,
+  })),
   "حساب کاربری": [
     { label: "وضعیت سفارش‌ها", href: "/account?tab=orders" },
     { label: "علاقه‌مندی‌ها",  href: "/account" },
