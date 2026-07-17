@@ -53,6 +53,7 @@ export default function AdminOrdersPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -90,14 +91,36 @@ export default function AdminOrdersPage() {
 
   async function updateStatus(orderId: string, status: string) {
     setUpdating(true);
-    await fetch(`/api/orders/${orderId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    setUpdating(false);
-    fetchOrders();
-    closeDetail();
+    setStatusMsg(null);
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setStatusMsg({ type: "err", text: data.error || "خطا در به‌روزرسانی وضعیت" });
+        return;
+      }
+      const smsSent = data.data?.smsSent;
+      const smsError = data.data?.smsError;
+      const smsPhone = data.data?.smsPhone;
+      if (smsSent) {
+        setStatusMsg({ type: "ok", text: `وضعیت به‌روز شد و پیامک به ${smsPhone} ارسال شد` });
+      } else if (smsError) {
+        setStatusMsg({ type: "err", text: `وضعیت به‌روز شد ولی پیامک ارسال نشد: ${smsError}` });
+      } else {
+        setStatusMsg({ type: "ok", text: "وضعیت سفارش به‌روزرسانی شد" });
+      }
+      await fetchOrders();
+      closeDetail();
+    } catch {
+      setStatusMsg({ type: "err", text: "خطای شبکه" });
+    } finally {
+      setUpdating(false);
+    }
   }
 
   const getStatus = (s: string) => statusOptions.find(o => o.value === s);
@@ -106,6 +129,16 @@ export default function AdminOrdersPage() {
     <div>
       <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700", marginBottom: "24px" }}>مدیریت سفارش‌ها</h2>
 
+      {statusMsg && (
+        <div style={{
+          marginBottom: "16px", padding: "12px 14px", borderRadius: "8px", fontSize: "13px",
+          backgroundColor: statusMsg.type === "ok" ? "#052e1a" : "#2a1215",
+          border: `1px solid ${statusMsg.type === "ok" ? "#166534" : "#7f1d1d"}`,
+          color: statusMsg.type === "ok" ? "#86efac" : "#fca5a5",
+        }}>
+          {statusMsg.text}
+        </div>
+      )}
       <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "10px", overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>

@@ -361,8 +361,14 @@ export const orders = {
     const where = userId ? "WHERE o.id = ? AND o.user_id = ?" : "WHERE o.id = ?";
     const params: unknown[] = userId ? [id, userId] : [id];
     const order = db.prepare(
-      `SELECT o.*, u.name as user_name, u.email as user_email, u.phone as user_phone FROM orders o LEFT JOIN users u ON u.id = o.user_id ${where}`
-    ).get(...params) as (Order & { user_name: string; user_email: string; user_phone: string }) | undefined;
+      `SELECT o.*, u.name as user_name, u.email as user_email, u.phone as user_phone, u.phone_login as user_phone_login
+       FROM orders o LEFT JOIN users u ON u.id = o.user_id ${where}`
+    ).get(...params) as (Order & {
+      user_name: string;
+      user_email: string;
+      user_phone: string | null;
+      user_phone_login: string | null;
+    }) | undefined;
     if (!order) return undefined;
     const items = db.prepare(
       "SELECT oi.*, p.name as product_name, p.images as product_images FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ?"

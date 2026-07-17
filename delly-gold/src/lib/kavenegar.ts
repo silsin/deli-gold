@@ -32,7 +32,7 @@ async function kavenegarRequest(
   const status = data.return?.status;
   if (!res.ok || status !== 200) {
     const message = data.return?.message || `Kavenegar HTTP ${res.status}`;
-    throw new Error(message);
+    throw new Error(status ? `Kavenegar ${status}: ${message}` : message);
   }
   return data;
 }

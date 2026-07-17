@@ -8,6 +8,25 @@ import { sendOrderStatusSms } from "@/lib/kavenegar";
 
 const VALID_STATUSES = ["PENDING","CONFIRMED","PROCESSING","SHIPPED","DELIVERED","CANCELLED"];
 
+function resolveOrderSmsPhone(order: {
+  recipient_phone?: string | null;
+  delivery_phone?: string | null;
+  user_phone_login?: string | null;
+  user_phone?: string | null;
+}): string | null {
+  const candidates = [
+    order.recipient_phone,
+    order.delivery_phone,
+    order.user_phone_login,
+    order.user_phone,
+  ];
+  for (const raw of candidates) {
+    const phone = normalizePhone(String(raw ?? ""));
+    if (phone) return phone;
+  }
+  return null;
+}
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const result = requireAuth(req);
@@ -33,20 +52,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const previousStatus = existing.status;
     const updated = orders.updateStatus(id, status);
 
+    let smsSent = false;
+    let smsSkipped = previousStatus === status;
+    let smsError: string | null = null;
+    let smsPhone: string | null = null;
+
     if (previousStatus !== status) {
-      const phoneRaw = updated?.recipient_phone || updated?.delivery_phone || "";
-      const phone = normalizePhone(phoneRaw);
-      if (phone) {
+      smsPhone = resolveOrderSmsPhone(updated!);
+      if (!smsPhone) {
+        smsError = "شماره موبایل معتبری برای ارسال پیامک یافت نشد";
+        console.warn(`Order ${id}: no valid mobile for status SMS`);
+      } else {
         try {
-          await sendOrderStatusSms(phone, id, status);
+          await sendOrderStatusSms(smsPhone, id, status);
+          smsSent = true;
         } catch (e) {
+          smsError = e instanceof Error ? e.message : "خطا در ارسال پیامک";
           console.error("Order status SMS error:", e);
         }
-      } else {
-        console.warn(`Order ${id}: no valid recipient phone for status SMS`);
       }
     }
 
-    return ok(serializeOrderDetail(updated!));
+    return ok({
+      ...serializeOrderDetail(updated!),
+      smsSent,
+      smsSkipped,
+      smsError,
+      smsPhone,
+    });
   } catch (e) { console.error(e); return serverError(); }
 }

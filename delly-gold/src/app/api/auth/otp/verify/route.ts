@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     const phoneRaw = String(body.phone ?? "").trim();
     const code = String(body.code ?? "").trim();
     const name = String(body.name ?? "").trim();
+    const intent = body.intent === "register" ? "register" : "login";
 
     if (!phoneRaw || !code) return error("شماره موبایل و کد تأیید الزامی است");
     if (!/^\d{5}$/.test(code)) return error("کد تأیید باید ۵ رقم باشد");
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
+      if (intent === "login") {
+        return error("حسابی با این شماره یافت نشد. لطفاً ثبت‌نام کنید", 404);
+      }
       if (!name) return error("نام الزامی است", 400);
       const hashed = await hashPassword(randomBytes(32).toString("hex"));
       const emailPlaceholder = `${phone}@phone.local`;

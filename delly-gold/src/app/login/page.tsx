@@ -78,6 +78,7 @@ function LoginForm() {
         body: JSON.stringify({
           phone,
           code: otp,
+          intent: tab,
           ...(tab === "register" ? { name } : {}),
         }),
       });
