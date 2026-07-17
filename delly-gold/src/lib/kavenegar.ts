@@ -6,9 +6,7 @@ interface KavenegarResponse {
 }
 
 function getApiKey(): string | null {
-
-
-  const key = process.env.KAVENEGAR_API_KEY?.trim() || "4A3747434547582F6F74494D6F52512B67486B5A4A536B38323077634276476D5548342B31496B37376C453D";
+  const key = process.env.KAVENEGAR_API_KEY?.trim();
   return key || null;
 }
 
@@ -39,7 +37,11 @@ async function kavenegarRequest(
   return data;
 }
 
-/** Send OTP via Kavenegar verify/lookup template (preferred) or plain SMS. */
+/**
+ * Send OTP via Kavenegar verify/lookup (اعتبارسنجی) — preferred.
+ * Use KAVENEGAR_OTP_PLAIN_SMS=1 to force plain sms/send instead.
+ * @see https://kavenegar.com/rest.html#verify-lookup
+ */
 export async function sendOtpSms(phone: string, code: string): Promise<void> {
   const apiKey = getApiKey();
   if (!apiKey) {
@@ -51,21 +53,62 @@ export async function sendOtpSms(phone: string, code: string): Promise<void> {
     throw new Error("KAVENEGAR_API_KEY is not configured");
   }
 
-  const template = process.env.KAVENEGAR_OTP_TEMPLATE?.trim();
-  const sender = process.env.KAVENEGAR_SENDER?.trim();
+  const template = process.env.KAVENEGAR_OTP_TEMPLATE?.trim() || "verify";
   const siteName = process.env.KAVENEGAR_SITE_NAME?.trim() || "دلی گلد";
+  const usePlainSms = process.env.KAVENEGAR_OTP_PLAIN_SMS === "1";
 
-  if (template) {
+  // Preferred: verify/lookup — high priority, not filtered as promotional SMS
+  if (!usePlainSms) {
     await kavenegarRequest("verify/lookup.json", {
       receptor: phone,
       token: code,
       template,
+      type: "sms",
     });
     return;
   }
 
+  // Fallback: plain sms/send (can be blocked if user disabled ads)
   const message = `کد ورود ${siteName}: ${code}\nاین کد تا ۵ دقیقه معتبر است.`;
+  await sendPlainSms(phone, message);
+}
+
+/** Plain SMS via sms/send.json — for transactional notices (order status, etc.). */
+export async function sendPlainSms(phone: string, message: string): Promise<void> {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    const devMode = process.env.NODE_ENV === "development" || process.env.OTP_DEV_LOG === "1";
+    if (devMode) {
+      console.log(`[SMS dev] KAVENEGAR_API_KEY missing — to ${phone}: ${message}`);
+      return;
+    }
+    throw new Error("KAVENEGAR_API_KEY is not configured");
+  }
+
+  const sender = process.env.KAVENEGAR_SENDER?.trim();
   const params: Record<string, string> = { receptor: phone, message };
   if (sender) params.sender = sender;
   await kavenegarRequest("sms/send.json", params);
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: "در انتظار بررسی",
+  CONFIRMED: "تأیید شده",
+  PROCESSING: "در حال آماده‌سازی",
+  SHIPPED: "ارسال شده",
+  DELIVERED: "تحویل داده شده",
+  CANCELLED: "لغو شده",
+};
+
+/** Notify recipient that an order status changed. */
+export async function sendOrderStatusSms(
+  phone: string,
+  orderId: string,
+  status: string
+): Promise<void> {
+  const siteName = process.env.KAVENEGAR_SITE_NAME?.trim() || "دلی گلد";
+  const label = ORDER_STATUS_LABELS[status] || status;
+  const shortId = orderId.slice(0, 8);
+  const message = `${siteName}\nسفارش ${shortId}\nوضعیت: ${label}`;
+  await sendPlainSms(phone, message);
 }
