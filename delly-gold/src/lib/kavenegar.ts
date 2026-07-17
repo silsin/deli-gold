@@ -85,10 +85,19 @@ export async function sendPlainSms(phone: string, message: string): Promise<void
     throw new Error("KAVENEGAR_API_KEY is not configured");
   }
 
-  const sender = process.env.KAVENEGAR_SENDER?.trim();
+  const sender = normalizeSender(process.env.KAVENEGAR_SENDER);
   const params: Record<string, string> = { receptor: phone, message };
   if (sender) params.sender = sender;
   await kavenegarRequest("sms/send.json", params);
+}
+
+/** Normalize sender line: +9810004347 → 10004347 */
+function normalizeSender(raw: string | undefined): string | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("98") && digits.length > 10) return digits.slice(2);
+  return digits || value;
 }
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
