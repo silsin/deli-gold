@@ -19,6 +19,7 @@ up:
 		echo "   Or run without Compose: make up-plain"; \
 		exit 1; \
 	fi
+	@sh scripts/ensure-data.sh
 	$(COMPOSE) up -d --build
 
 ## Start with plain Docker (no Compose plugin required)
@@ -33,6 +34,7 @@ install-compose:
 fix-compose:
 	-docker rm -f delly-gold 2>/dev/null
 	$(COMPOSE) down --remove-orphans 2>/dev/null || true
+	@sh scripts/ensure-data.sh
 	$(COMPOSE) up -d --build
 
 ## Stop and remove containers
@@ -50,6 +52,7 @@ restart:
 ## Full rebuild — no cache
 rebuild:
 	$(COMPOSE) down
+	@sh scripts/ensure-data.sh
 	$(COMPOSE) build --no-cache
 	$(COMPOSE) up -d
 
@@ -61,11 +64,9 @@ shell:
 status:
 	$(COMPOSE) ps
 
-## Remove containers + volumes (WARNING: deletes database!)
+## Stop containers (host ./data is kept — DB + uploads safe)
 clean:
-	@echo "⚠️  This will DELETE the database volume!"
-	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ]
-	$(COMPOSE) down -v
+	$(COMPOSE) down
 
 ## Show this help
 help:

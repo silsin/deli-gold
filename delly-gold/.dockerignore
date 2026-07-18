@@ -4,7 +4,8 @@ node_modules
 # Next.js build output (rebuilt inside Docker)
 .next
 
-# Local database (use Docker volume instead)
+# Local / host data (bind-mounted at runtime — do not bake into image)
+data/
 prisma/dev.db
 prisma/dev.db-shm
 prisma/dev.db-wal

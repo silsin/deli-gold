@@ -121,7 +121,10 @@ docker-entrypoint.sh← DB setup + start server
 .env.production.example ← Template for production secrets
 ```
 
-**Volume:** `delly-gold-db` — SQLite database persisted between restarts
+**Data dir (bind mount):** host `./data` → `/app/data` (automatic — no config needed)  
+`make up` / `scripts/docker-up.sh` run `scripts/ensure-data.sh`, which:
+1. Creates `./data/uploads` on the host
+2. If that folder has no DB yet, copies from the old Docker volume `*delly-gold-db*` once
 
 ---
 

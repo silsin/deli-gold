@@ -5,12 +5,19 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  Delly Gold — Starting up"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Run DB migrations + seed (idempotent — safe to run every startup)
+UPLOAD_DIR="${UPLOAD_DIR:-/app/data/uploads}"
+
+# Bind mounts are often owned by root on the host — fix so nextjs can write
+if [ "$(id -u)" = "0" ]; then
+  mkdir -p "$UPLOAD_DIR"
+  chown -R nextjs:nodejs /app/data
+  exec su-exec nextjs "$0"
+fi
+
+mkdir -p "$UPLOAD_DIR"
+
 echo "📦 Setting up database..."
 node scripts/setup-db.mjs
-
-# Ensure uploads directory exists on the persistent volume
-mkdir -p "${UPLOAD_DIR:-/app/data/uploads}"
 
 echo "🚀 Starting Next.js server..."
 exec node server.js

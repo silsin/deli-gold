@@ -35,7 +35,7 @@ RUN npm run build
 # ─────────────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache libc6-compat tzdata wget
+RUN apk add --no-cache libc6-compat tzdata wget su-exec
 
 ENV TZ=Asia/Tehran
 ENV NODE_ENV=production
@@ -61,14 +61,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma   ./prisma
 # bcryptjs is used by the seed script at runtime — copy from deps stage
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 
-# Persistent SQLite data directory
+# Persistent SQLite data directory (bind-mounted at runtime)
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-# Entrypoint script
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
+# Entrypoint runs as root briefly to fix bind-mount ownership, then drops to nextjs
+COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
-
-USER nextjs
 
 EXPOSE 3000
 
