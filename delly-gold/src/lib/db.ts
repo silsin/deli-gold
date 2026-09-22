@@ -352,7 +352,9 @@ export interface Order {
 }
 
 export interface OrderItem {
-  id: string; quantity: number; price: number; order_id: string; product_id: string;
+  id: string; quantity: number; price: number; order_id: string;
+  /** Null once the referenced product has been deleted (ON DELETE SET NULL). */
+  product_id: string | null;
 }
 
 export const orders = {

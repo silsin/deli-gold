@@ -362,6 +362,36 @@ const migrations = [
         ('special_offers_end', '');
     `,
   },
+  {
+    // order_items.product_id referenced products(id) with no ON DELETE action, so
+    // deleting a product that had ever been ordered raised
+    // "FOREIGN KEY constraint failed" — surfaced by the API as HTTP 500.
+    // Rebuild the table so the product reference is nullable and clears itself,
+    // keeping the order line (quantity/price) intact for order history.
+    name: "024_order_items_product_fk",
+    sql: `
+      PRAGMA foreign_keys=OFF;
+      BEGIN;
+      DROP TABLE IF EXISTS order_items_new;
+      CREATE TABLE order_items_new (
+        id         TEXT PRIMARY KEY,
+        quantity   INTEGER NOT NULL,
+        price      REAL NOT NULL,
+        order_id   TEXT NOT NULL,
+        product_id TEXT,
+        FOREIGN KEY (order_id)   REFERENCES orders(id)   ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+      );
+      INSERT INTO order_items_new (id, quantity, price, order_id, product_id)
+        SELECT id, quantity, price, order_id, product_id FROM order_items;
+      DROP TABLE order_items;
+      ALTER TABLE order_items_new RENAME TO order_items;
+      CREATE INDEX IF NOT EXISTS idx_order_items_order   ON order_items(order_id);
+      CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id);
+      COMMIT;
+      PRAGMA foreign_keys=ON;
+    `,
+  },
 ];
 
 let appliedCount = 0;

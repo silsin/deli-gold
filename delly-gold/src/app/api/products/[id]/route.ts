@@ -41,8 +41,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const { id } = await params;
-    specialOffers.deleteByProductId(id);
+    // Delete the product first: wishlist_items and special_offers cascade, and if
+    // anything else rejects the delete we must not have already removed its offer
+    // rows. The explicit offer sweep afterwards also covers databases created
+    // before special_offers had its ON DELETE CASCADE.
     products.delete(id);
+    specialOffers.deleteByProductId(id);
     return ok({ deleted: true });
   } catch (e) { console.error(e); return serverError(); }
 }
