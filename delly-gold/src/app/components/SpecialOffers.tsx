@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight, BadgePercent } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +21,7 @@ function getImg(images: string): string | null {
 
 export default function SpecialOffers() {
   const [offers, setOffers]         = useState<OfferWithProduct[]>([]);
-  const [title, setTitle]           = useState("Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø´Ú¯ÙØª Ø§Ù†Ú¯ÛŒØ²");
+  const [title, setTitle]           = useState("پیشنهاد شگفت انگیز");
   const [viewAll, setViewAll]       = useState("/products");
   const [settings, setSettings]     = useState<Settings>({ gold_markup_percent: "5", gold_fixed_fee: "0" });
   const [liked, setLiked]           = useState<Set<string>>(new Set());
@@ -73,27 +73,30 @@ export default function SpecialOffers() {
         <Link href={viewAll} style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", textDecoration: "none", fontSize: "12px", fontWeight: "700", padding: "7px 16px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.4)" }}
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.35)"}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.2)"}>
-          Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ù‡Ù…Ù‡
+          مشاهده همه
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <BadgePercent size={20} color="#fff" />
           <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: "800", margin: 0 }}>{title}</h2>
         </div>
       </div>
+
+
       {/* Scroll row */}
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", position: "relative" }}>
-        <button onClick={() => scroll("left")} aria-label="Ù‚Ø¨Ù„ÛŒ"
+        <button onClick={() => scroll("left")} aria-label="قبلی"
           style={{ position: "absolute", left: "0", top: "50%", transform: "translateY(-50%)", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#555", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#e53935"; el.style.color = "#fff"; el.style.borderColor = "#e53935"; }}
           onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#fff"; el.style.color = "#555"; el.style.borderColor = "#e0e0e0"; }}>
           <ChevronLeft size={18}/>
         </button>
-        <button onClick={() => scroll("right")} aria-label="Ø¨Ø¹Ø¯ÛŒ"
+        <button onClick={() => scroll("right")} aria-label="بعدی"
           style={{ position: "absolute", right: "0", top: "50%", transform: "translateY(-50%)", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#555", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#e53935"; el.style.color = "#fff"; el.style.borderColor = "#e53935"; }}
           onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#fff"; el.style.color = "#555"; el.style.borderColor = "#e0e0e0"; }}>
           <ChevronRight size={18}/>
         </button>
+
 
         <div ref={scrollRef} style={{ display: "flex", overflowX: "auto", scrollbarWidth: "none", padding: "20px 24px", margin: "0 -16px" }}>
           <style>{`::-webkit-scrollbar{display:none}`}</style>
@@ -119,16 +122,18 @@ export default function SpecialOffers() {
                         onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1)"}
                       />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", fontSize: "11px" }}>Ø¨Ø¯ÙˆÙ† ØªØµÙˆÛŒØ±</div>
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", fontSize: "11px" }}>بدون تصویر</div>
                     )}
                     {hasDiscount && !oos && (
                       <div style={{ position: "absolute", top: "8px", right: "8px", backgroundColor: "#e53935", color: "#fff", fontSize: "11px", fontWeight: "800", padding: "3px 8px", borderRadius: "12px", direction: "ltr" }}>
                         {p.discount_percent}%
                       </div>
                     )}
-                    {oos && <span style={{ position: "absolute", top: "8px", left: "8px", backgroundColor: "#f5f5f5", color: "#aaa", fontSize: "9px", fontWeight: "700", padding: "2px 7px", borderRadius: "10px", border: "1px solid #e0e0e0" }}>Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯</span>}
+                    {oos && <span style={{ position: "absolute", top: "8px", left: "8px", backgroundColor: "#f5f5f5", color: "#aaa", fontSize: "9px", fontWeight: "700", padding: "2px 7px", borderRadius: "10px", border: "1px solid #e0e0e0" }}>ناموجود</span>}
                   </div>
                 </Link>
+
+
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
                   <span style={{ color: "#bbb", fontSize: "10px" }}>{p.weight} gr {p.karat}K</span>
                   <span style={{ color: "#bbb", fontSize: "10px" }}>{code}</span>
@@ -156,9 +161,9 @@ export default function SpecialOffers() {
                     {discounted > 0 ? (
                       <>
                         <p style={{ color: "#e53935", fontSize: "12px", fontWeight: "800", lineHeight: 1.2, direction: "ltr", textAlign: "right" }}>{discounted.toLocaleString("fa-IR")}</p>
-                        <p style={{ color: "#bbb", fontSize: "9px" }}>ØªÙˆÙ…Ø§Ù†</p>
+                        <p style={{ color: "#bbb", fontSize: "9px" }}>تومان</p>
                       </>
-                    ) : <p style={{ color: "#bbb", fontSize: "11px" }}>ØªÙ…Ø§Ø³ Ø¨Ú¯ÛŒØ±ÛŒØ¯</p>}
+                    ) : <p style={{ color: "#bbb", fontSize: "11px" }}>تماس بگیرید</p>}
                   </div>
                 </div>
               </div>
@@ -169,3 +174,4 @@ export default function SpecialOffers() {
     </section>
   );
 }
+

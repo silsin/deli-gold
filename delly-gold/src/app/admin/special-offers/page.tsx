@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Trash2, X, Eye, EyeOff, Save } from "lucide-react";
@@ -31,7 +31,7 @@ export default function AdminSpecialOffersPage() {
   const [error, setError]         = useState("");
 
   // Section settings
-  const [title, setTitle]         = useState("Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø´Ú¯ÙØª Ø§Ù†Ú¯ÛŒØ²");
+  const [title, setTitle]         = useState("پیشنهاد شگفت انگیز");
   const [href, setHref]           = useState("/products");
   const [enabled, setEnabled]     = useState(true);
   const [savedSettings, setSavedSettings] = useState(false);
@@ -77,7 +77,7 @@ export default function AdminSpecialOffersPage() {
   }
 
   async function handleSave() {
-    if (!productId) { setError("Ø§Ù†ØªØ®Ø§Ø¨ Ù…Ø­ØµÙˆÙ„ Ø§Ù„Ø²Ø§Ù…ÛŒ Ø§Ø³Øª"); return; }
+    if (!productId) { setError("انتخاب محصول الزامی است"); return; }
     setSaving(true); setError("");
     try {
       const res = await fetch("/api/admin/special-offers", {
@@ -85,10 +85,10 @@ export default function AdminSpecialOffersPage() {
         body: JSON.stringify({ product_id: productId, discount_percent: parseFloat(discount) || 0, sort_order: parseInt(sortOrder) || 0, active: 1 }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Ø®Ø·Ø§"); return; }
+      if (!res.ok) { setError(data.error || "خطا"); return; }
       setShowModal(false);
       fetchAll();
-    } catch { setError("Ø®Ø·Ø§ÛŒ Ø´Ø¨Ú©Ù‡"); }
+    } catch { setError("خطای شبکه"); }
     finally { setSaving(false); }
   }
 
@@ -118,36 +118,38 @@ export default function AdminSpecialOffersPage() {
 
   const selectedProduct = products.find(p => p.id === productId);
 
+
   return (
     <AdminGuard>
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div>
-            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700" }}>Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø´Ú¯ÙØª Ø§Ù†Ú¯ÛŒØ²</h2>
-            <p style={{ color: "#666", fontSize: "12px", marginTop: "4px" }}>Ù…Ø­ØµÙˆÙ„Ø§Øª Ø¨Ø®Ø´ ØªØ®ÙÛŒÙâ€ŒØ¯Ø§Ø± ØµÙØ­Ù‡ Ø§ØµÙ„ÛŒ Ø±Ø§ Ù…Ø¯ÛŒØ±ÛŒØª Ú©Ù†ÛŒØ¯</p>
+            <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700" }}>پیشنهاد شگفت انگیز</h2>
+            <p style={{ color: "#666", fontSize: "12px", marginTop: "4px" }}>محصولات بخش تخفیف‌دار صفحه اصلی را مدیریت کنید</p>
           </div>
           <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "6px", padding: "8px 16px", fontWeight: "700", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
-            <Plus size={16} /> Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø¬Ø¯ÛŒØ¯
+            <Plus size={16} /> پیشنهاد جدید
           </button>
         </div>
+
         {/* Section settings */}
         <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "20px", marginBottom: "24px" }}>
-          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "700", marginBottom: "4px" }}>ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ø¨Ø®Ø´</h3>
-          <p style={{ color: "#666", fontSize: "12px", marginBottom: "16px" }}>Ø¹Ù†ÙˆØ§Ù†ØŒ Ù„ÛŒÙ†Ú© Â«Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ù‡Ù…Ù‡Â» Ùˆ Ø±ÙˆØ´Ù†/Ø®Ø§Ù…ÙˆØ´ Ø¨ÙˆØ¯Ù† Ø¨Ø®Ø´</p>
+          <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "700", marginBottom: "4px" }}>تنظیمات بخش</h3>
+          <p style={{ color: "#666", fontSize: "12px", marginBottom: "16px" }}>عنوان، لینک «مشاهده همه» و روشن/خاموش بودن بخش</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "12px", marginBottom: "14px" }}>
             <div>
-              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>Ø¹Ù†ÙˆØ§Ù† Ø¨Ø®Ø´</label>
+              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>عنوان بخش</label>
               <input value={title} onChange={e => setTitle(e.target.value)} style={{ ...inp, direction: "rtl" }} />
             </div>
             <div>
-              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>Ù„ÛŒÙ†Ú© Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ù‡Ù…Ù‡</label>
+              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>لینک مشاهده همه</label>
               <input value={href} onChange={e => setHref(e.target.value)} style={{ ...inp, direction: "ltr" }} placeholder="/products" />
             </div>
             <div>
-              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>ÙˆØ¶Ø¹ÛŒØª Ø¨Ø®Ø´</label>
+              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>وضعیت بخش</label>
               <button onClick={() => setEnabled(v => !v)}
                 style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px", padding: "8px 12px", cursor: "pointer", fontFamily: "inherit" }}>
-                <span style={{ color: enabled ? "#10b981" : "#666", fontSize: "12px", fontWeight: "700" }}>{enabled ? "ÙØ¹Ø§Ù„" : "ØºÛŒØ±ÙØ¹Ø§Ù„"}</span>
+                <span style={{ color: enabled ? "#10b981" : "#666", fontSize: "12px", fontWeight: "700" }}>{enabled ? "فعال" : "غیرفعال"}</span>
                 <span style={{ width: "36px", height: "20px", borderRadius: "10px", backgroundColor: enabled ? "#10b981" : "#333", position: "relative", transition: "background 0.2s" }}>
                   <span style={{ position: "absolute", top: "2px", right: enabled ? "2px" : "18px", width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "#fff", transition: "right 0.2s" }} />
                 </span>
@@ -155,17 +157,19 @@ export default function AdminSpecialOffersPage() {
             </div>
           </div>
           <button onClick={saveSectionSettings} style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "700", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
-            <Save size={15} /> Ø°Ø®ÛŒØ±Ù‡ ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ø¨Ø®Ø´
+            <Save size={15} /> ذخیره تنظیمات بخش
           </button>
-          {savedSettings && <div style={{ marginTop: "12px", backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", color: "#10b981", fontSize: "13px" }}>âœ“ ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ø°Ø®ÛŒØ±Ù‡ Ø´Ø¯</div>}
+          {savedSettings && <div style={{ marginTop: "12px", backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", color: "#10b981", fontSize: "13px" }}>✓ تنظیمات ذخیره شد</div>}
         </div>
+
+
         {loading ? (
-          <p style={{ color: "#555" }}>Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ...</p>
+          <p style={{ color: "#555" }}>در حال بارگذاری...</p>
         ) : offers.length === 0 ? (
           <div style={{ backgroundColor: "#1a1a1a", border: "2px dashed #2a2a2a", borderRadius: "12px", padding: "48px", textAlign: "center" }}>
-            <p style={{ color: "#555", marginBottom: "16px" }}>Ù‡ÛŒÚ† Ù…Ø­ØµÙˆÙ„ÛŒ Ø¨Ù‡ Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯Ù‡Ø§ Ø§Ø¶Ø§ÙÙ‡ Ù†Ø´Ø¯Ù‡</p>
+            <p style={{ color: "#555", marginBottom: "16px" }}>هیچ محصولی به پیشنهادها اضافه نشده</p>
             <button onClick={openCreate} style={{ backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "6px", padding: "8px 20px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}>
-              Ø§ÙˆÙ„ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø±Ø§ Ø¨Ø³Ø§Ø²ÛŒØ¯
+              اولین پیشنهاد را بسازید
             </button>
           </div>
         ) : (
@@ -180,7 +184,7 @@ export default function AdminSpecialOffersPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ color: "#fff", fontSize: "13px", fontWeight: "600", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.name}</p>
                   <p style={{ color: "#666", fontSize: "11px", margin: "2px 0 0" }}>
-                    ØªØ±ØªÛŒØ¨: {o.sort_order} Â· {o.published ? "Ù…Ù†ØªØ´Ø± Ø´Ø¯Ù‡" : "Ù¾ÛŒØ´â€ŒÙ†ÙˆÛŒØ³"} {o.stock === 0 ? "Â· Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯" : ""}
+                    ترتیب: {o.sort_order} · {o.published ? "منتشر شده" : "پیش‌نویس"} {o.stock === 0 ? "· ناموجود" : ""}
                   </p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
@@ -188,10 +192,10 @@ export default function AdminSpecialOffersPage() {
                     type="number" min={0} max={90} defaultValue={o.discount_percent}
                     onBlur={e => { const v = parseFloat(e.target.value); if (v !== o.discount_percent) updateDiscount(o, e.target.value); }}
                     style={{ ...inp, width: "70px", textAlign: "center", padding: "6px 8px" }}
-                    title="Ø¯Ø±ØµØ¯ ØªØ®ÙÛŒÙ"
+                    title="درصد تخفیف"
                   />
-                  <span style={{ color: "#666", fontSize: "11px" }}>Ùª</span>
-                  <button onClick={() => toggleActive(o)} title={o.active ? "ØºÛŒØ±ÙØ¹Ø§Ù„ Ú©Ø±Ø¯Ù†" : "ÙØ¹Ø§Ù„ Ú©Ø±Ø¯Ù†"}
+                  <span style={{ color: "#666", fontSize: "11px" }}>٪</span>
+                  <button onClick={() => toggleActive(o)} title={o.active ? "غیرفعال کردن" : "فعال کردن"}
                     style={{ backgroundColor: "transparent", border: "1px solid #333", borderRadius: "6px", padding: "6px 8px", cursor: "pointer", color: o.active ? "#10b981" : "#666" }}>
                     {o.active ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
@@ -204,31 +208,33 @@ export default function AdminSpecialOffersPage() {
             ))}
           </div>
         )}
+
+
         {/* Create modal */}
         {showModal && (
           <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "16px" }}>
             <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "24px", width: "100%", maxWidth: "440px", maxHeight: "90vh", overflowY: "auto" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-                <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: "700", margin: 0 }}>Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø¬Ø¯ÛŒØ¯</h3>
+                <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: "700", margin: 0 }}>پیشنهاد جدید</h3>
                 <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", padding: "4px" }}><X size={18} /></button>
               </div>
 
-              <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>Ø§Ù†ØªØ®Ø§Ø¨ Ù…Ø­ØµÙˆÙ„</label>
+              <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>انتخاب محصول</label>
               <select value={productId} onChange={e => setProductId(e.target.value)}
                 style={{ ...inp, marginBottom: "14px", backgroundColor: "#121212" }}>
-                <option value="">â€” Ø§Ù†ØªØ®Ø§Ø¨ Ú©Ù†ÛŒØ¯ â€”</option>
+                <option value="">— انتخاب کنید —</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} {p.published ? "" : "(Ù¾ÛŒØ´â€ŒÙ†ÙˆÛŒØ³)"}</option>
+                  <option key={p.id} value={p.id}>{p.name} {p.published ? "" : "(پیش‌نویس)"}</option>
                 ))}
               </select>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
                 <div>
-                  <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>Ø¯Ø±ØµØ¯ ØªØ®ÙÛŒÙ</label>
+                  <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>درصد تخفیف</label>
                   <input type="number" min={0} max={90} value={discount} onChange={e => setDiscount(e.target.value)} style={{ ...inp }} />
                 </div>
                 <div>
-                  <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>ØªØ±ØªÛŒØ¨ Ù†Ù…Ø§ÛŒØ´</label>
+                  <label style={{ display: "block", color: "#888", fontSize: "12px", marginBottom: "6px" }}>ترتیب نمایش</label>
                   <input type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} style={{ ...inp }} />
                 </div>
               </div>
@@ -236,23 +242,24 @@ export default function AdminSpecialOffersPage() {
               {error && <div style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#ef4444", fontSize: "13px" }}>{error}</div>}
 
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button onClick={() => setShowModal(false)} style={{ backgroundColor: "#2a2a2a", color: "#ccc", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>Ø§Ù†ØµØ±Ø§Ù</button>
+                <button onClick={() => setShowModal(false)} style={{ backgroundColor: "#2a2a2a", color: "#ccc", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>انصراف</button>
                 <button onClick={handleSave} disabled={saving || !selectedProduct}
                   style={{ backgroundColor: saving || !selectedProduct ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "10px 20px", fontWeight: "700", cursor: saving || !selectedProduct ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-                  {saving ? "Ø¯Ø± Ø­Ø§Ù„ Ø°Ø®ÛŒØ±Ù‡..." : "Ø§ÙØ²ÙˆØ¯Ù† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯"}
+                  {saving ? "در حال ذخیره..." : "افزودن پیشنهاد"}
                 </button>
               </div>
             </div>
           </div>
         )}
+
         {/* Delete confirm */}
         {deleteId && (
           <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "16px" }}>
             <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "24px", width: "100%", maxWidth: "360px", textAlign: "center" }}>
-              <p style={{ color: "#fff", fontSize: "14px", marginBottom: "20px" }}>Ø§ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø­Ø°Ù Ø´ÙˆØ¯ØŸ</p>
+              <p style={{ color: "#fff", fontSize: "14px", marginBottom: "20px" }}>این پیشنهاد حذف شود؟</p>
               <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button onClick={() => setDeleteId(null)} style={{ backgroundColor: "#2a2a2a", color: "#ccc", border: "none", borderRadius: "8px", padding: "9px 20px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>Ø§Ù†ØµØ±Ø§Ù</button>
-                <button onClick={() => handleDelete(deleteId)} style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 20px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}>Ø­Ø°Ù</button>
+                <button onClick={() => setDeleteId(null)} style={{ backgroundColor: "#2a2a2a", color: "#ccc", border: "none", borderRadius: "8px", padding: "9px 20px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>انصراف</button>
+                <button onClick={() => handleDelete(deleteId)} style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", borderRadius: "8px", padding: "9px 20px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}>حذف</button>
               </div>
             </div>
           </div>
@@ -261,3 +268,4 @@ export default function AdminSpecialOffersPage() {
     </AdminGuard>
   );
 }
+
