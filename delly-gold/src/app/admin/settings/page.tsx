@@ -74,6 +74,23 @@ export default function AdminSettingsPage() {
   const [priceBar, setPriceBar] = useState<PriceBarStyle>(DEFAULT_PRICE_BAR_STYLE);
   const [savingPriceBar, setSavingPriceBar] = useState(false);
   const [priceBarSaved, setPriceBarSaved] = useState(false);
+
+  // Load the selected price-bar font on demand so the preview updates instantly
+  useEffect(() => {
+    const id = priceBar.fontId?.trim();
+    if (!id) return;
+    const linkId = "pricebar-gfonts-preview";
+    const url = buildGoogleFontsUrl([id]);
+    if (!url) return;
+    let link = document.getElementById(linkId) as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement("link");
+      link.id = linkId;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+    if (link.href !== url) link.href = url;
+  }, [priceBar.fontId]);
   const [goldData, setGoldData] = useState<GoldData | null>(null);
   const [loadingPrice, setLoadingPrice] = useState(true);
   const [themePalette, setThemePalette] = useState(DEFAULT_PALETTE_ID);
@@ -566,8 +583,13 @@ export default function AdminSettingsPage() {
               type="number"
               min={PRICE_BAR_FONT_SIZE_MIN}
               max={PRICE_BAR_FONT_SIZE_MAX}
-              value={priceBar.fontSize}
-              onChange={e => updatePriceBar("fontSize", parseInt(e.target.value, 10) || 12)}
+              value={String(priceBar.fontSize ?? "")}
+              onChange={e => {
+                const raw = e.target.value;
+                if (raw === "") { updatePriceBar("fontSize", 12); return; }
+                const n = parseInt(raw, 10);
+                updatePriceBar("fontSize", Number.isNaN(n) ? 12 : n);
+              }}
               onBlur={e => updatePriceBar("fontSize", clampPriceBarFontSize(e.target.value))}
               style={{ width: "70px", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "5px", padding: "6px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }}
             />
@@ -586,11 +608,12 @@ export default function AdminSettingsPage() {
           borderRadius: "8px",
           padding: "12px 16px",
           marginBottom: "18px",
+          overflow: "hidden",
         }}>
           <PriceBarContent
             style={priceBar}
             amount={finalPrice.toLocaleString("fa-IR")}
-            showDecorations={false}
+            showDecorations={true}
           />
         </div>
 
