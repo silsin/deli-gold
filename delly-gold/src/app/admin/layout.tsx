@@ -5,12 +5,13 @@ import Link from "next/link";
 import AdminGuard from "./AdminGuard";
 import {
   LayoutDashboard, Package, ShoppingBag, Users, Tag, Settings,
-  LogOut, Menu, X, ChevronLeft, Navigation, MessageSquare,
+  LogOut, Menu, X, ChevronLeft, Navigation, MessageSquare, BadgePercent,
 } from "lucide-react";
 
 const navItems = [
   { label: "داشبورد",        href: "/admin",             icon: LayoutDashboard },
   { label: "اسلایدر",        href: "/admin/slides",      icon: Package },
+  { label: "شگفت انگیزها",   href: "/admin/special-offers", icon: BadgePercent },
   { label: "محصولات",        href: "/admin/products",    icon: Package },
   { label: "سفارش‌ها",       href: "/admin/orders",      icon: ShoppingBag },
   { label: "تیکت‌ها",        href: "/admin/tickets",     icon: MessageSquare },

@@ -336,6 +336,25 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_support_messages_ticket ON support_messages(ticket_id);
     `,
   },
+  {
+    name: "022_special_offers",
+    sql: `
+      CREATE TABLE IF NOT EXISTS special_offers (
+        id               TEXT PRIMARY KEY,
+        product_id       TEXT NOT NULL,
+        discount_percent REAL NOT NULL DEFAULT 0,
+        sort_order       INTEGER NOT NULL DEFAULT 0,
+        active           INTEGER NOT NULL DEFAULT 1,
+        created_at       TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_special_offers_active ON special_offers(active, sort_order);
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('special_offers_title', 'پیشنهاد شگفت انگیز'),
+        ('special_offers_href', '/products'),
+        ('special_offers_enabled', '1');
+    `,
+  },
 ];
 
 let appliedCount = 0;

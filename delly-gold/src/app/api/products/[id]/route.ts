@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { products } from "@/lib/db";
+import { products, specialOffers } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { ok, error, notFound, serverError } from "@/lib/response";
 
@@ -41,6 +41,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const { id } = await params;
+    specialOffers.deleteByProductId(id);
     products.delete(id);
     return ok({ deleted: true });
   } catch (e) { console.error(e); return serverError(); }

@@ -41,6 +41,17 @@ function ensureSchema(db: DatabaseSync) {
     );
     CREATE INDEX IF NOT EXISTS idx_otp_codes_phone ON otp_codes(phone);
     CREATE INDEX IF NOT EXISTS idx_otp_codes_expires ON otp_codes(expires_at);
+
+    CREATE TABLE IF NOT EXISTS special_offers (
+      id               TEXT PRIMARY KEY,
+      product_id       TEXT NOT NULL,
+      discount_percent REAL NOT NULL DEFAULT 0,
+      sort_order       INTEGER NOT NULL DEFAULT 0,
+      active           INTEGER NOT NULL DEFAULT 1,
+      created_at       TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_special_offers_active ON special_offers(active, sort_order);
   `);
   ensureOrderShippingColumns(db);
   ensureSupportTables(db);
@@ -575,5 +586,91 @@ export const support = {
   setStatus(ticketId: string, status: "OPEN" | "CLOSED") {
     const db = getDb();
     db.prepare("UPDATE support_tickets SET status = ?, updated_at = datetime('now') WHERE id = ?").run(status, ticketId);
+  },
+};
+
+// ── Special offers (پیشنهاد شگفت انگیز) ──────────────────────────────────────
+
+export interface SpecialOfferRow {
+  id: string;
+  product_id: string;
+  discount_percent: number;
+  sort_order: number;
+  active: number;
+  created_at: string;
+}
+
+export interface SpecialOfferWithProduct extends SpecialOfferRow {
+  name: string;
+  slug: string;
+  price: number;
+  weight: number;
+  karat: number;
+  stock: number;
+  images: string;
+  ajrat_override: number;
+  ajrat_percent: number | null;
+  ajrat_fixed: number | null;
+  published: number;
+}
+
+export const specialOffers = {
+  /** All offers joined with their product, ordered for display. */
+  listWithProduct(opts: { activeOnly?: boolean } = {}) {
+    const { activeOnly = false } = opts;
+    const db = getDb();
+    const where = activeOnly ? "WHERE so.active = 1 AND p.published = 1" : "";
+    return db.prepare(
+      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images,
+              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
+       FROM special_offers so
+       INNER JOIN products p ON p.id = so.product_id
+       ${where}
+       ORDER BY so.sort_order ASC, so.created_at ASC`
+    ).all() as SpecialOfferWithProduct[];
+  },
+
+  create(data: { product_id: string; discount_percent: number; sort_order?: number; active?: number }) {
+    const db = getDb();
+    const id = generateId();
+    db.prepare(
+      "INSERT INTO special_offers (id, product_id, discount_percent, sort_order, active) VALUES (?, ?, ?, ?, ?)"
+    ).run(id, data.product_id, data.discount_percent, data.sort_order ?? 0, data.active ?? 1);
+    return this.findById(id);
+  },
+
+  findById(id: string) {
+    const db = getDb();
+    const offer = db.prepare("SELECT * FROM special_offers WHERE id = ?").get(id) as SpecialOfferRow | undefined;
+    if (!offer) return undefined;
+    const withProduct = db.prepare(
+      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images,
+              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
+       FROM special_offers so
+       INNER JOIN products p ON p.id = so.product_id
+       WHERE so.id = ?`
+    ).get(id) as SpecialOfferWithProduct | undefined;
+    return withProduct ?? offer;
+  },
+
+  update(id: string, data: Partial<Pick<SpecialOfferRow, "discount_percent" | "sort_order" | "active">>) {
+    const db = getDb();
+    const fields = Object.keys(data).map(k => `${k} = ?`).join(", ");
+    if (!fields) return this.findById(id);
+    db.prepare(`UPDATE special_offers SET ${fields} WHERE id = ?`).run(...Object.values(data), id);
+    return this.findById(id);
+  },
+
+  delete(id: string) {
+    getDb().prepare("DELETE FROM special_offers WHERE id = ?").run(id);
+  },
+
+  /** Delete every offer row for a product (called when product is deleted). */
+  deleteByProductId(productId: string) {
+    getDb().prepare("DELETE FROM special_offers WHERE product_id = ?").run(productId);
+  },
+
+  countByProductId(productId: string) {
+    return (getDb().prepare("SELECT COUNT(*) as cnt FROM special_offers WHERE product_id = ?").get(productId) as { cnt: number }).cnt;
   },
 };

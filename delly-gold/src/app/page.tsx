@@ -5,6 +5,7 @@ import HeroSlider       from "./components/HeroSlider";
 import TrustBar         from "./components/TrustBar";
 import PromoBanners     from "./components/PromoBanners";
 import CategoryIcons    from "./components/CategoryIcons";
+import SpecialOffers    from "./components/SpecialOffers";
 import FavoriteProducts from "./components/FavoriteProducts";
 import CategoryShowcase from "./components/CategoryShowcase";
 import BudgetBanners    from "./components/BudgetBanners";
@@ -22,6 +23,7 @@ export default function Home() {
       <TrustBar />
       <PromoBanners />
       <CategoryIcons />
+      <SpecialOffers />
       <FavoriteProducts />
       <CategoryShowcase />
       <BudgetBanners />

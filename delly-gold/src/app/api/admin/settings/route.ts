@@ -154,6 +154,14 @@ export async function POST(req: NextRequest) {
       if (key === "price_bar_font_size") {
         value = String(clampPriceBarFontSize(value));
       }
+      if (key === "promo_strip_font_size") {
+        const n = parseInt(String(value), 10);
+        value = String(Number.isNaN(n) ? 12 : Math.min(40, Math.max(8, n)));
+      }
+      if (key === "promo_strip_speed") {
+        const n = parseInt(String(value), 10);
+        value = String(Number.isNaN(n) ? 32 : Math.min(120, Math.max(5, n)));
+      }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at

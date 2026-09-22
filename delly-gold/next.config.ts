@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   reactCompiler: true,
+  serverExternalPackages: ["node:sqlite"],
   // Exclude SQLite DB files from NFT tracing to prevent over-bundling
   outputFileTracingExcludes: {
     "*": [
