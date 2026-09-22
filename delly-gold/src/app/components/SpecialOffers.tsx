@@ -90,11 +90,12 @@ const CSS = `
 .dg-so-nav-right{right:2px;}
 
 @media (min-width:768px){
+  .dg-so-row{flex-wrap:nowrap;}
   .dg-so-aside{flex:0 0 16.6667%;max-width:16.6667%;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:center;gap:0;padding:0 6px;}
   .dg-so-title,.dg-so-aside-cd,.dg-so-aside-btn{flex:0 0 auto;max-width:100%;}
   .dg-so-title{font-size:18px;line-height:40px;margin-bottom:14px;}
   .dg-so-aside-cd{margin-bottom:16px;}
-  .dg-so-main{flex:1 1 auto;max-width:none;}
+  .dg-so-main{flex:1 1 0;min-width:0;max-width:none;}
 }
 @media (min-width:992px){
   .dg-so-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
