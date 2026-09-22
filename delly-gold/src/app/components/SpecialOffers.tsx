@@ -28,6 +28,11 @@ function endOfToday(): number {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
+/** Carousel autoplay interval. younesgold uses 1000ms; 3000ms is far more readable. */
+const AUTOPLAY_MS = 3000;
+/** Must match the `gap` on `.dg-so-track`. */
+const CARD_GAP = 10;
+
 /**
  * Styles mirror younesgold.com's «پیشنهاد شگفت انگیز» block 1:1 —
  * `.special-container` (gold gradient panel), the `.countdown` box/colon markup,
@@ -50,7 +55,7 @@ const CSS = `
 .dg-so-main{flex:0 0 100%;max-width:100%;min-width:0;position:relative;}
 .dg-so-track{display:flex;gap:10px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding:2px;}
 .dg-so-track::-webkit-scrollbar{display:none;}
-.dg-so-card{flex:0 0 calc(33.3333% - 7px);max-width:calc(33.3333% - 7px);background:#fff;display:flex;flex-direction:column;text-align:center;overflow:hidden;}
+.dg-so-card{flex:0 0 calc(33.3333% - 7px);max-width:calc(33.3333% - 7px);background:#fff;display:flex;flex-direction:column;text-align:center;overflow:hidden;border-radius:10px;}
 .dg-so-media{position:relative;display:block;background:#d7d7d7;aspect-ratio:1/1;overflow:hidden;}
 .dg-so-img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
 .dg-so-media:hover .dg-so-img{transform:scale(1.06);}
@@ -108,6 +113,7 @@ export default function SpecialOffers() {
   const [time, setTime]         = useState({ h: "00", m: "00", s: "00" });
   const [expired, setExpired]   = useState(false);
   const scrollRef               = useRef<HTMLDivElement>(null);
+  const pausedRef               = useRef(false);
   const { add } = useCart();
 
   useEffect(() => {
@@ -141,6 +147,28 @@ export default function SpecialOffers() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [enabled, endAt]);
+
+  // Carousel autoplay (younesgold autoplays it) — pauses while the pointer is over the row.
+  useEffect(() => {
+    if (!enabled || offers.length === 0) return;
+    const id = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el || pausedRef.current) return;
+
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 4) return;                                   // everything already fits
+
+      const card = el.firstElementChild as HTMLElement | null;
+      const step = card ? card.offsetWidth + CARD_GAP : 280;
+      const rtl  = getComputedStyle(el).direction === "rtl";
+      // In RTL the track starts at scrollLeft 0 and goes negative as it advances.
+      const travelled = rtl ? -el.scrollLeft : el.scrollLeft;
+
+      if (travelled >= max - 4) el.scrollTo({ left: 0, behavior: "smooth" });   // loop to the start
+      else el.scrollBy({ left: rtl ? -step : step, behavior: "smooth" });
+    }, AUTOPLAY_MS);
+    return () => clearInterval(id);
+  }, [enabled, offers.length]);
 
   function toggleLike(id: string) {
     setLiked(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -201,7 +229,11 @@ export default function SpecialOffers() {
                 <ChevronRight size={18} />
               </button>
 
-              <div className="dg-so-track" ref={scrollRef}>
+              <div className="dg-so-track" ref={scrollRef}
+                onMouseEnter={() => { pausedRef.current = true; }}
+                onMouseLeave={() => { pausedRef.current = false; }}
+                onTouchStart={() => { pausedRef.current = true; }}
+                onTouchEnd={() => { pausedRef.current = false; }}>
                 {offers.map(p => {
                   const img         = getImg(p.images);
                   const { finalPrice } = calcFinalPrice(p, settings);
