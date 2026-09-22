@@ -14,3 +14,5 @@
 (node:134256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
  GET /api/special-offers 200 in 592ms (next.js: 475ms, application-code: 117ms)
+ GET /api/special-offers 200 in 740ms (next.js: 605ms, application-code: 135ms)
+ GET / 200 in 3.2s (next.js: 1782ms, application-code: 1423ms)

@@ -355,6 +355,13 @@ const migrations = [
         ('special_offers_enabled', '1');
     `,
   },
+  {
+    name: "023_special_offers_countdown",
+    sql: `
+      INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('special_offers_end', '');
+    `,
+  },
 ];
 
 let appliedCount = 0;

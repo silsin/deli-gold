@@ -18,6 +18,14 @@ const inp: React.CSSProperties = {
   fontSize: "13px", outline: "none", fontFamily: "inherit",
 };
 
+/** Local `datetime-local` value for the end of the current day. */
+function endOfTodayLocal(): string {
+  const d = new Date();
+  d.setHours(23, 59, 0, 0);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 export default function AdminSpecialOffersPage() {
   const [offers, setOffers]       = useState<Offer[]>([]);
   const [products, setProducts]   = useState<PickerProduct[]>([]);
@@ -34,6 +42,7 @@ export default function AdminSpecialOffersPage() {
   const [title, setTitle]         = useState("پیشنهاد شگفت انگیز");
   const [href, setHref]           = useState("/products");
   const [enabled, setEnabled]     = useState(true);
+  const [endAt, setEndAt]         = useState("");
   const [savedSettings, setSavedSettings] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -54,6 +63,7 @@ export default function AdminSpecialOffersPage() {
         if (d.data.special_offers_title) setTitle(d.data.special_offers_title);
         if (d.data.special_offers_href)  setHref(d.data.special_offers_href);
         setEnabled(d.data.special_offers_enabled !== "0");
+        setEndAt(d.data.special_offers_end || endOfTodayLocal());
       }
     });
   }, [fetchAll]);
@@ -65,6 +75,7 @@ export default function AdminSpecialOffersPage() {
         special_offers_title: title,
         special_offers_href: href,
         special_offers_enabled: enabled ? "1" : "0",
+        special_offers_end: endAt,
       }),
     });
     setSavedSettings(true);
@@ -144,6 +155,11 @@ export default function AdminSpecialOffersPage() {
             <div>
               <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>لینک مشاهده همه</label>
               <input value={href} onChange={e => setHref(e.target.value)} style={{ ...inp, direction: "ltr" }} placeholder="/products" />
+            </div>
+            <div>
+              <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>پایان شمارش معکوس</label>
+              <input type="datetime-local" value={endAt} onChange={e => setEndAt(e.target.value)} style={{ ...inp, direction: "ltr" }} />
+              <p style={{ color: "#555", fontSize: "10px", marginTop: "4px" }}>خالی بماند = پایان امروز</p>
             </div>
             <div>
               <label style={{ display: "block", color: "#888", fontSize: "11px", marginBottom: "6px" }}>وضعیت بخش</label>

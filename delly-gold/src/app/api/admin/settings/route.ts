@@ -63,6 +63,10 @@ export async function GET(req: NextRequest) {
     if (!settings.site_social_whatsapp_icon)  settings.site_social_whatsapp_icon = "";
     if (!settings.site_social_install_icon)   settings.site_social_install_icon = "";
     if (!settings.site_brand_desc)     settings.site_brand_desc = "";
+    if (!settings.special_offers_title)   settings.special_offers_title = "پیشنهاد شگفت انگیز";
+    if (!settings.special_offers_href)    settings.special_offers_href = "/products";
+    if (!settings.special_offers_enabled) settings.special_offers_enabled = "1";
+    if (!settings.special_offers_end)     settings.special_offers_end = "";
     if (!settings.promo_b1_title)      settings.promo_b1_title = "";
     if (!settings.promo_b1_sub)        settings.promo_b1_sub = "";
     if (!settings.promo_b1_href)       settings.promo_b1_href = "/products";
