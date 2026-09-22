@@ -138,6 +138,7 @@ type ProductRow = {
   karat: number;
   stock: number;
   images: string;
+  videos?: string;
   featured: number;
   published: number;
   ajrat_override: number;
@@ -158,6 +159,7 @@ export function serializeProduct(row: ProductRow) {
     karat: row.karat,
     stock: row.stock,
     images: row.images,
+    videos: row.videos ?? "[]",
     featured: row.featured === 1,
     published: row.published === 1,
     ajrat_override: row.ajrat_override,

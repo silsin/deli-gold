@@ -3,11 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./CartContext";
+import ProductVideoPreview from "./ProductVideoPreview";
 import { calcFinalPrice } from "@/lib/pricing";
+import { firstMedia } from "@/lib/media";
 
 interface Product {
   id: string; name: string; slug: string; price: number;
-  weight: number; karat: number; images: string; stock: number;
+  weight: number; karat: number; images: string; videos: string; stock: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
 }
 interface Offer { id: string; discount_percent: number; sort_order: number; active: number; product_id: string; }
@@ -244,6 +246,7 @@ export default function SpecialOffers() {
                   const isLiked     = liked.has(p.id);
                   const isAdded     = addedId === p.id;
                   const oos         = p.stock === 0;
+                  const vid         = firstMedia(p.videos);
 
                   return (
                     <div key={p.id} className="dg-so-card">
@@ -259,6 +262,8 @@ export default function SpecialOffers() {
                             ? <img className="dg-so-img" src={img} alt={p.name} loading="lazy" />
                             : <div className="dg-so-noimg">بدون تصویر</div>}
                         </Link>
+
+                        {vid && <ProductVideoPreview src={vid} />}
 
                         <button type="button" className={`dg-so-wish${isLiked ? " on" : ""}`}
                           aria-label="افزودن به لیست علاقه مندی" onClick={() => toggleLike(p.id)}>

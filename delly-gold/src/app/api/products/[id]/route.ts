@@ -26,6 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (body.karat !== undefined) data.karat = parseInt(body.karat);
     if (body.stock !== undefined) data.stock = parseInt(body.stock);
     if (body.images !== undefined) data.images = JSON.stringify(body.images);
+    if (body.videos !== undefined) data.videos = JSON.stringify(body.videos);
     if (body.categoryId !== undefined) data.category_id = body.categoryId;
     if (body.featured !== undefined) data.featured = body.featured ? 1 : 0;
     if (body.published !== undefined) data.published = body.published ? 1 : 0;

@@ -284,7 +284,7 @@ export const categories = {
 export interface Product {
   id: string; name: string; slug: string; description: string | null;
   price: number; weight: number; karat: number; stock: number;
-  images: string; featured: number; published: number;
+  images: string; videos: string; featured: number; published: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
   ajrat_override: number;
@@ -316,8 +316,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, featured, published, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.featured, data.published, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {
@@ -610,6 +610,7 @@ export interface SpecialOfferWithProduct extends SpecialOfferRow {
   karat: number;
   stock: number;
   images: string;
+  videos: string;
   ajrat_override: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
@@ -623,7 +624,7 @@ export const specialOffers = {
     const db = getDb();
     const where = activeOnly ? "WHERE so.active = 1 AND p.published = 1" : "";
     return db.prepare(
-      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images,
+      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images, p.videos,
               p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
        FROM special_offers so
        INNER JOIN products p ON p.id = so.product_id
@@ -646,7 +647,7 @@ export const specialOffers = {
     const offer = db.prepare("SELECT * FROM special_offers WHERE id = ?").get(id) as SpecialOfferRow | undefined;
     if (!offer) return undefined;
     const withProduct = db.prepare(
-      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images,
+      `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images, p.videos,
               p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
        FROM special_offers so
        INNER JOIN products p ON p.id = so.product_id

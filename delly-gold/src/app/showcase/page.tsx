@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, Star } from "lucide-react";
 import PageLayout from "../components/PageLayout";
+import ProductVideoPreview from "../components/ProductVideoPreview";
 import Link from "next/link";
+import { firstMedia } from "@/lib/media";
 
 interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
-  karat: number; stock: number; images: string; category_name: string;
+  karat: number; stock: number; images: string; videos: string; category_name: string;
 }
 
 const showcases = [
@@ -133,6 +135,7 @@ export default function ShowcasePage() {
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
                 <div style={{ paddingBottom: "100%", position: "relative", overflow: "hidden" }}>
                   <img src={goldImages[i % goldImages.length]} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  {firstMedia(p.videos) && <ProductVideoPreview src={firstMedia(p.videos)!} />}
                 </div>
                 <div style={{ padding: 12 }}>
                   <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{p.name}</p>

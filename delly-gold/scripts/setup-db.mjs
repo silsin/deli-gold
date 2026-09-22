@@ -392,6 +392,13 @@ const migrations = [
       PRAGMA foreign_keys=ON;
     `,
   },
+  {
+    // Product video support: JSON array of video URLs, same pattern as `images`.
+    // The first video is treated as the product's "video banner" — shown in the
+    // detail gallery and as the hover preview on product list cards.
+    name: "025_product_videos",
+    sql: `ALTER TABLE products ADD COLUMN videos TEXT NOT NULL DEFAULT '[]';`,
+  },
 ];
 
 let appliedCount = 0;

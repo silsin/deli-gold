@@ -9,14 +9,14 @@ interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
   karat: number; stock: number; featured: boolean; published: boolean;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
-  images: string; category: { name: string };
+  images: string; videos: string; category: { name: string };
 }
 interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; }
 
 const empty = {
   name: "", slug: "", description: "", price: "", weight: "", karat: "18",
   stock: "0", categoryId: "", featured: false, published: true,
-  images: [] as string[],
+  images: [] as string[], videos: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
 };
 
@@ -34,7 +34,9 @@ export default function AdminProductsPage() {
   const [deleteId, setDeleteId]     = useState<string | null>(null);
   const [err, setErr]               = useState("");
   const [uploading, setUploading]   = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const fileRef                     = useRef<HTMLInputElement>(null);
+  const videoRef                    = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -59,6 +61,8 @@ export default function AdminProductsPage() {
   function openEdit(p: Product) {
     let imgs: string[] = [];
     try { imgs = JSON.parse(p.images); } catch {}
+    let vids: string[] = [];
+    try { vids = JSON.parse(p.videos || "[]"); } catch {}
     setEditId(p.id);
     setForm({
       name: p.name, slug: p.slug, description: "",
@@ -67,6 +71,7 @@ export default function AdminProductsPage() {
       categoryId: p.category ? (categories.find(c => c.name === p.category.name)?.id || "") : "",
       featured: p.featured, published: p.published,
       images: imgs,
+      videos: vids,
       ajrat_override: p.ajrat_override === 1,
       ajrat_percent: p.ajrat_percent !== null ? String(p.ajrat_percent) : "",
       ajrat_fixed:   p.ajrat_fixed   !== null ? String(p.ajrat_fixed)   : "",
@@ -88,6 +93,20 @@ export default function AdminProductsPage() {
 
   function removeImage(idx: number) { setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) })); }
 
+  async function uploadVideo(file: File) {
+    setUploadingVideo(true); setErr("");
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const d   = await res.json();
+      if (d.success) setForm(f => ({ ...f, videos: [...f.videos, d.data.url] }));
+      else setErr(d.error || "خطا در آپلود ویدیو");
+    } catch { setErr("خطای شبکه در آپلود"); }
+    finally { setUploadingVideo(false); }
+  }
+
+  function removeVideo(idx: number) { setForm(f => ({ ...f, videos: f.videos.filter((_, i) => i !== idx) })); }
+
   async function handleSave() {
     setSaving(true); setErr("");
     try {
@@ -98,6 +117,7 @@ export default function AdminProductsPage() {
         karat:  parseInt(form.karat),
         stock:  parseInt(form.stock),
         images: form.images,
+        videos: form.videos,
         ajrat_override: form.ajrat_override,
         ajrat_percent: form.ajrat_override && form.ajrat_percent !== "" ? parseFloat(form.ajrat_percent) : null,
         ajrat_fixed:   form.ajrat_override && form.ajrat_fixed   !== "" ? parseFloat(form.ajrat_fixed)   : null,
@@ -258,6 +278,27 @@ export default function AdminProductsPage() {
                 {/* Or URL */}
                 <input style={{ ...inp, marginBottom:"18px" }} placeholder="یا URL تصویر را وارد کنید و Enter بزنید"
                   onKeyDown={e=>{ if(e.key==="Enter"&&(e.target as HTMLInputElement).value.trim()){ setForm(f=>({...f,images:[...f.images,(e.target as HTMLInputElement).value.trim()]})); (e.target as HTMLInputElement).value=""; }}}/>
+
+                {/* ── Videos ── */}
+                <p style={{ color:"#d4af37", fontSize:"11px", fontWeight:"700", letterSpacing:"1px", marginBottom:"10px" }}>ویدیوهای محصول</p>
+                <input ref={videoRef} type="file" accept="video/mp4,video/webm,video/quicktime,video/ogg" onChange={e=>{ const f=e.target.files?.[0]; if(f) uploadVideo(f); e.target.value=""; }} style={{ display:"none" }}/>
+                <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"12px" }}>
+                  {form.videos.map((vid,i)=>(
+                    <div key={i} style={{ position:"relative", width:"96px", height:"72px" }}>
+                      <video src={vid} muted playsInline preload="metadata" style={{ width:"96px", height:"72px", objectFit:"cover", borderRadius:"7px", border:"1px solid #333", backgroundColor:"#000" }}/>
+                      <button onClick={()=>removeVideo(i)} style={{ position:"absolute", top:"-6px", right:"-6px", width:"18px", height:"18px", borderRadius:"50%", backgroundColor:"#ef4444", border:"none", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"10px" }}>
+                        <X size={10}/>
+                      </button>
+                    </div>
+                  ))}
+                  <button onClick={()=>videoRef.current?.click()} disabled={uploadingVideo}
+                    style={{ width:"96px", height:"72px", backgroundColor:"#121212", border:"2px dashed #333", borderRadius:"7px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:"4px", color:"#555" }}>
+                    <Upload size={18} color="#555"/>
+                    <span style={{ fontSize:"9px" }}>{uploadingVideo?"آپلود...":"افزودن ویدیو"}</span>
+                  </button>
+                </div>
+                <input style={{ ...inp, marginBottom:"18px" }} placeholder="یا URL ویدیو را وارد کنید و Enter بزنید (MP4, WebM)"
+                  onKeyDown={e=>{ if(e.key==="Enter"&&(e.target as HTMLInputElement).value.trim()){ setForm(f=>({...f,videos:[...f.videos,(e.target as HTMLInputElement).value.trim()]})); (e.target as HTMLInputElement).value=""; }}}/>
 
                 {/* ── Basic info ── */}
                 <p style={{ color:"#d4af37", fontSize:"11px", fontWeight:"700", letterSpacing:"1px", marginBottom:"10px" }}>اطلاعات پایه</p>

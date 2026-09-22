@@ -3,11 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "./CartContext";
+import ProductVideoPreview from "./ProductVideoPreview";
 import { calcFinalPrice } from "@/lib/pricing";
+import { firstMedia } from "@/lib/media";
 
 interface Product {
   id: string; name: string; slug: string; price: number;
-  weight: number; karat: number; images: string; stock: number;
+  weight: number; karat: number; images: string; videos: string; stock: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
 }
 interface Settings { gold_markup_percent: string; gold_fixed_fee: string; }
@@ -80,6 +82,7 @@ export default function FavoriteProducts() {
           <style>{`::-webkit-scrollbar{display:none}`}</style>
           {products.map(p => {
             const img       = getImg(p.images);
+            const vid       = firstMedia(p.videos);
             const { finalPrice } = calcFinalPrice(p, settings);
             const isLiked   = liked.has(p.id);
             const isAdded   = addedId === p.id;
@@ -99,6 +102,7 @@ export default function FavoriteProducts() {
                     ) : (
                       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", fontSize: "11px" }}>بدون تصویر</div>
                     )}
+                    {vid && <ProductVideoPreview src={vid} fit="contain" />}
                     {oos && <span style={{ position: "absolute", top: "8px", right: "8px", backgroundColor: "#f5f5f5", color: "#aaa", fontSize: "9px", fontWeight: "700", padding: "2px 7px", borderRadius: "10px", border: "1px solid #e0e0e0" }}>ناموجود</span>}
                   </div>
                 </Link>

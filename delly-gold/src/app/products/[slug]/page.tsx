@@ -1,16 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, ShoppingCart, Check, ChevronLeft, Shield, Truck, RotateCcw, Info } from "lucide-react";
+import { Heart, ShoppingCart, Check, ChevronLeft, Shield, Truck, RotateCcw, Info, Play } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import Link from "next/link";
 import { useCart } from "../../components/CartContext";
+import ProductVideoPreview from "../../components/ProductVideoPreview";
 import { calcFinalPrice } from "@/lib/pricing";
+import { parseMedia, firstMedia } from "@/lib/media";
 
 interface Product {
   id: string; name: string; slug: string; description: string;
   price: number; weight: number; karat: number; stock: number;
-  images: string; featured: number; category_name: string; category_slug: string;
+  images: string; videos: string; featured: number; category_name: string; category_slug: string;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
 }
 interface Settings { gold_markup_percent: string; gold_fixed_fee: string; }
@@ -85,6 +87,11 @@ export default function ProductDetailPage() {
   );
 
   const images   = getImages(product.images);
+  // Videos lead the gallery — the first video acts as the product's video banner.
+  const media    = [
+    ...parseMedia(product.videos).map(src => ({ type: "video" as const, src })),
+    ...images.map((src: string) => ({ type: "image" as const, src })),
+  ];
   const pricing  = calcFinalPrice(product, settings);
   const inCartQty = items.find(i => i.productId === product.id)?.quantity ?? 0;
   const oos      = product.stock === 0;
@@ -124,11 +131,22 @@ export default function ProductDetailPage() {
           <div>
             {/* Main image */}
             <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ebebeb", marginBottom: 10, aspectRatio: "1/1", position: "relative", backgroundColor: "#f8f8f8" }}>
-              <img
-                src={images[activeImg]}
-                alt={product.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.3s" }}
-              />
+              {media[activeImg]?.type === "video" ? (
+                <video
+                  key={media[activeImg].src}
+                  src={media[activeImg].src}
+                  controls
+                  autoPlay
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", backgroundColor: "#000" }}
+                />
+              ) : (
+                <img
+                  src={media[activeImg]?.src}
+                  alt={product.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "opacity 0.3s" }}
+                />
+              )}
               {product.featured === 1 && (
                 <span style={{ position: "absolute", top: 12, right: 12, backgroundColor: "#c8a12a", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 20 }}>ویژه</span>
               )}
@@ -140,12 +158,21 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
+            {media.length > 1 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {images.map((img: string, i: number) => (
+                {media.map((m, i) => (
                   <button key={i} onClick={() => setActiveImg(i)}
-                    style={{ width: 68, height: 68, borderRadius: 8, overflow: "hidden", border: `2px solid ${activeImg === i ? "#c8a12a" : "#ebebeb"}`, cursor: "pointer", padding: 0, background: "none", flexShrink: 0, transition: "border-color 0.2s" }}>
-                    <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    style={{ width: 68, height: 68, borderRadius: 8, overflow: "hidden", border: `2px solid ${activeImg === i ? "#c8a12a" : "#ebebeb"}`, cursor: "pointer", padding: 0, background: "none", flexShrink: 0, transition: "border-color 0.2s", position: "relative" }}>
+                    {m.type === "video" ? (
+                      <>
+                        <video src={m.src} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#000" }} />
+                        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)", color: "#fff" }}>
+                          <Play size={18} fill="#fff" />
+                        </span>
+                      </>
+                    ) : (
+                      <img src={m.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -291,6 +318,7 @@ export default function ProductDetailPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }} className="related-grid">
               {related.map((p, i) => {
                 const img = (() => { try { const a = JSON.parse(p.images); if (a[0]) return a[0]; } catch {} return fallbackImgs[i % fallbackImgs.length]; })();
+                const vid = firstMedia(p.videos);
                 const fp  = calcFinalPrice(p, settings).finalPrice;
                 return (
                   <Link key={p.id} href={`/products/${p.slug}`}
@@ -299,6 +327,7 @@ export default function ProductDetailPage() {
                     onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = "#ebebeb"; el.style.transform = "translateY(0)"; el.style.boxShadow = "none"; }}>
                     <div style={{ paddingBottom: "100%", position: "relative", backgroundColor: "#f8f8f8" }}>
                       <img src={img} alt={p.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      {vid && <ProductVideoPreview src={vid} />}
                     </div>
                     <div style={{ padding: 12 }}>
                       <p style={{ color: "#333", fontSize: 12, fontWeight: 600, marginBottom: 4, lineHeight: 1.4 }}>{p.name}</p>

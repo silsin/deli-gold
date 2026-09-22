@@ -5,12 +5,14 @@ import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "../components/CartContext";
+import ProductVideoPreview from "../components/ProductVideoPreview";
 import { calcFinalPrice } from "@/lib/pricing";
+import { firstMedia } from "@/lib/media";
 
 interface Category { id: string; name: string; slug: string; }
 interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
-  karat: number; stock: number; images: string; featured: number;
+  karat: number; stock: number; images: string; videos: string; featured: number;
   category_name: string;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
 }
@@ -190,6 +192,7 @@ function ProductsInner() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }} className="prod-grid">
             {products.map((p, i) => {
               const img = getImg(p.images, i);
+              const vid = firstMedia(p.videos);
               const { finalPrice } = calcFinalPrice(p, settings);
               const isLiked = liked.has(p.id);
               const inCart  = items.some(it => it.productId === p.id);
@@ -237,6 +240,7 @@ function ProductsInner() {
                         onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1.08)"}
                         onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1)"}
                       />
+                      {vid && <ProductVideoPreview src={vid} fit="contain" />}
                     </div>
                   </Link>
 

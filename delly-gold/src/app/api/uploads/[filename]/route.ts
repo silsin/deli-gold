@@ -20,10 +20,14 @@ const MIME: Record<string, string> = {
   webp: "image/webp",
   gif: "image/gif",
   svg: "image/svg+xml",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  ogv: "video/ogg",
+  mov: "video/quicktime",
 };
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
@@ -40,6 +44,29 @@ export async function GET(
   const contentType = MIME[ext] ?? "application/octet-stream";
   const size = statSync(filePath).size;
 
+  // HTTP Range support — required for <video> playback/seeking (esp. iOS Safari).
+  const range = req.headers.get("range");
+  if (range) {
+    const m = range.match(/bytes=(\d*)-(\d*)/);
+    if (m && (m[1] || m[2])) {
+      const start = m[1] ? parseInt(m[1]) : Math.max(0, size - parseInt(m[2]));
+      const end = m[1] ? (m[2] ? Math.min(parseInt(m[2]), size - 1) : size - 1) : size - 1;
+      if (start >= size || start > end) {
+        return new NextResponse(null, { status: 416, headers: { "Content-Range": `bytes */${size}` } });
+      }
+      const chunk = createReadStream(filePath, { start, end });
+      return new NextResponse(Readable.toWeb(chunk) as ReadableStream, {
+        status: 206,
+        headers: {
+          "Content-Type": contentType,
+          "Content-Range": `bytes ${start}-${end}/${size}`,
+          "Content-Length": String(end - start + 1),
+          "Accept-Ranges": "bytes",
+        },
+      });
+    }
+  }
+
   const nodeStream = createReadStream(filePath);
   const webStream = Readable.toWeb(nodeStream) as ReadableStream;
 
@@ -48,6 +75,7 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "Content-Length": String(size),
+      "Accept-Ranges": "bytes",
       "Cache-Control": "public, max-age=31536000, immutable",
     },
   });

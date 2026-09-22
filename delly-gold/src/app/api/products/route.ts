@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, categoryId, featured, published, ajrat_override, ajrat_percent, ajrat_fixed } = body;
+    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, ajrat_override, ajrat_percent, ajrat_fixed } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       id: "", name: name.trim(), slug: slug.trim(), description: description ?? null,
       price: parseFloat(price), weight: parseFloat(weight), karat: parseInt(karat ?? 18),
       stock: parseInt(stock ?? 0), images: JSON.stringify(images ?? []),
+      videos: JSON.stringify(videos ?? []),
       featured: featured ? 1 : 0, published: published !== false ? 1 : 0,
       category_id: categoryId,
       ajrat_override: ajrat_override ? 1 : 0,
