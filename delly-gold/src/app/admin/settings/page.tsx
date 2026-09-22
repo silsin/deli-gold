@@ -17,6 +17,7 @@ import {
   getDefaultTypoSettings,
   getFontFamily,
   buildGoogleFontsUrl,
+  clampTypoSize,
 } from "@/lib/typography";
 import {
   DEFAULT_PRICE_BAR_STYLE,
@@ -24,6 +25,9 @@ import {
   priceBarStyleToSettings,
   PRICE_BAR_ALIGN_OPTIONS,
   PRICE_BAR_PART_LABELS,
+  PRICE_BAR_FONT_SIZE_MIN,
+  PRICE_BAR_FONT_SIZE_MAX,
+  clampPriceBarFontSize,
   movePriceBarPartOrder,
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
@@ -531,6 +535,52 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px" }}>فونت نوار قیمت</label>
+          <select
+            value={priceBar.fontId}
+            onChange={e => updatePriceBar("fontId", e.target.value)}
+            style={{ ...inp, direction: "rtl", fontFamily: getFontFamily(priceBar.fontId) }}
+          >
+            {FONT_OPTIONS.map(f => (
+              <option key={f.id} value={f.id}>{f.label} — {f.style}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "8px" }}>
+            اندازه فونت نوار قیمت (۸ تا ۲۰۰) — <span style={{ color: "#d4af37", fontWeight: 700 }}>{priceBar.fontSize}px</span>
+          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <input
+              type="range"
+              min={PRICE_BAR_FONT_SIZE_MIN}
+              max={PRICE_BAR_FONT_SIZE_MAX}
+              step={1}
+              value={Math.min(PRICE_BAR_FONT_SIZE_MAX, Math.max(PRICE_BAR_FONT_SIZE_MIN, priceBar.fontSize || 12))}
+              onChange={e => updatePriceBar("fontSize", parseInt(e.target.value, 10) || 12)}
+              style={{ flex: 1, accentColor: "#d4af37" }}
+            />
+            <input
+              type="number"
+              min={PRICE_BAR_FONT_SIZE_MIN}
+              max={PRICE_BAR_FONT_SIZE_MAX}
+              value={priceBar.fontSize}
+              onChange={e => updatePriceBar("fontSize", parseInt(e.target.value, 10) || 12)}
+              onBlur={e => updatePriceBar("fontSize", clampPriceBarFontSize(e.target.value))}
+              style={{ width: "70px", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "5px", padding: "6px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }}
+            />
+          </div>
+          <p style={{
+            color: "#e0d4a0", marginTop: "10px", lineHeight: 1.6,
+            fontFamily: getFontFamily(priceBar.fontId), fontSize: `${priceBar.fontSize}px`,
+            backgroundColor: "#121212", border: "1px solid #2a2a2a", borderRadius: "8px", padding: "10px 14px",
+          }}>
+            پیش‌نمایش: {priceBar.labelText} {priceBar.goldText} {finalPrice.toLocaleString("fa-IR")} {priceBar.currencyText}
+          </p>
+        </div>
+
         <div style={{
           background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 40%, #7b1a1a 100%)",
           borderRadius: "8px",
@@ -540,7 +590,6 @@ export default function AdminSettingsPage() {
           <PriceBarContent
             style={priceBar}
             amount={finalPrice.toLocaleString("fa-IR")}
-            fontSize="12px"
             showDecorations={false}
           />
         </div>
@@ -939,9 +988,18 @@ export default function AdminSettingsPage() {
                 type="range"
                 min={FONT_SIZE_MIN}
                 max={FONT_SIZE_MAX}
-                value={fontMobile}
+                step={1}
+                value={Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parseInt(fontMobile) || 14))}
                 onChange={e => handleFontMobileChange(e.target.value)}
                 style={{ flex: 1, accentColor: "#d4af37" }}
+              />
+              <input
+                type="number"
+                min={FONT_SIZE_MIN}
+                max={FONT_SIZE_MAX}
+                value={fontMobile}
+                onChange={e => handleFontMobileChange(e.target.value)}
+                style={{ width: "64px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "5px", padding: "4px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }}
               />
               <span style={{ color: "#d4af37", fontSize: "14px", fontWeight: "700", minWidth: "36px", direction: "ltr" }}>
                 {fontMobile}px
@@ -957,9 +1015,18 @@ export default function AdminSettingsPage() {
                 type="range"
                 min={FONT_SIZE_MIN}
                 max={FONT_SIZE_MAX}
-                value={fontDesktop}
+                step={1}
+                value={Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, parseInt(fontDesktop) || 16))}
                 onChange={e => handleFontDesktopChange(e.target.value)}
                 style={{ flex: 1, accentColor: "#d4af37" }}
+              />
+              <input
+                type="number"
+                min={FONT_SIZE_MIN}
+                max={FONT_SIZE_MAX}
+                value={fontDesktop}
+                onChange={e => handleFontDesktopChange(e.target.value)}
+                style={{ width: "64px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "5px", padding: "4px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }}
               />
               <span style={{ color: "#d4af37", fontSize: "14px", fontWeight: "700", minWidth: "36px", direction: "ltr" }}>
                 {fontDesktop}px
@@ -1210,18 +1277,20 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              {/* Size slider */}
+              {/* Size slider + free numeric input (8–200px) */}
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                <label style={{ color: "#888", fontSize: "11px", flexShrink: 0 }}>اندازه:</label>
-                <input type="range" min={section.minSize} max={section.maxSize} value={currentSize}
+                <label style={{ color: "#888", fontSize: "11px", flexShrink: 0 }}>اندازه (۸ تا ۲۰۰):</label>
+                <input type="range" min={section.minSize} max={section.maxSize} step={1}
+                  value={Math.min(section.maxSize, Math.max(section.minSize, parseInt(String(currentSize)) || section.defaultSize))}
                   onChange={e => setTypo(t => ({ ...t, [sizeKey]: e.target.value }))}
                   style={{ flex: 1, accentColor: "#d4af37" }} />
                 <span style={{ color: "#d4af37", fontSize: "13px", fontWeight: "700", minWidth: "40px", direction: "ltr" }}>
                   {currentSize}px
                 </span>
-                <input type="number" min={section.minSize} max={section.maxSize} value={currentSize}
+                <input type="number" min={section.minSize} max={section.maxSize} step={1} value={currentSize}
                   onChange={e => setTypo(t => ({ ...t, [sizeKey]: e.target.value }))}
-                  style={{ width: "60px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "5px", padding: "4px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }} />
+                  onBlur={e => setTypo(t => ({ ...t, [sizeKey]: String(clampTypoSize(e.target.value, section.defaultSize)) }))}
+                  style={{ width: "70px", backgroundColor: "#1a1a1a", border: "1px solid #333", borderRadius: "5px", padding: "4px 8px", color: "#fff", fontSize: "12px", outline: "none", direction: "ltr", textAlign: "center" }} />
               </div>
 
               {/* Live preview */}
@@ -1229,7 +1298,7 @@ export default function AdminSettingsPage() {
                 <p style={{ color: "#555", fontSize: "9px", marginBottom: "6px" }}>پیش‌نمایش:</p>
                 <p style={{
                   fontFamily: fontObj.family,
-                  fontSize: `${Math.min(currentSize, 32)}px`,
+                  fontSize: `${currentSize}px`,
                   color: "#e0d4a0",
                   lineHeight: 1.4,
                   wordBreak: "break-word",

@@ -30,12 +30,12 @@ export default function AnnouncementBar() {
   return (
     <div style={{
       background: "linear-gradient(135deg, #7b1a1a 0%, #8b2020 40%, #7b1a1a 100%)",
-      height: "38px",
+      minHeight: "38px",
       display: "flex",
       alignItems: "center",
       position: "relative",
       overflow: "hidden",
-      padding: "0 16px",
+      padding: "6px 16px",
     }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(90deg, transparent 0%, rgba(200,161,42,0.08) 50%, transparent 100%)", pointerEvents: "none" }} />
       <PriceBarContent style={style} amount={amount} />

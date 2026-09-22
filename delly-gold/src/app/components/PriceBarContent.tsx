@@ -3,6 +3,7 @@ import {
   type PriceBarPartId,
   type PriceBarStyle,
 } from "@/lib/price-bar-settings";
+import { getFontFamily } from "@/lib/typography";
 
 function renderPart(
   part: PriceBarPartId,
@@ -19,7 +20,7 @@ function renderPart(
       );
     case "gold":
       return (
-        <span key="gold" style={{ color: style.goldColor, fontWeight: 800, fontSize: "13px" }}>
+        <span key="gold" style={{ color: style.goldColor, fontWeight: 800, fontSize }}>
           {style.goldText}
         </span>
       );
@@ -58,7 +59,7 @@ function renderPart(
 export default function PriceBarContent({
   style,
   amount,
-  fontSize = "12px",
+  fontSize,
   showDecorations = true,
 }: {
   style: PriceBarStyle;
@@ -66,6 +67,8 @@ export default function PriceBarContent({
   fontSize?: string;
   showDecorations?: boolean;
 }) {
+  const resolvedSize = fontSize ?? `${style.fontSize ?? 12}px`;
+  const resolvedFamily = getFontFamily(style.fontId ?? "Vazirmatn");
   return (
     <div
       style={{
@@ -76,6 +79,8 @@ export default function PriceBarContent({
         width: "100%",
         gap: "10px",
         zIndex: 1,
+        fontFamily: resolvedFamily,
+        fontSize: resolvedSize,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -95,13 +100,13 @@ export default function PriceBarContent({
             flexDirection: "row",
             direction: "rtl",
             gap: "4px",
-            fontSize,
+            fontSize: resolvedSize,
             fontWeight: "500",
             letterSpacing: "0.3px",
             flexWrap: "wrap",
           }}
         >
-          {style.partOrder.map(part => renderPart(part, style, amount, fontSize))}
+          {style.partOrder.map(part => renderPart(part, style, amount, resolvedSize))}
         </span>
 
         {showDecorations && (

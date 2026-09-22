@@ -125,8 +125,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-body",
     defaultFont: "Vazirmatn",
     defaultSize: 14,
-    minSize: 12,
-    maxSize: 20,
+    minSize: 8,
+    maxSize: 200,
     sample: "دلی گلد — فروشگاه طلا و جواهر با بهترین کیفیت و اعتماد",
   },
   {
@@ -137,8 +137,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-heading",
     defaultFont: "Vazirmatn",
     defaultSize: 28,
-    minSize: 18,
-    maxSize: 60,
+    minSize: 8,
+    maxSize: 200,
     sample: "جدیدترین طلاهای دلی گلد",
   },
   {
@@ -149,8 +149,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-product",
     defaultFont: "Vazirmatn",
     defaultSize: 13,
-    minSize: 11,
-    maxSize: 20,
+    minSize: 8,
+    maxSize: 200,
     sample: "گردنبند قلبی طلا ۱۸ عیار",
   },
   {
@@ -161,8 +161,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-price",
     defaultFont: "Vazirmatn",
     defaultSize: 15,
-    minSize: 12,
-    maxSize: 24,
+    minSize: 8,
+    maxSize: 200,
     sample: "۱۷٬۵۹۵٬۰۰۰ تومان",
   },
   {
@@ -173,8 +173,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-nav",
     defaultFont: "Vazirmatn",
     defaultSize: 13,
-    minSize: 11,
-    maxSize: 18,
+    minSize: 8,
+    maxSize: 200,
     sample: "گردنبند · انگشتر · دستبند · گوشواره",
   },
   {
@@ -185,8 +185,8 @@ export const TYPO_SECTIONS: TypoSection[] = [
     cssSize: "--font-size-slider",
     defaultFont: "Vazirmatn",
     defaultSize: 48,
-    minSize: 24,
-    maxSize: 80,
+    minSize: 8,
+    maxSize: 200,
     sample: "طلای ناب دلی گلد",
   },
 ];
@@ -220,4 +220,15 @@ export function getDefaultTypoSettings(): Record<string, string> {
 
 export function getFontFamily(fontId: string): string {
   return FONT_OPTIONS.find(f => f.id === fontId)?.family ?? "'Vazirmatn', sans-serif";
+}
+
+/** Absolute limits for any custom font size (admin can type any value). */
+export const TYPO_SIZE_MIN = 8;
+export const TYPO_SIZE_MAX = 200;
+
+/** Clamp any user-supplied size into the allowed absolute range. */
+export function clampTypoSize(value: unknown, fallback: number): number {
+  const n = typeof value === "number" ? value : parseInt(String(value ?? ""), 10);
+  if (Number.isNaN(n)) return fallback;
+  return Math.min(TYPO_SIZE_MAX, Math.max(TYPO_SIZE_MIN, Math.round(n)));
 }

@@ -23,6 +23,8 @@ export interface PriceBarStyle {
   currencyColor: string;
   align: PriceBarAlign;
   partOrder: PriceBarPartId[];
+  fontId: string;
+  fontSize: number;
 }
 
 export const PRICE_BAR_ALIGN_OPTIONS: { id: PriceBarAlign; label: string }[] = [
@@ -41,7 +43,18 @@ export const DEFAULT_PRICE_BAR_STYLE: PriceBarStyle = {
   currencyColor: "#f0c040",
   align: "center",
   partOrder: DEFAULT_PRICE_BAR_PART_ORDER,
+  fontId: "Vazirmatn",
+  fontSize: 12,
 };
+
+export const PRICE_BAR_FONT_SIZE_MIN = 8;
+export const PRICE_BAR_FONT_SIZE_MAX = 200;
+
+export function clampPriceBarFontSize(value: unknown): number {
+  const n = typeof value === "number" ? value : parseInt(String(value ?? ""), 10);
+  if (Number.isNaN(n)) return DEFAULT_PRICE_BAR_STYLE.fontSize;
+  return Math.min(PRICE_BAR_FONT_SIZE_MAX, Math.max(PRICE_BAR_FONT_SIZE_MIN, Math.round(n)));
+}
 
 function parseAlign(value: string | undefined): PriceBarAlign {
   if (value === "right" || value === "left" || value === "center") return value;
@@ -109,6 +122,8 @@ export function parsePriceBarStyle(data: Record<string, string | undefined>): Pr
     currencyColor: data.price_bar_currency_color?.trim() || DEFAULT_PRICE_BAR_STYLE.currencyColor,
     align: parseAlign(data.price_bar_align),
     partOrder: parsePriceBarPartOrder(data.price_bar_part_order),
+    fontId: data.price_bar_font_id?.trim() || DEFAULT_PRICE_BAR_STYLE.fontId,
+    fontSize: clampPriceBarFontSize(data.price_bar_font_size),
   };
 }
 
@@ -123,5 +138,7 @@ export function priceBarStyleToSettings(style: PriceBarStyle): Record<string, st
     price_bar_currency_color: style.currencyColor,
     price_bar_align: style.align,
     price_bar_part_order: style.partOrder.join(","),
+    price_bar_font_id: style.fontId,
+    price_bar_font_size: String(clampPriceBarFontSize(style.fontSize)),
   };
 }

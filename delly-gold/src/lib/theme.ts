@@ -84,8 +84,8 @@ export const DEFAULT_PALETTE_ID = "gold-dark";
 export const DEFAULT_FONT_MOBILE = "14";
 export const DEFAULT_FONT_DESKTOP = "16";
 
-export const FONT_SIZE_MIN = 12;
-export const FONT_SIZE_MAX = 20;
+export const FONT_SIZE_MIN = 8;
+export const FONT_SIZE_MAX = 200;
 
 export interface ThemeSettings {
   theme_palette: string;

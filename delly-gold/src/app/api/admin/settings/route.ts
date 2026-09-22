@@ -3,8 +3,8 @@ import { requireAdmin, getAuthUser } from "@/lib/auth";
 import { ok, error, serverError } from "@/lib/response";
 import { getDb } from "@/lib/db";
 import { THEME_PALETTES, FONT_SIZE_MIN, FONT_SIZE_MAX } from "@/lib/theme";
-import { TYPO_SECTIONS, getDefaultTypoSettings } from "@/lib/typography";
-import { parsePriceBarStyle, priceBarStyleToSettings } from "@/lib/price-bar-settings";
+import { TYPO_SECTIONS, getDefaultTypoSettings, clampTypoSize } from "@/lib/typography";
+import { parsePriceBarStyle, priceBarStyleToSettings, clampPriceBarFontSize } from "@/lib/price-bar-settings";
 import {
   ABOUT_PAGE_SETTING_KEY,
   EMPTY_ABOUT_PAGE_SETTINGS,
@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
     const db = getDb();
     const body = await req.json();
 
-    for (const [key, value] of Object.entries(body)) {
+    for (const [key, rawValue] of Object.entries(body)) {
+      let value: unknown = rawValue;
       if (key === "theme_palette") {
         const valid = THEME_PALETTES.some(p => p.id === String(value));
         if (!valid) return error("پالت رنگ نامعتبر است");
@@ -144,6 +145,14 @@ export async function POST(req: NextRequest) {
         if (Number.isNaN(n) || n < FONT_SIZE_MIN || n > FONT_SIZE_MAX) {
           return error(`اندازه فونت باید بین ${FONT_SIZE_MIN} تا ${FONT_SIZE_MAX} باشد`);
         }
+      }
+      if (/^typo_.+_size$/.test(key)) {
+        const section = TYPO_SECTIONS.find(s => `${s.key}_size` === key);
+        const fallback = section?.defaultSize ?? 14;
+        value = String(clampTypoSize(value, fallback));
+      }
+      if (key === "price_bar_font_size") {
+        value = String(clampPriceBarFontSize(value));
       }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))

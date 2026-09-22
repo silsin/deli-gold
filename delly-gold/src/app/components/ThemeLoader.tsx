@@ -5,7 +5,7 @@
  * Injects a <link> into <head> for Google Fonts.
  */
 import { useEffect } from "react";
-import { TYPO_SECTIONS, buildGoogleFontsUrl, getFontFamily, getDefaultTypoSettings } from "@/lib/typography";
+import { TYPO_SECTIONS, buildGoogleFontsUrl, getFontFamily, getDefaultTypoSettings, clampTypoSize } from "@/lib/typography";
 import { applyTheme, parseThemeSettings } from "@/lib/theme";
 
 let applied = false; // prevent double-fetch on React strict mode
@@ -32,12 +32,16 @@ export default function ThemeLoader() {
 
         for (const section of TYPO_SECTIONS) {
           const fontId = data[`${section.key}_font`] || defaults[`${section.key}_font`];
-          const size   = data[`${section.key}_size`] || defaults[`${section.key}_size`];
+          const size = clampTypoSize(data[`${section.key}_size`] || defaults[`${section.key}_size`], section.defaultSize);
 
           root.style.setProperty(section.cssFont, getFontFamily(fontId));
           root.style.setProperty(section.cssSize, `${size}px`);
           fontIds.push(fontId);
         }
+
+        // Price-bar font (top banner) — include so its <link> is loaded
+        const priceBarFont = (data.price_bar_font_id || "Vazirmatn").trim() || "Vazirmatn";
+        fontIds.push(priceBarFont);
 
         // ── 3. Inject Google Fonts ────────────────────────────────────
         const url = buildGoogleFontsUrl(fontIds);
