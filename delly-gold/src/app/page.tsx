@@ -1,17 +1,7 @@
 import AnnouncementBar  from "./components/AnnouncementBar";
 import Navbar           from "./components/Navbar";
 import PromoStrip       from "./components/PromoStrip";
-import HeroSlider       from "./components/HeroSlider";
-import TrustBar         from "./components/TrustBar";
-import PromoBanners     from "./components/PromoBanners";
-import CategoryIcons    from "./components/CategoryIcons";
-import SpecialOffers    from "./components/SpecialOffers";
-import ExpressShipping  from "./components/ExpressShipping";
-import FavoriteProducts from "./components/FavoriteProducts";
-import CategoryShowcase from "./components/CategoryShowcase";
-import BudgetBanners    from "./components/BudgetBanners";
-import CollectionsGrid  from "./components/CollectionsGrid";
-import InfoBlocks       from "./components/InfoBlocks";
+import HomeSections     from "./components/HomeSections";
 import Footer           from "./components/Footer";
 
 export default function Home() {
@@ -20,17 +10,7 @@ export default function Home() {
       <AnnouncementBar />
       <Navbar />
       <PromoStrip />
-      <HeroSlider />
-      <TrustBar />
-      <PromoBanners />
-      <CategoryIcons />
-      <SpecialOffers />
-      <ExpressShipping />
-      <FavoriteProducts />
-      <CategoryShowcase />
-      <BudgetBanners />
-      <CollectionsGrid />
-      <InfoBlocks />
+      <HomeSections />
       <Footer />
     </main>
   );

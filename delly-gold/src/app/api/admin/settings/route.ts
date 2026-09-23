@@ -20,6 +20,10 @@ import {
   emptyGuidePagesSettings,
   serializeGuidePagesSettings,
 } from "@/lib/guide-pages-settings";
+import {
+  HOME_SECTIONS_SETTING_KEY,
+  parseHomeSectionOrder,
+} from "@/lib/home-sections";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -165,6 +169,10 @@ export async function POST(req: NextRequest) {
       if (key === "promo_strip_speed") {
         const n = parseInt(String(value), 10);
         value = String(Number.isNaN(n) ? 32 : Math.min(120, Math.max(5, n)));
+      }
+      if (key === HOME_SECTIONS_SETTING_KEY) {
+        // Normalize: drop unknown/duplicate keys, append any missing sections
+        value = JSON.stringify(parseHomeSectionOrder(String(value)));
       }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))
