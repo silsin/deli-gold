@@ -19,6 +19,7 @@ export const HOME_SECTIONS: HomeSectionDef[] = [
   { key: "categories",     label: "آیکون دسته‌بندی‌ها" },
   { key: "special_offers", label: "پیشنهاد شگفت‌انگیز" },
   { key: "express",        label: "ارسال اکسپرس" },
+  { key: "low_wage",       label: "محصولات کم اجرت" },
   { key: "favorites",      label: "محصولات محبوب" },
   { key: "showcase",       label: "ویترین دسته‌بندی" },
   { key: "budget",         label: "بنرهای بودجه" },

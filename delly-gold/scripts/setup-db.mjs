@@ -447,6 +447,16 @@ const migrations = [
       WHERE (SELECT COUNT(*) FROM promo_banners) < 2;
     `,
   },
+  {
+    // «محصولات کم اُجرت» — another simple product flag like «ارسال فوری» (026),
+    // toggled from the product add/edit form. Flagged products render in their
+    // own homepage panel (violet theme, same cards as special offers).
+    name: "028_product_low_wage",
+    sql: `
+      ALTER TABLE products ADD COLUMN low_wage INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_products_low_wage ON products(low_wage);
+    `,
+  },
 ];
 
 let appliedCount = 0;

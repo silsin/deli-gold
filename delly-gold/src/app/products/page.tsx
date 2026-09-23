@@ -48,6 +48,7 @@ function ProductsInner() {
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState(searchParams.get("search") || "");
   const [selectedCat, setSelectedCat] = useState(searchParams.get("category") || "");
+  const lowWage = searchParams.get("lowWage") === "true";
   const [sort, setSort]             = useState("newest");
   const [liked, setLiked]           = useState<Set<string>>(new Set());
   const [addedId, setAddedId]       = useState<string | null>(null);
@@ -61,6 +62,7 @@ function ProductsInner() {
     const params = new URLSearchParams({ limit: "16", page: String(page) });
     if (search) params.set("search", search);
     if (selectedCat) params.set("category", selectedCat);
+    if (lowWage) params.set("lowWage", "true");
     const res = await fetch(`/api/products?${params}`);
     const data = await res.json();
     if (data.success) {
@@ -71,7 +73,7 @@ function ProductsInner() {
       setPagination(data.data.pagination);
     }
     setLoading(false);
-  }, [search, selectedCat, sort, page]);
+  }, [search, selectedCat, sort, page, lowWage]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => {
@@ -92,9 +94,11 @@ function ProductsInner() {
     setTimeout(() => setAddedId(cur => cur === p.id ? null : cur), 1800);
   }
 
-  const activeCatName = selectedCat
-    ? categories.find(c => c.id === selectedCat)?.name || "محصولات"
-    : "همه محصولات";
+  const activeCatName = lowWage
+    ? "محصولات کم اُجرت"
+    : selectedCat
+      ? categories.find(c => c.id === selectedCat)?.name || "محصولات"
+      : "همه محصولات";
 
   return (
     <PageLayout>

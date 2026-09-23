@@ -31,6 +31,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (body.featured !== undefined) data.featured = body.featured ? 1 : 0;
     if (body.published !== undefined) data.published = body.published ? 1 : 0;
     if (body.express_shipping !== undefined) data.express_shipping = body.express_shipping ? 1 : 0;
+    if (body.low_wage !== undefined) data.low_wage = body.low_wage ? 1 : 0;
     if (body.ajrat_override !== undefined) data.ajrat_override = body.ajrat_override ? 1 : 0;
     if (body.ajrat_percent !== undefined) data.ajrat_percent = body.ajrat_percent !== null && body.ajrat_percent !== "" ? parseFloat(body.ajrat_percent) : null;
     if (body.ajrat_fixed !== undefined) data.ajrat_fixed = body.ajrat_fixed !== null && body.ajrat_fixed !== "" ? parseFloat(body.ajrat_fixed) : null;

@@ -9,6 +9,7 @@ interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
   karat: number; stock: number; featured: boolean; published: boolean;
   express_shipping: number;
+  low_wage: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
   images: string; videos: string; category: { name: string };
 }
@@ -18,6 +19,7 @@ const empty = {
   name: "", slug: "", description: "", price: "", weight: "", karat: "18",
   stock: "0", categoryId: "", featured: false, published: true,
   express_shipping: false,
+  low_wage: false,
   images: [] as string[], videos: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
 };
@@ -73,6 +75,7 @@ export default function AdminProductsPage() {
       categoryId: p.category ? (categories.find(c => c.name === p.category.name)?.id || "") : "",
       featured: p.featured, published: p.published,
       express_shipping: p.express_shipping === 1,
+      low_wage: p.low_wage === 1,
       images: imgs,
       videos: vids,
       ajrat_override: p.ajrat_override === 1,
@@ -336,7 +339,7 @@ export default function AdminProductsPage() {
                     </select>
                   </div>
                   <div style={{ display:"flex", gap:"14px", paddingTop:"20px" }}>
-                    {[{k:"featured",l:"ویژه"},{k:"published",l:"منتشر"},{k:"express_shipping",l:"ارسال فوری"}].map(t=>(
+                    {[{k:"featured",l:"ویژه"},{k:"published",l:"منتشر"},{k:"express_shipping",l:"ارسال فوری"},{k:"low_wage",l:"کم اجرت"}].map(t=>(
                       <label key={t.k} style={{ display:"flex", alignItems:"center", gap:"6px", cursor:"pointer", color:"#ccc", fontSize:"13px" }}>
                         <input type="checkbox" checked={(form as Record<string,unknown>)[t.k] as boolean} onChange={e=>setForm(f=>({...f,[t.k]:e.target.checked}))}/>
                         {t.l}
