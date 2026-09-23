@@ -409,6 +409,44 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_products_express ON products(express_shipping);
     `,
   },
+  {
+    // «بنرهای تبلیغاتی» — admin-manageable homepage promo cards
+    // (تخفیف‌های دلی‌گلد / طلای کم اُجرت / ...). Replaces the hardcoded pair
+    // in PromoBanners.tsx; existing settings values are migrated into rows.
+    name: "027_promo_banners",
+    sql: `
+      CREATE TABLE IF NOT EXISTS promo_banners (
+        id         TEXT PRIMARY KEY,
+        title      TEXT NOT NULL,
+        sub        TEXT NOT NULL DEFAULT '',
+        href       TEXT NOT NULL DEFAULT '/products',
+        image      TEXT NOT NULL DEFAULT '',
+        theme      TEXT NOT NULL DEFAULT 'dark' CHECK(theme IN ('dark','light')),
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        active     INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_promo_banners_active ON promo_banners(active, sort_order);
+
+      INSERT INTO promo_banners (id, title, sub, href, image, theme, sort_order, active)
+      SELECT lower(hex(randomblob(12))),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b1_title'), ''), 'تخفیف‌های دلی‌گلد'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b1_sub'), ''),   'محصولات تخفیف‌دار'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b1_href'), ''),  '/products'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b1_image'), ''), 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80'),
+        'dark', 0, 1
+      WHERE NOT EXISTS (SELECT 1 FROM promo_banners);
+
+      INSERT INTO promo_banners (id, title, sub, href, image, theme, sort_order, active)
+      SELECT lower(hex(randomblob(12))),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b2_title'), ''), 'طلای کم اُجرت'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b2_sub'), ''),   'محصولات با کمترین اُجرت ساخت'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b2_href'), ''),  '/products'),
+        COALESCE(NULLIF((SELECT value FROM settings WHERE key = 'promo_b2_image'), ''), 'https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80'),
+        'light', 1, 1
+      WHERE (SELECT COUNT(*) FROM promo_banners) < 2;
+    `,
+  },
 ];
 
 let appliedCount = 0;

@@ -4,21 +4,23 @@ import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 
 interface Banner {
+  id: string;
   title: string; sub: string; href: string; image: string;
+  theme: "dark" | "light";
 }
 
 export default function PromoBanners() {
-  const [b1, setB1] = useState<Banner>({ title: "تخفیف‌های دلی‌گلد", sub: "محصولات تخفیف‌دار", href: "/products", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=500&q=80" });
-  const [b2, setB2] = useState<Banner>({ title: "طلای کم اُجرت", sub: "محصولات با کمترین اُجرت ساخت", href: "/products", image: "https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=500&q=80" });
+  const [banners, setBanners] = useState<Banner[] | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/settings").then(r => r.json()).then(d => {
-      if (!d.success) return;
-      const s = d.data;
-      if (s.promo_b1_title) setB1({ title: s.promo_b1_title, sub: s.promo_b1_sub || "", href: s.promo_b1_href || "/products", image: s.promo_b1_image || b1.image });
-      if (s.promo_b2_title) setB2({ title: s.promo_b2_title, sub: s.promo_b2_sub || "", href: s.promo_b2_href || "/products", image: s.promo_b2_image || b2.image });
-    }).catch(() => {});
+    fetch("/api/promo-banners").then(r => r.json()).then(d => {
+      if (d.success) setBanners(d.data);
+    }).catch(() => setBanners([]));
   }, []);
+
+  // Before fetch resolves render nothing (avoids flashing hardcoded defaults);
+  // if no banner is active the whole section hides itself.
+  if (!banners || banners.length === 0) return null;
 
   const Card = ({ b, dark }: { b: Banner; dark: boolean }) => (
     <Link href={b.href} style={{ textDecoration: "none", display: "block" }}>
@@ -47,9 +49,8 @@ export default function PromoBanners() {
 
   return (
     <section style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 32px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }} className="pb-grid">
-        <Card b={b1} dark={true} />
-        <Card b={b2} dark={false} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "12px" }} className="pb-grid">
+        {banners.map(b => <Card key={b.id} b={b} dark={b.theme === "dark"} />)}
       </div>
       <style>{`@media(max-width:640px){.pb-grid{grid-template-columns:1fr!important}}`}</style>
     </section>

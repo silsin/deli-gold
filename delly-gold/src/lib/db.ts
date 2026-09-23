@@ -56,7 +56,26 @@ function ensureSchema(db: DatabaseSync) {
   ensureOrderShippingColumns(db);
   ensureSupportTables(db);
   ensureProductExpressColumn(db);
+  ensurePromoBannersTable(db);
   _schemaReady = true;
+}
+
+/** «بنرهای تبلیغاتی» — added by migration 027; ensure it at runtime too. */
+function ensurePromoBannersTable(db: DatabaseSync) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS promo_banners (
+      id         TEXT PRIMARY KEY,
+      title      TEXT NOT NULL,
+      sub        TEXT NOT NULL DEFAULT '',
+      href       TEXT NOT NULL DEFAULT '/products',
+      image      TEXT NOT NULL DEFAULT '',
+      theme      TEXT NOT NULL DEFAULT 'dark' CHECK(theme IN ('dark','light')),
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      active     INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_promo_banners_active ON promo_banners(active, sort_order);
+  `);
 }
 
 /** «ارسال فوری» flag — added by migration 026; ensure it at runtime too. */
@@ -491,6 +510,55 @@ export const heroSlides = {
   },
   delete(id: string) {
     getDb().prepare("DELETE FROM hero_slides WHERE id = ?").run(id);
+  },
+};
+
+// ── Promo banners (بنرهای تبلیغاتی) ────────────────────────────────────────────
+
+export interface PromoBanner {
+  id: string;
+  title: string;
+  sub: string;
+  href: string;
+  image: string;
+  theme: "dark" | "light";
+  sort_order: number;
+  active: number;
+  created_at: string;
+}
+
+export const promoBanners = {
+  list() {
+    return getDb().prepare(
+      "SELECT * FROM promo_banners ORDER BY sort_order ASC, created_at ASC"
+    ).all() as PromoBanner[];
+  },
+  listActive() {
+    return getDb().prepare(
+      "SELECT * FROM promo_banners WHERE active = 1 ORDER BY sort_order ASC, created_at ASC"
+    ).all() as PromoBanner[];
+  },
+  findById(id: string) {
+    return getDb().prepare("SELECT * FROM promo_banners WHERE id = ?").get(id) as PromoBanner | undefined;
+  },
+  create(data: Omit<PromoBanner, "id" | "created_at">) {
+    const id = generateId();
+    getDb().prepare(`
+      INSERT INTO promo_banners (id,title,sub,href,image,theme,sort_order,active)
+      VALUES (?,?,?,?,?,?,?,?)
+    `).run(id, data.title, data.sub ?? "", data.href ?? "/products", data.image ?? "",
+       data.theme === "light" ? "light" : "dark", data.sort_order ?? 0, data.active);
+    return promoBanners.findById(id)!;
+  },
+  update(id: string, data: Partial<Omit<PromoBanner, "id" | "created_at">>) {
+    const existing = promoBanners.findById(id);
+    if (!existing) return undefined;
+    const fields = Object.keys(data).map(k => `${k} = ?`).join(", ");
+    if (fields) getDb().prepare(`UPDATE promo_banners SET ${fields} WHERE id = ?`).run(...Object.values(data), id);
+    return promoBanners.findById(id)!;
+  },
+  delete(id: string) {
+    getDb().prepare("DELETE FROM promo_banners WHERE id = ?").run(id);
   },
 };
 

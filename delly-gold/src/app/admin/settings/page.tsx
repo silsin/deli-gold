@@ -130,21 +130,6 @@ export default function AdminSettingsPage() {
   const [savingHf, setSavingHf] = useState(false);
   const [hfSaved, setHfSaved] = useState(false);
 
-  // Promo banners
-  const [pb1Title, setPb1Title] = useState("");
-  const [pb1Sub, setPb1Sub]   = useState("");
-  const [pb1Href, setPb1Href] = useState("/products");
-  const [pb1Img, setPb1Img]   = useState("");
-  const [pb2Title, setPb2Title] = useState("");
-  const [pb2Sub, setPb2Sub]   = useState("");
-  const [pb2Href, setPb2Href] = useState("/products");
-  const [pb2Img, setPb2Img]   = useState("");
-  const [savingBanners, setSavingBanners] = useState(false);
-  const [bannersSaved, setBannersSaved] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState<number | null>(null);
-  const bannerRef1 = useRef<HTMLInputElement>(null);
-  const bannerRef2 = useRef<HTMLInputElement>(null);
-
   // Typography
   const defaults = getDefaultTypoSettings();
   const [typo, setTypo] = useState<Record<string, string>>(defaults);
@@ -163,21 +148,6 @@ export default function AdminSettingsPage() {
       }
     } catch {}
     finally { setUploadingSocialIcon(null); }
-  }
-
-  async function uploadBannerImage(bannerNum: 1 | 2, file: File) {
-    setUploadingBanner(bannerNum);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.success) {
-        if (bannerNum === 1) setPb1Img(data.data.url);
-        else setPb2Img(data.data.url);
-      }
-    } catch {}
-    finally { setUploadingBanner(null); }
   }
 
   const previewTheme = useCallback((palette: string, mobile: string, desktop: string) => {
@@ -218,15 +188,6 @@ export default function AdminSettingsPage() {
           setGapifyWebsiteToken(d.data.gapify_website_token ?? "");
           setHuggingfaceToken(d.data.huggingface_api_token ?? "");
           setTryonEnabled((d.data.tryon_enabled ?? "1") !== "0");
-          // Promo banners
-          if (d.data.promo_b1_title) setPb1Title(d.data.promo_b1_title);
-          if (d.data.promo_b1_sub)   setPb1Sub(d.data.promo_b1_sub);
-          if (d.data.promo_b1_href)  setPb1Href(d.data.promo_b1_href);
-          if (d.data.promo_b1_image) setPb1Img(d.data.promo_b1_image);
-          if (d.data.promo_b2_title) setPb2Title(d.data.promo_b2_title);
-          if (d.data.promo_b2_sub)   setPb2Sub(d.data.promo_b2_sub);
-          if (d.data.promo_b2_href)  setPb2Href(d.data.promo_b2_href);
-          if (d.data.promo_b2_image) setPb2Img(d.data.promo_b2_image);
           // Typography
           const typoUpdate: Record<string, string> = { ...getDefaultTypoSettings() };
           for (const s of TYPO_SECTIONS) {
@@ -404,22 +365,6 @@ export default function AdminSettingsPage() {
     }
     setSavedTypo(true); setTimeout(() => setSavedTypo(false), 3000);
     setSavingTypo(false);
-  }
-
-  async function handleSaveBanners() {
-    setSavingBanners(true); setBannersSaved(false);
-    const res = await fetch("/api/admin/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        promo_b1_title: pb1Title, promo_b1_sub: pb1Sub,
-        promo_b1_href: pb1Href,  promo_b1_image: pb1Img,
-        promo_b2_title: pb2Title, promo_b2_sub: pb2Sub,
-        promo_b2_href: pb2Href,  promo_b2_image: pb2Img,
-      }),
-    });
-    if (res.ok) { setBannersSaved(true); setTimeout(() => setBannersSaved(false), 3000); }
-    setSavingBanners(false);
   }
 
   const basePrice = goldData?.price ?? 0;
@@ -1183,66 +1128,19 @@ export default function AdminSettingsPage() {
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* ── Promo Banners ── */}
+      {/* ── Promo Banners (managed in dedicated page) ── */}
       <div style={{ ...cardStyle, marginTop: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
           <span style={{ fontSize: "18px" }}>🖼️</span>
           <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600" }}>بنرهای تبلیغاتی</h3>
         </div>
-
-        {[
-          { n: "بنر اول", num: 1 as const, title: pb1Title, setTitle: setPb1Title, sub: pb1Sub, setSub: setPb1Sub, href: pb1Href, setHref: setPb1Href, img: pb1Img, setImg: setPb1Img, ref: bannerRef1 },
-          { n: "بنر دوم", num: 2 as const, title: pb2Title, setTitle: setPb2Title, sub: pb2Sub, setSub: setPb2Sub, href: pb2Href, setHref: setPb2Href, img: pb2Img, setImg: setPb2Img, ref: bannerRef2 },
-        ].map((b, i) => (
-          <div key={i} style={{ marginBottom: "24px", padding: "16px", backgroundColor: "#121212", borderRadius: "8px", border: "1px solid #2a2a2a" }}>
-            <p style={{ color: "#d4af37", fontSize: "12px", fontWeight: "700", marginBottom: "12px" }}>{b.n}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
-              <div>
-                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>عنوان</label>
-                <input value={b.title} onChange={e => b.setTitle(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
-              </div>
-              <div>
-                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>زیرعنوان</label>
-                <input value={b.sub} onChange={e => b.setSub(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px", direction: "rtl" }} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "4px" }}>لینک</label>
-                <input value={b.href} onChange={e => b.setHref(e.target.value)} style={{ ...inp, fontSize: "13px", padding: "8px 10px" }} />
-              </div>
-            </div>
-            <label style={{ color: "#888", fontSize: "11px", display: "block", marginBottom: "6px" }}>تصویر بنر</label>
-            <input ref={b.ref} type="file" accept="image/*" style={{ display: "none" }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) uploadBannerImage(b.num, f); }} />
-            {b.img ? (
-              <div style={{ position: "relative", width: "100%" }}>
-                <img src={b.img} alt="" style={{ width: "100%", height: "90px", objectFit: "cover", borderRadius: "6px", border: "1px solid #333", display: "block" }} />
-                <button onClick={() => b.setImg("")}
-                  style={{ position: "absolute", top: "6px", right: "6px", backgroundColor: "rgba(239,68,68,0.9)", border: "none", borderRadius: "50%", width: "22px", height: "22px", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <X size={12} />
-                </button>
-                <button onClick={() => b.ref.current?.click()}
-                  style={{ position: "absolute", bottom: "6px", left: "6px", backgroundColor: "rgba(0,0,0,0.7)", color: "#fff", border: "none", borderRadius: "5px", padding: "4px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}>
-                  تغییر تصویر
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => b.ref.current?.click()} disabled={uploadingBanner === b.num}
-                style={{ width: "100%", height: "70px", backgroundColor: "#121212", border: "2px dashed #333", borderRadius: "8px", color: "#666", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "inherit", fontSize: "12px" }}>
-                <Upload size={16} color="#555" />
-                {uploadingBanner === b.num ? "در حال آپلود..." : "آپلود تصویر"}
-              </button>
-            )}
-            <input value={b.img} onChange={e => b.setImg(e.target.value)}
-              style={{ ...inp, fontSize: "12px", padding: "7px 10px", marginTop: "6px" }} placeholder="یا آدرس URL تصویر را وارد کنید" />
-          </div>
-        ))}
-
-        {bannersSaved && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ بنرها ذخیره شدند</div>}
-        <button onClick={handleSaveBanners} disabled={savingBanners}
-          style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: savingBanners ? "#a08020" : "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", cursor: savingBanners ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
-          {savingBanners ? <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={16} />}
-          {savingBanners ? "در حال ذخیره..." : "ذخیره بنرها"}
-        </button>
+        <p style={{ color: "#888", fontSize: "13px", marginBottom: "14px" }}>
+          بنرهای تبلیغاتی صفحه اصلی از صفحه مدیریت مجزا ویرایش، اضافه و حذف می‌شوند.
+        </p>
+        <a href="/admin/promo-banners"
+          style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "8px", padding: "11px 24px", fontWeight: "700", fontSize: "14px", textDecoration: "none", fontFamily: "inherit" }}>
+          مدیریت بنرهای تبلیغاتی
+        </a>
       </div>
 
       {/* ── Typography ── */}
