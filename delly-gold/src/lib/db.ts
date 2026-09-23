@@ -55,7 +55,19 @@ function ensureSchema(db: DatabaseSync) {
   `);
   ensureOrderShippingColumns(db);
   ensureSupportTables(db);
+  ensureProductExpressColumn(db);
   _schemaReady = true;
+}
+
+/** «ارسال فوری» flag — added by migration 026; ensure it at runtime too. */
+function ensureProductExpressColumn(db: DatabaseSync) {
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'").get();
+  if (!table) return;
+  const cols = db.prepare("PRAGMA table_info(products)").all() as { name: string }[];
+  if (!cols.some(c => c.name === "express_shipping")) {
+    db.exec("ALTER TABLE products ADD COLUMN express_shipping INTEGER NOT NULL DEFAULT 0");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_products_express ON products(express_shipping)");
+  }
 }
 
 function ensureOrderShippingColumns(db: DatabaseSync) {
@@ -285,6 +297,7 @@ export interface Product {
   id: string; name: string; slug: string; description: string | null;
   price: number; weight: number; karat: number; stock: number;
   images: string; videos: string; featured: number; published: number;
+  express_shipping: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
   ajrat_override: number;
@@ -292,14 +305,15 @@ export interface Product {
 }
 
 export const products = {
-  list(opts: { categoryId?: string; featured?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
-    const { categoryId, featured, search, limit = 12, offset = 0, adminMode = false } = opts;
+  list(opts: { categoryId?: string; featured?: boolean; express?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
+    const { categoryId, featured, express, search, limit = 12, offset = 0, adminMode = false } = opts;
     const db = getDb();
     const conditions: string[] = [];
     const params: unknown[] = [];
     if (!adminMode) { conditions.push("p.published = 1"); }
     if (categoryId) { conditions.push("p.category_id = ?"); params.push(categoryId); }
     if (featured !== undefined) { conditions.push("p.featured = ?"); params.push(featured ? 1 : 0); }
+    if (express !== undefined) { conditions.push("p.express_shipping = ?"); params.push(express ? 1 : 0); }
     if (search) { conditions.push("(p.name LIKE ? OR p.description LIKE ?)"); params.push(`%${search}%`, `%${search}%`); }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const rows = db.prepare(
@@ -316,8 +330,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {

@@ -6,6 +6,7 @@ import TrustBar         from "./components/TrustBar";
 import PromoBanners     from "./components/PromoBanners";
 import CategoryIcons    from "./components/CategoryIcons";
 import SpecialOffers    from "./components/SpecialOffers";
+import ExpressShipping  from "./components/ExpressShipping";
 import FavoriteProducts from "./components/FavoriteProducts";
 import CategoryShowcase from "./components/CategoryShowcase";
 import BudgetBanners    from "./components/BudgetBanners";
@@ -24,6 +25,7 @@ export default function Home() {
       <PromoBanners />
       <CategoryIcons />
       <SpecialOffers />
+      <ExpressShipping />
       <FavoriteProducts />
       <CategoryShowcase />
       <BudgetBanners />

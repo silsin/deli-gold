@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const result = products.list({
       categoryId: searchParams.get("category") || undefined,
       featured: searchParams.get("featured") === "true" ? true : undefined,
+      express: searchParams.get("express") === "true" ? true : undefined,
       search: searchParams.get("search") || undefined,
       limit, offset: (page - 1) * limit,
       adminMode,
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, ajrat_override, ajrat_percent, ajrat_fixed } = body;
+    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, ajrat_override, ajrat_percent, ajrat_fixed } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       stock: parseInt(stock ?? 0), images: JSON.stringify(images ?? []),
       videos: JSON.stringify(videos ?? []),
       featured: featured ? 1 : 0, published: published !== false ? 1 : 0,
+      express_shipping: express_shipping ? 1 : 0,
       category_id: categoryId,
       ajrat_override: ajrat_override ? 1 : 0,
       ajrat_percent: ajrat_override && ajrat_percent !== undefined ? parseFloat(ajrat_percent) : null,

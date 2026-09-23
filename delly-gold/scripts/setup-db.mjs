@@ -399,6 +399,16 @@ const migrations = [
     name: "025_product_videos",
     sql: `ALTER TABLE products ADD COLUMN videos TEXT NOT NULL DEFAULT '[]';`,
   },
+  {
+    // «محصولات ارسال فوری» — a simple flag on the product (no separate table),
+    // toggled from the product add/edit form. The homepage renders flagged
+    // products in their own colored panel with the same cards as special offers.
+    name: "026_product_express_shipping",
+    sql: `
+      ALTER TABLE products ADD COLUMN express_shipping INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_products_express ON products(express_shipping);
+    `,
+  },
 ];
 
 let appliedCount = 0;
