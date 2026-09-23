@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, Suspense } from "react";
-import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -145,6 +145,21 @@ function ProductsInner() {
           })}
         </div>
       </div>
+
+      {/* Gold hero banner — only on the «سکه و آبشده» listing */}
+      {coin && (
+        <div style={{ background: "linear-gradient(90deg, rgb(200,161,42) 0%, rgb(240,215,137) 50%, rgb(122,92,16) 100%)", padding: "30px 0" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
+              <Coins size={26} />
+            </div>
+            <div>
+              <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>سکه و آبشده</h1>
+              <p style={{ color: "rgba(255,255,255,0.92)", fontSize: 12, margin: "5px 0 0" }}>خرید سکه و طلای آبشده بر اساس قیمت لحظه‌ای طلا</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "20px 16px" }}>
 

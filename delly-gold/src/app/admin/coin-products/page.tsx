@@ -5,12 +5,12 @@ import { Plus, Trash2, X, Pencil, Coins, RefreshCw } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 
 /**
- * Â«Ø³Ú©Ù‡ Ùˆ Ø¢Ø¨Ø´Ø¯Ù‡Â» admin â€” a dedicated, simple add/edit form for coin/melted-gold
+ * «سکه و آبشده» admin — a dedicated, simple add/edit form for coin/melted-gold
  * products (name, weight, karat, image, profit %, stock). Products live in the
  * main `products` table with coin=1, so they also show in the shop and in the
- * Â«Ø³Ú©Ù‡ Ùˆ Ø¢Ø¨Ø´Ø¯Ù‡Â» homepage section. Base price is computed from the live 18k
+ * «سکه و آبشده» homepage section. Base price is computed from the live 18k
  * gold price (Ã— weight Ã— karat/18); the profit % is stored as the product's
- * Ø§Ø¬Ø±Øª override so storefront prices follow the usual calcFinalPrice logic.
+ * اجرت override so storefront prices follow the usual calcFinalPrice logic.
  */
 
 interface CoinProduct {
@@ -33,7 +33,7 @@ function fmt(n: number) { return Math.round(n).toLocaleString("en-US"); }
 export default function AdminCoinProductsPage() {
   const [items, setItems]           = useState<CoinProduct[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [goldPrice, setGoldPrice]   = useState(0); // ØªÙˆÙ…Ø§Ù† per gram, 18k
+  const [goldPrice, setGoldPrice]   = useState(0); // تومان per gram, 18k
   const [priceLoading, setPriceLoading] = useState(false);
 
   const [showModal, setShowModal]   = useState(false);
@@ -97,15 +97,15 @@ export default function AdminCoinProductsPage() {
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const d = await res.json();
       if (d.success) setImage(d.data.url);
-      else setError(d.error || "Ø®Ø·Ø§ Ø¯Ø± Ø¢Ù¾Ù„ÙˆØ¯ ØªØµÙˆÛŒØ±");
-    } catch { setError("Ø®Ø·Ø§ Ø¯Ø± Ø¢Ù¾Ù„ÙˆØ¯ ØªØµÙˆÛŒØ±"); }
+      else setError(d.error || "خطا در آپلود تصویر");
+    } catch { setError("خطا در آپلود تصویر"); }
     setUploading(false);
   }
 
   async function handleSave() {
-    if (!name.trim()) { setError("Ù†Ø§Ù… Ù…Ø­ØµÙˆÙ„ Ø§Ù„Ø²Ø§Ù…ÛŒ Ø§Ø³Øª"); return; }
-    if (w <= 0) { setError("ÙˆØ²Ù† Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª"); return; }
-    if (basePrice <= 0) { setError("Ù‚ÛŒÙ…Øª Ù„Ø­Ø¸Ù‡â€ŒØ§ÛŒ Ø·Ù„Ø§ Ø¯Ø± Ø¯Ø³ØªØ±Ø³ Ù†ÛŒØ³Øª â€” Ø§Ø¨ØªØ¯Ø§ Â«Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ù‚ÛŒÙ…ØªÂ» Ø±Ø§ Ø¨Ø²Ù†ÛŒØ¯"); return; }
+    if (!name.trim()) { setError("نام محصول الزامی است"); return; }
+    if (w <= 0) { setError("وزن نامعتبر است"); return; }
+    if (basePrice <= 0) { setError("قیمت لحظه‌ای طلا در دسترس نیست — ابتدا «بروزرسانی قیمت» را بزنید"); return; }
     setSaving(true); setError("");
     try {
       const res = editId
@@ -126,8 +126,8 @@ export default function AdminCoinProductsPage() {
           });
       const d = await res.json();
       if (d.success) { setShowModal(false); fetchAll(); }
-      else setError(d.error || "Ø®Ø·Ø§ Ø¯Ø± Ø°Ø®ÛŒØ±Ù‡");
-    } catch { setError("Ø®Ø·Ø§ Ø¯Ø± Ø°Ø®ÛŒØ±Ù‡"); }
+      else setError(d.error || "خطا در ذخیره");
+    } catch { setError("خطا در ذخیره"); }
     setSaving(false);
   }
 
@@ -147,19 +147,19 @@ export default function AdminCoinProductsPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Coins size={22} color="#d4af37" />
-            <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>Ø³Ú©Ù‡ Ùˆ Ø¢Ø¨Ø´Ø¯Ù‡</h1>
+            <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>سکه و آبشده</h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", color: "#d4af37", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              Ù‚ÛŒÙ…Øª Ù„Ø­Ø¸Ù‡â€ŒØ§ÛŒ Ø·Ù„Ø§ÛŒ Û±Û¸ Ø¹ÛŒØ§Ø±: {goldPrice > 0 ? `${fmt(goldPrice)} ØªÙˆÙ…Ø§Ù†` : "â€”"}
-              <button onClick={fetchPrice} title="Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ù‚ÛŒÙ…Øª"
+              قیمت لحظه‌ای طلای ۱۸ عیار: {goldPrice > 0 ? `${fmt(goldPrice)} تومان` : "—"}
+              <button onClick={fetchPrice} title="بروزرسانی قیمت"
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#888", display: "flex", padding: 2 }}>
                 <RefreshCw size={14} className={priceLoading ? "spin" : ""} />
               </button>
             </div>
             <button onClick={openCreate}
               style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-              <Plus size={16} /> Ø§ÙØ²ÙˆØ¯Ù† Ù…Ø­ØµÙˆÙ„
+              <Plus size={16} /> افزودن محصول
             </button>
           </div>
         </div>
