@@ -143,6 +143,7 @@ type ProductRow = {
   published: number;
   express_shipping?: number;
   low_wage?: number;
+  coin?: number;
   ajrat_override: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
@@ -166,6 +167,7 @@ export function serializeProduct(row: ProductRow) {
     published: row.published === 1,
     express_shipping: row.express_shipping ?? 0,
     low_wage: row.low_wage ?? 0,
+    coin: row.coin ?? 0,
     ajrat_override: row.ajrat_override,
     ajrat_percent: row.ajrat_percent,
     ajrat_fixed: row.ajrat_fixed,

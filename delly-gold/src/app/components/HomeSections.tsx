@@ -7,6 +7,7 @@ import CategoryIcons    from "./CategoryIcons";
 import SpecialOffers    from "./SpecialOffers";
 import ExpressShipping  from "./ExpressShipping";
 import LowWageProducts  from "./LowWageProducts";
+import CoinProducts     from "./CoinProducts";
 import FavoriteProducts from "./FavoriteProducts";
 import CategoryShowcase from "./CategoryShowcase";
 import BudgetBanners    from "./BudgetBanners";
@@ -26,6 +27,7 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   special_offers: SpecialOffers,
   express:        ExpressShipping,
   low_wage:       LowWageProducts,
+  coin:           CoinProducts,
   favorites:      FavoriteProducts,
   showcase:       CategoryShowcase,
   budget:         BudgetBanners,

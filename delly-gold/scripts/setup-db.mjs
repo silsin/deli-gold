@@ -457,6 +457,17 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_products_low_wage ON products(low_wage);
     `,
   },
+  {
+    // «سکه و آبشده» — coin/melted-gold flag like «ارسال فوری» (026), managed
+    // from the dedicated «سکه و آبشده» admin page (/admin/coin-products).
+    // Flagged products render in their own homepage panel (gold theme) and
+    // are browsable at /products?coin=true.
+    name: "029_product_coin",
+    sql: `
+      ALTER TABLE products ADD COLUMN coin INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_products_coin ON products(coin);
+    `,
+  },
 ];
 
 let appliedCount = 0;

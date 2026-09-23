@@ -20,6 +20,7 @@ export const HOME_SECTIONS: HomeSectionDef[] = [
   { key: "special_offers", label: "پیشنهاد شگفت‌انگیز" },
   { key: "express",        label: "ارسال اکسپرس" },
   { key: "low_wage",       label: "محصولات کم اجرت" },
+  { key: "coin",           label: "سکه و آبشده" },
   { key: "favorites",      label: "محصولات محبوب" },
   { key: "showcase",       label: "ویترین دسته‌بندی" },
   { key: "budget",         label: "بنرهای بودجه" },
