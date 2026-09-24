@@ -26,22 +26,18 @@ const CARD_GAP = 10;
 
 /**
  * «سکه و آبشده» — same card/carousel design as «محصولات کم اُجرت» but with
- * a plain (gradient-free) panel with a header row on top — title (start),
- * live-gold chip (middle) and «مشاهده همه» (end of the left) — above a
- * full-width carousel. Products are managed from the dedicated «سکه و آبشده»
- * admin page (/admin/coin-products), which flags products with coin=1.
+ * a plain (no background, no border) wrapper: a header row with the title
+ * (start) and «مشاهده همه» (end of the left) above a full-width carousel.
+ * Products are managed from the dedicated «سکه و آبشده» admin page
+ * (/admin/coin-products), which flags products with coin=1.
  */
 const CSS = `
 .dg-cn-wrap{max-width:1280px;margin:0 auto;padding:0 16px;}
-.dg-cn-panel{border-radius:15px;background:#fafafa;border:1px solid #f0f0f0;padding:10px 15px;}
+.dg-cn-panel{padding:10px 15px;}
 .dg-cn-row{display:flex;flex-wrap:wrap;align-items:stretch;}
 .dg-cn-aside{flex:0 0 100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:2px 0 10px;}
-.dg-cn-title,.dg-cn-aside-info,.dg-cn-aside-btn{flex:0 0 auto;display:flex;align-items:center;margin:0;}
+.dg-cn-title,.dg-cn-aside-btn{flex:0 0 auto;display:flex;align-items:center;margin:0;}
 .dg-cn-title{color:#c8a12a;font-size:15px;font-weight:700;line-height:1.7;text-align:right;}
-/* Mobile: title + view-all share the first line (space-between → button at the left
-   end); the gold-price chip drops to its own centered line instead of pushing them apart. */
-.dg-cn-aside-info{order:3;flex:0 0 100%;justify-content:center;}
-.dg-cn-shipbox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(200,161,42,.35);color:#c8a12a;font-weight:700;font-size:13px;padding:10px 16px;border-radius:6px;white-space:nowrap;}
 .dg-cn-viewall{display:inline-block;background:#c8a12a;color:#fff;border-radius:4px;padding:8px 18px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background-color .3s ease;}
 .dg-cn-viewall:hover{background:#000;color:#fff;}
 
@@ -86,9 +82,8 @@ const CSS2 = `
 .dg-cn-nav-right{right:2px;}
 
 @media (min-width:768px){
-  .dg-cn-aside{flex-wrap:nowrap;padding:2px 6px 12px;}
+  .dg-cn-aside{flex-wrap:nowrap;}
   .dg-cn-title{font-size:18px;}
-  .dg-cn-aside-info{order:0;flex:0 0 auto;}
 }
 @media (min-width:992px){
   .dg-cn-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
@@ -160,22 +155,16 @@ export default function CoinProducts() {
       <style>{CSS + CSS2}</style>
       <div className="dg-cn-wrap">
         <div className="dg-cn-panel">
-          {/* Header row: title (start) · live-gold note · view-all (end of the left) */}
+          {/* Header row: title (start) · view-all (end of the left) */}
           <div className="dg-cn-aside">
             <h3 className="dg-cn-title">سکه و آبشده</h3>
-            <div className="dg-cn-aside-info">
-              <div className="dg-cn-shipbox">
-                <Coins size={20} />
-                <span>قیمت لحظه‌ای طلا</span>
-              </div>
-            </div>
             <div className="dg-cn-aside-btn">
               <Link href="/products?coin=true" className="dg-cn-viewall">مشاهده همه</Link>
             </div>
           </div>
 
           <div className="dg-cn-row">
-            {/* Product carousel — full panel width */}
+            {/* Product carousel — full width */}
             <div className="dg-cn-main">
               <button type="button" className="dg-cn-nav dg-cn-nav-left" onClick={() => scroll("left")} aria-label="قبلی">
                 <ChevronLeft size={18} />
