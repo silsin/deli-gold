@@ -32,7 +32,7 @@ const CARD_GAP = 10;
  */
 const CSS = `
 .dg-cn-wrap{max-width:1280px;margin:0 auto;padding:0 16px;}
-.dg-cn-panel{border-radius:15px;background:linear-gradient(90deg,rgb(200,161,42) 0%,rgb(240,215,137) 50%,rgb(122,92,16) 100%);padding:10px 15px;}
+.dg-cn-panel{border-radius:15px;padding:10px 15px;}
 .dg-cn-row{display:flex;flex-wrap:wrap;align-items:stretch;}
 .dg-cn-aside{flex:0 0 100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:4px 0 12px;}
 .dg-cn-title,.dg-cn-aside-info,.dg-cn-aside-btn{flex:0 0 33.3333%;max-width:33.3333%;display:flex;align-items:center;justify-content:center;margin:0;}
@@ -158,7 +158,7 @@ export default function CoinProducts() {
     <section style={{ marginBottom: "32px" }}>
       <style>{CSS + CSS2}</style>
       <div className="dg-cn-wrap">
-        <div className="dg-cn-panel">
+        <div className="dg-cn-panel" style={{ background: "linear-gradient(90deg, rgb(200,161,42) 0%, rgb(240,215,137) 50%, rgb(122,92,16) 100%)" }}>
           <div className="dg-cn-row">
 
             {/* Panel side column: title + low-wage note + view-all */}

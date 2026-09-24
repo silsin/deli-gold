@@ -50,9 +50,15 @@ export function parseHomeSectionOrder(raw: string | null | undefined): string[] 
   }
   // Dedupe while preserving order
   keys = [...new Set(keys)];
-  // Append any registered sections not present in the saved order
+  // Insert any registered sections missing from the saved order at their
+  // registry position (before the next already-present section), so newly
+  // added sections appear in a sensible spot instead of at the very bottom
   for (const k of DEFAULT_HOME_SECTION_ORDER) {
-    if (!keys.includes(k)) keys.push(k);
+    if (keys.includes(k)) continue;
+    const kIdx = DEFAULT_HOME_SECTION_ORDER.indexOf(k);
+    const nextPresent = DEFAULT_HOME_SECTION_ORDER.slice(kIdx + 1).find((d) => keys.includes(d));
+    if (nextPresent) keys.splice(keys.indexOf(nextPresent), 0, k);
+    else keys.push(k);
   }
   return keys.length ? keys : [...DEFAULT_HOME_SECTION_ORDER];
 }
