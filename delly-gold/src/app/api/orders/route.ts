@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { orders, products as productsDb } from "@/lib/db";
 import { requireAuth, requireAdmin } from "@/lib/auth";
 import { serializeOrder, serializeOrderDetail } from "@/lib/serialize";
+import { parseVariants } from "@/lib/product-variants";
 import { validateOrderShipping } from "@/lib/order-shipping";
 import { ok, created, error, serverError } from "@/lib/response";
 
@@ -35,14 +36,45 @@ export async function POST(req: NextRequest) {
     const shipping = shippingResult.data;
 
     let total = 0;
-    const orderItems: { productId: string; quantity: number; price: number }[] = [];
+    const orderItems: {
+      productId: string;
+      quantity: number;
+      price: number;
+      variantWeight?: number | null;
+      giftPack?: string | null;
+      postcard?: string | null;
+    }[] = [];
     for (const item of items) {
       const product = productsDb.findById(item.productId);
       if (!product) return error(`محصول یافت نشد`);
       if (product.published !== 1) return error(`محصول در دسترس نیست`);
-      if (product.stock < item.quantity) return error(`موجودی ${product.name} کافی نیست`);
-      total += product.price * item.quantity;
-      orderItems.push({ productId: item.productId, quantity: item.quantity, price: product.price });
+
+      // Weight variants: the chosen weight carries its own price and stock.
+      const variants = parseVariants(product.variants);
+      const requestedWeight =
+        item.variantWeight !== undefined && item.variantWeight !== null
+          ? Number(item.variantWeight)
+          : null;
+      let unitPrice = product.price;
+      let available = product.stock;
+      let variantWeight: number | null = null;
+      if (variants.length > 0) {
+        const variant = variants.find(v => v.weight === requestedWeight) ?? variants[0];
+        unitPrice = variant.price;
+        available = variant.stock;
+        variantWeight = variant.weight;
+      }
+
+      if (available < item.quantity) return error(`موجودی ${product.name} کافی نیست`);
+      total += unitPrice * item.quantity;
+      orderItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: unitPrice,
+        variantWeight,
+        giftPack: item.giftPack ? String(item.giftPack).slice(0, 60) : null,
+        postcard: item.postcard ? String(item.postcard).slice(0, 60) : null,
+      });
     }
     const order = orders.create({
       userId: result.user.userId,

@@ -24,6 +24,11 @@ import {
   HOME_SECTIONS_SETTING_KEY,
   parseHomeSectionOrder,
 } from "@/lib/home-sections";
+import {
+  PRODUCT_PAGE_SETTING_KEY,
+  parseProductPageSettings,
+  serializeProductPageSettings,
+} from "@/lib/product-page-settings";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -48,6 +53,7 @@ export async function GET(req: NextRequest) {
     // Defaults — empty strings, no hardcoded fake data
     if (!settings.gold_markup_percent) settings.gold_markup_percent = "5";
     if (!settings.gold_fixed_fee)      settings.gold_fixed_fee = "0";
+    if (!settings.gold_tax_percent)    settings.gold_tax_percent = "0";
     if (!settings.theme_palette)       settings.theme_palette = "gold-dark";
     if (!settings.font_size_mobile)    settings.font_size_mobile = "14";
     if (!settings.font_size_desktop)   settings.font_size_desktop = "16";
@@ -90,6 +96,9 @@ export async function GET(req: NextRequest) {
     }
     if (!settings[GUIDE_PAGES_SETTING_KEY]) {
       settings[GUIDE_PAGES_SETTING_KEY] = serializeGuidePagesSettings(emptyGuidePagesSettings());
+    }
+    if (!settings[PRODUCT_PAGE_SETTING_KEY]) {
+      settings[PRODUCT_PAGE_SETTING_KEY] = serializeProductPageSettings(parseProductPageSettings(null));
     }
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));
@@ -173,6 +182,14 @@ export async function POST(req: NextRequest) {
       if (key === HOME_SECTIONS_SETTING_KEY) {
         // Normalize: drop unknown/duplicate keys, append any missing sections
         value = JSON.stringify(parseHomeSectionOrder(String(value)));
+      }
+      if (key === "gold_tax_percent") {
+        const n = parseFloat(String(value));
+        value = String(Number.isNaN(n) ? 0 : Math.min(100, Math.max(0, n)));
+      }
+      if (key === PRODUCT_PAGE_SETTING_KEY) {
+        // Normalize the gift options / packaging line / FAQ accordion
+        value = serializeProductPageSettings(parseProductPageSettings(String(value)));
       }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))

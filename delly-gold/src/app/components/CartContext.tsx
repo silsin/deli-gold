@@ -10,6 +10,20 @@ export interface CartItem {
   image: string;
   quantity: number;
   stock: number;
+  /** Weight variant picked on the product page (products with weight choices). */
+  variantWeight?: number;
+  /** Free gift options picked on the product page. */
+  giftPack?: string;
+  postcard?: string;
+}
+
+/**
+ * Stable key for a cart line: the product plus its chosen weight. Two weights of
+ * the same product are two separate lines; products without variants key by id
+ * alone (unchanged behaviour).
+ */
+export function cartLineKey(item: Pick<CartItem, "productId" | "variantWeight">): string {
+  return item.variantWeight ? `${item.productId}::${item.variantWeight}` : item.productId;
 }
 
 interface CartContextType {
@@ -17,8 +31,10 @@ interface CartContextType {
   count: number;
   total: number;
   add: (item: Omit<CartItem, "quantity">) => void;
-  remove: (productId: string) => void;
-  update: (productId: string, quantity: number) => void;
+  /** key = cartLineKey(item) */
+  remove: (key: string) => void;
+  /** key = cartLineKey(item) */
+  update: (key: string, quantity: number) => void;
   clear: () => void;
 }
 
@@ -45,11 +61,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, ready]);
 
   const add = useCallback((item: Omit<CartItem, "quantity">) => {
+    const key = cartLineKey(item);
     setItems(prev => {
-      const existing = prev.find(i => i.productId === item.productId);
+      const existing = prev.find(i => cartLineKey(i) === key);
       if (existing) {
         return prev.map(i =>
-          i.productId === item.productId
+          cartLineKey(i) === key
             ? { ...i, quantity: Math.min(i.quantity + 1, i.stock) }
             : i
         );
@@ -58,17 +75,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const remove = useCallback((productId: string) => {
-    setItems(prev => prev.filter(i => i.productId !== productId));
+  const remove = useCallback((key: string) => {
+    setItems(prev => prev.filter(i => cartLineKey(i) !== key));
   }, []);
 
-  const update = useCallback((productId: string, quantity: number) => {
+  const update = useCallback((key: string, quantity: number) => {
     if (quantity < 1) {
-      setItems(prev => prev.filter(i => i.productId !== productId));
+      setItems(prev => prev.filter(i => cartLineKey(i) !== key));
     } else {
       setItems(prev =>
         prev.map(i =>
-          i.productId === productId
+          cartLineKey(i) === key
             ? { ...i, quantity: Math.min(quantity, i.stock) }
             : i
         )

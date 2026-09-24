@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Plus, Minus, ShoppingCart, ChevronLeft, CheckCircle } from "lucide-react";
 import PageLayout from "../components/PageLayout";
-import { useCart } from "../components/CartContext";
+import { useCart, cartLineKey } from "../components/CartContext";
 import CheckoutShippingForm, {
   EMPTY_SHIPPING_FORM,
   validateShippingForm,
@@ -72,7 +72,13 @@ export default function CartPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+          items: items.map(i => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            variantWeight: i.variantWeight ?? null,
+            giftPack: i.giftPack ?? null,
+            postcard: i.postcard ?? null,
+          })),
           ...shipping,
           note: shipping.note?.trim() || undefined,
         }),
@@ -148,7 +154,7 @@ export default function CartPage() {
               {step === "cart" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(item => (
-                    <div key={item.productId} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
+                    <div key={cartLineKey(item)} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
                       {/* Image */}
                       <div style={{ width: 80, height: 80, borderRadius: 8, overflow: "hidden", flexShrink: 0, border: "1px solid var(--theme-border)" }}>
                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -156,7 +162,14 @@ export default function CartPage() {
                       {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <h3 style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 600, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h3>
-                        <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: 8 }}>{item.karat} عیار · {item.weight} گرم</p>
+                        <p style={{ color: "var(--theme-text-muted)", fontSize: 12, marginBottom: item.giftPack || item.postcard ? 4 : 8 }}>{item.karat} عیار · {item.variantWeight ?? item.weight} گرم</p>
+                        {(item.giftPack || item.postcard) && (
+                          <p style={{ color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 8 }}>
+                            {item.giftPack && <>بسته‌بندی: {item.giftPack}</>}
+                            {item.giftPack && item.postcard && " · "}
+                            {item.postcard && <>کارت پستال: {item.postcard}</>}
+                          </p>
+                        )}
                         <p style={{ color: "var(--theme-accent)", fontSize: 14, fontWeight: 700 }}>
                           {(item.price * item.quantity).toLocaleString("fa-IR")}
                           <span style={{ color: "var(--theme-text-muted)", fontWeight: 400, fontSize: 12, marginRight: 4 }}>تومان</span>
@@ -164,17 +177,17 @@ export default function CartPage() {
                       </div>
                       {/* Quantity */}
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                        <button onClick={() => update(item.productId, item.quantity - 1)}
+                        <button onClick={() => update(cartLineKey(item), item.quantity - 1)}
                           style={{ width: 28, height: 28, backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 6, color: "var(--theme-text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Minus size={12} />
                         </button>
                         <span style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.quantity}</span>
-                        <button onClick={() => update(item.productId, item.quantity + 1)}
+                        <button onClick={() => update(cartLineKey(item), item.quantity + 1)}
                           disabled={item.quantity >= item.stock}
                           style={{ width: 28, height: 28, backgroundColor: item.quantity >= item.stock ? "var(--theme-card)" : "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 6, color: item.quantity >= item.stock ? "var(--theme-text-muted)" : "var(--theme-text-muted)", cursor: item.quantity >= item.stock ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Plus size={12} />
                         </button>
-                        <button onClick={() => remove(item.productId)}
+                        <button onClick={() => remove(cartLineKey(item))}
                           style={{ width: 28, height: 28, backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 6, color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 4 }}>
                           <Trash2 size={12} />
                         </button>
@@ -242,8 +255,11 @@ export default function CartPage() {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
                   {items.map(item => (
-                    <div key={item.productId} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                      <span style={{ color: "var(--theme-text-muted)" }}>{item.name} × {item.quantity}</span>
+                    <div key={cartLineKey(item)} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                      <span style={{ color: "var(--theme-text-muted)" }}>
+                        {item.name}
+                        {item.variantWeight ? ` (${item.variantWeight} گرم)` : ""} × {item.quantity}
+                      </span>
                       <span style={{ color: "var(--theme-text-muted)" }}>{(item.price * item.quantity).toLocaleString("fa-IR")}</span>
                     </div>
                   ))}

@@ -468,6 +468,45 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_products_coin ON products(coin);
     `,
   },
+  {
+    // «صفحه محصول» — product variants (weight/price/stock choices) + the specs
+    // table rows, both JSON arrays on the product row. Managed from the product
+    // form in /admin/products and rendered by /products/[slug].
+    name: "030_product_variants_specs",
+    sql: `
+      ALTER TABLE products ADD COLUMN variants TEXT NOT NULL DEFAULT '[]';
+      ALTER TABLE products ADD COLUMN specs TEXT NOT NULL DEFAULT '[]';
+    `,
+  },
+  {
+    // Per-line gift options + the chosen weight variant, copied onto the order
+    // line so the admin can see what was actually ordered.
+    name: "031_order_item_extras",
+    sql: `
+      ALTER TABLE order_items ADD COLUMN variant_weight REAL;
+      ALTER TABLE order_items ADD COLUMN gift_pack TEXT;
+      ALTER TABLE order_items ADD COLUMN postcard TEXT;
+    `,
+  },
+  {
+    // «دیدگاه‌ها» — customer reviews, moderated from /admin/reviews.
+    name: "032_product_reviews",
+    sql: `
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id         TEXT PRIMARY KEY,
+        product_id TEXT NOT NULL,
+        user_id    TEXT,
+        name       TEXT NOT NULL,
+        rating     INTEGER NOT NULL DEFAULT 5,
+        body       TEXT NOT NULL,
+        status     TEXT NOT NULL DEFAULT 'PENDING',
+        created_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id, status);
+      CREATE INDEX IF NOT EXISTS idx_product_reviews_status  ON product_reviews(status, created_at);
+    `,
+  },
 ];
 
 let appliedCount = 0;

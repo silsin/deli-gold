@@ -2,6 +2,8 @@
  * Map SQLite snake_case rows to the camelCase shapes expected by admin UI.
  */
 
+import { parseVariants, parseSpecs } from "./product-variants";
+
 type OrderRow = {
   id: string;
   status: string;
@@ -29,6 +31,9 @@ type OrderItemRow = {
   price: number;
   product_name?: string | null;
   product_images?: string | null;
+  variant_weight?: number | null;
+  gift_pack?: string | null;
+  postcard?: string | null;
 };
 
 function shippingFields(row: OrderRow) {
@@ -71,6 +76,9 @@ export function serializeOrderDetail(
       id: item.id,
       quantity: item.quantity,
       price: item.price,
+      variantWeight: item.variant_weight ?? null,
+      giftPack: item.gift_pack ?? null,
+      postcard: item.postcard ?? null,
       product: {
         name: item.product_name ?? "—",
         images: item.product_images ?? "[]",
@@ -144,6 +152,8 @@ type ProductRow = {
   express_shipping?: number;
   low_wage?: number;
   coin?: number;
+  variants?: string | null;
+  specs?: string | null;
   ajrat_override: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
@@ -168,11 +178,45 @@ export function serializeProduct(row: ProductRow) {
     express_shipping: row.express_shipping ?? 0,
     low_wage: row.low_wage ?? 0,
     coin: row.coin ?? 0,
+    variants: parseVariants(row.variants),
+    specs: parseSpecs(row.specs),
     ajrat_override: row.ajrat_override,
     ajrat_percent: row.ajrat_percent,
     ajrat_fixed: row.ajrat_fixed,
     category: row.category_name
       ? { name: row.category_name, slug: row.category_slug ?? "" }
+      : null,
+  };
+}
+
+type ProductReviewRow = {
+  id: string;
+  product_id: string;
+  user_id?: string | null;
+  name: string;
+  rating: number;
+  body: string;
+  status: string;
+  created_at: string;
+  product_name?: string | null;
+  product_slug?: string | null;
+};
+
+export function serializeReview(row: ProductReviewRow) {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    name: row.name,
+    rating: row.rating,
+    body: row.body,
+    status: row.status,
+    // SQLite stores datetime('now') as "YYYY-MM-DD HH:MM:SS" (UTC) — hand the
+    // client a parseable ISO string.
+    createdAt: row.created_at
+      ? (row.created_at.includes("T") ? row.created_at : `${row.created_at.replace(" ", "T")}Z`)
+      : row.created_at,
+    product: row.product_name
+      ? { name: row.product_name, slug: row.product_slug ?? "" }
       : null,
   };
 }

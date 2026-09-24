@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { products, specialOffers } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { normalizeVariants, normalizeSpecs, serializeVariants, serializeSpecs } from "@/lib/product-variants";
 import { ok, error, notFound, serverError } from "@/lib/response";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -36,6 +37,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (body.ajrat_override !== undefined) data.ajrat_override = body.ajrat_override ? 1 : 0;
     if (body.ajrat_percent !== undefined) data.ajrat_percent = body.ajrat_percent !== null && body.ajrat_percent !== "" ? parseFloat(body.ajrat_percent) : null;
     if (body.ajrat_fixed !== undefined) data.ajrat_fixed = body.ajrat_fixed !== null && body.ajrat_fixed !== "" ? parseFloat(body.ajrat_fixed) : null;
+    if (body.variants !== undefined) data.variants = serializeVariants(normalizeVariants(body.variants));
+    if (body.specs !== undefined) data.specs = serializeSpecs(normalizeSpecs(body.specs));
     return ok(products.update(id, data));
   } catch (e) { console.error(e); return serverError(); }
 }

@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
       ajrat_override: 1,
       ajrat_percent: profit !== undefined && profit !== "" ? parseFloat(profit) : 0,
       ajrat_fixed: 0,
+      variants: "[]",
+      specs: "[]",
     });
 
     return created(serializeProduct(created_row));

@@ -58,6 +58,9 @@ function ensureSchema(db: DatabaseSync) {
   ensureProductExpressColumn(db);
   ensureProductLowWageColumn(db);
   ensureProductCoinColumn(db);
+  ensureProductVariantsSpecsColumns(db);
+  ensureOrderItemExtrasColumns(db);
+  ensureProductReviewsTable(db);
   ensurePromoBannersTable(db);
   _schemaReady = true;
 }
@@ -111,6 +114,54 @@ function ensureProductCoinColumn(db: DatabaseSync) {
     db.exec("ALTER TABLE products ADD COLUMN coin INTEGER NOT NULL DEFAULT 0");
     db.exec("CREATE INDEX IF NOT EXISTS idx_products_coin ON products(coin)");
   }
+}
+
+/** Add any missing columns to a table — shared by the runtime schema guards. */
+function ensureColumns(db: DatabaseSync, table: string, columns: Record<string, string>) {
+  const exists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?").get(table);
+  if (!exists) return;
+  const have = new Set(
+    (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).map(c => c.name)
+  );
+  for (const [name, ddl] of Object.entries(columns)) {
+    if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${ddl}`);
+  }
+}
+
+/** Product variants + specs — added by migration 030; ensure them at runtime too. */
+function ensureProductVariantsSpecsColumns(db: DatabaseSync) {
+  ensureColumns(db, "products", {
+    variants: "TEXT NOT NULL DEFAULT '[]'",
+    specs: "TEXT NOT NULL DEFAULT '[]'",
+  });
+}
+
+/** Order-line extras — added by migration 031; ensure them at runtime too. */
+function ensureOrderItemExtrasColumns(db: DatabaseSync) {
+  ensureColumns(db, "order_items", {
+    variant_weight: "REAL",
+    gift_pack: "TEXT",
+    postcard: "TEXT",
+  });
+}
+
+/** «دیدگاه‌ها» table — added by migration 032; ensure it at runtime too. */
+function ensureProductReviewsTable(db: DatabaseSync) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS product_reviews (
+      id         TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      user_id    TEXT,
+      name       TEXT NOT NULL,
+      rating     INTEGER NOT NULL DEFAULT 5,
+      body       TEXT NOT NULL,
+      status     TEXT NOT NULL DEFAULT 'PENDING',
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id, status);
+    CREATE INDEX IF NOT EXISTS idx_product_reviews_status  ON product_reviews(status, created_at);
+  `);
 }
 
 function ensureOrderShippingColumns(db: DatabaseSync) {
@@ -343,6 +394,10 @@ export interface Product {
   express_shipping: number;
   low_wage: number;
   coin: number;
+  /** JSON array of weight/price/stock choices; "[]" = single-weight product. */
+  variants: string;
+  /** JSON array of {label, value} rows for the «خصوصیات محصولات طلا» table. */
+  specs: string;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
   ajrat_override: number;
@@ -377,8 +432,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, variants, specs, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.variants ?? "[]", data.specs ?? "[]", data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {
@@ -394,6 +449,76 @@ export const products = {
       return (getDb().prepare("SELECT COUNT(*) as cnt FROM products WHERE slug = ? AND id != ?").get(slug, excludeId) as { cnt: number }).cnt;
     }
     return (getDb().prepare("SELECT COUNT(*) as cnt FROM products WHERE slug = ?").get(slug) as { cnt: number }).cnt;
+  },
+};
+
+// ── Product reviews («دیدگاه‌ها») ─────────────────────────────────────────────
+
+export interface ProductReview {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  name: string;
+  rating: number;
+  body: string;
+  /** PENDING until an admin approves it in /admin/reviews. */
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  created_at: string;
+}
+
+export const productReviews = {
+  /** Approved reviews of one product, newest first. */
+  listApproved(productId: string, limit = 50) {
+    return getDb().prepare(
+      "SELECT * FROM product_reviews WHERE product_id = ? AND status = 'APPROVED' ORDER BY created_at DESC LIMIT ?"
+    ).all(productId, limit) as ProductReview[];
+  },
+  /** { count, average } over the approved reviews — zeros when there is none. */
+  summary(productId: string) {
+    const row = getDb().prepare(
+      "SELECT COUNT(*) as count, AVG(rating) as average FROM product_reviews WHERE product_id = ? AND status = 'APPROVED'"
+    ).get(productId) as { count: number; average: number | null };
+    return {
+      count: row.count,
+      average: row.average ? Math.round(row.average * 10) / 10 : 0,
+    };
+  },
+  /** Admin moderation list, optionally filtered by status. */
+  listForAdmin(opts: { status?: string; limit?: number; offset?: number } = {}) {
+    const { status, limit = 20, offset = 0 } = opts;
+    const db = getDb();
+    const where = status ? "WHERE r.status = ?" : "";
+    const params: unknown[] = status ? [status] : [];
+    const rows = db.prepare(
+      `SELECT r.*, p.name as product_name, p.slug as product_slug
+       FROM product_reviews r LEFT JOIN products p ON p.id = r.product_id
+       ${where} ORDER BY r.created_at DESC LIMIT ? OFFSET ?`
+    ).all(...params, limit, offset) as (ProductReview & { product_name: string | null; product_slug: string | null })[];
+    const total = (db.prepare(`SELECT COUNT(*) as cnt FROM product_reviews r ${where}`).get(...params) as { cnt: number }).cnt;
+    return { rows, total };
+  },
+  countByStatus(status: string) {
+    return (getDb().prepare("SELECT COUNT(*) as cnt FROM product_reviews WHERE status = ?").get(status) as { cnt: number }).cnt;
+  },
+  /** The user's latest non-rejected review of a product (one review per user). */
+  findMine(productId: string, userId: string) {
+    return getDb().prepare(
+      "SELECT * FROM product_reviews WHERE product_id = ? AND user_id = ? AND status != 'REJECTED' ORDER BY created_at DESC LIMIT 1"
+    ).get(productId, userId) as ProductReview | undefined;
+  },
+  create(data: { productId: string; userId: string | null; name: string; rating: number; body: string }) {
+    const id = generateId();
+    getDb().prepare(
+      "INSERT INTO product_reviews (id, product_id, user_id, name, rating, body, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')"
+    ).run(id, data.productId, data.userId, data.name, data.rating, data.body);
+    return getDb().prepare("SELECT * FROM product_reviews WHERE id = ?").get(id) as ProductReview;
+  },
+  setStatus(id: string, status: string) {
+    getDb().prepare("UPDATE product_reviews SET status = ? WHERE id = ?").run(status, id);
+    return getDb().prepare("SELECT * FROM product_reviews WHERE id = ?").get(id) as ProductReview | undefined;
+  },
+  delete(id: string) {
+    getDb().prepare("DELETE FROM product_reviews WHERE id = ?").run(id);
   },
 };
 
@@ -416,6 +541,11 @@ export interface OrderItem {
   id: string; quantity: number; price: number; order_id: string;
   /** Null once the referenced product has been deleted (ON DELETE SET NULL). */
   product_id: string | null;
+  /** Weight chosen on the product page when the product has weight variants. */
+  variant_weight?: number | null;
+  /** Free gift options picked on the product page. */
+  gift_pack?: string | null;
+  postcard?: string | null;
 }
 
 export const orders = {
@@ -462,7 +592,15 @@ export const orders = {
     county: string;
     postalCode: string;
     deliveryPhone: string;
-    items: { productId: string; quantity: number; price: number }[];
+    items: {
+      productId: string;
+      quantity: number;
+      price: number;
+      /** Set when the customer picked a weight variant on the product page. */
+      variantWeight?: number | null;
+      giftPack?: string | null;
+      postcard?: string | null;
+    }[];
   }) {
     const db = getDb();
     const id = generateId();
@@ -478,8 +616,11 @@ export const orders = {
       data.province, data.county, data.postalCode, data.deliveryPhone,
     );
     for (const item of data.items) {
-      db.prepare("INSERT INTO order_items (id, quantity, price, order_id, product_id) VALUES (?, ?, ?, ?, ?)").run(
-        generateId(), item.quantity, item.price, id, item.productId
+      db.prepare(
+        "INSERT INTO order_items (id, quantity, price, order_id, product_id, variant_weight, gift_pack, postcard) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      ).run(
+        generateId(), item.quantity, item.price, id, item.productId,
+        item.variantWeight ?? null, item.giftPack ?? null, item.postcard ?? null
       );
     }
     return orders.findById(id)!;

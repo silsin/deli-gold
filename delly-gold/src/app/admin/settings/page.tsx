@@ -36,6 +36,7 @@ import SliderTextSettings from "@/app/admin/components/SliderTextSettings";
 import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
 import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
 import GuidePagesSettings from "@/app/admin/components/GuidePagesSettings";
+import ProductPageSettings from "@/app/admin/components/ProductPageSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
 import type { SocialLinkType } from "@/lib/social-links";
 import SocialIcon from "@/app/components/SocialIcon";
@@ -69,6 +70,7 @@ const inp: React.CSSProperties = {
 export default function AdminSettingsPage() {
   const [markup, setMarkup] = useState("5");
   const [fixedFee, setFixedFee] = useState("0");
+  const [tax, setTax] = useState("0");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [priceBar, setPriceBar] = useState<PriceBarStyle>(DEFAULT_PRICE_BAR_STYLE);
@@ -165,6 +167,7 @@ export default function AdminSettingsPage() {
         if (d.success) {
           setMarkup(d.data.gold_markup_percent ?? "5");
           setFixedFee(d.data.gold_fixed_fee ?? "0");
+          setTax(d.data.gold_tax_percent ?? "0");
           setPriceBar(parsePriceBarStyle(d.data));
           const theme = parseThemeSettings(d.data);
           setThemePalette(theme.theme_palette);
@@ -228,6 +231,7 @@ export default function AdminSettingsPage() {
       body: JSON.stringify({
         gold_markup_percent: markup,
         gold_fixed_fee: fixedFee,
+        gold_tax_percent: tax,
       }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
@@ -370,7 +374,10 @@ export default function AdminSettingsPage() {
   const basePrice = goldData?.price ?? 0;
   const markupNum = parseFloat(markup) || 0;
   const fixedNum = parseFloat(fixedFee) || 0;
-  const finalPrice = Math.round(basePrice * (1 + markupNum / 100) + fixedNum);
+  const taxNum = parseFloat(tax) || 0;
+  const ajratNum = Math.round(basePrice * (markupNum / 100) + fixedNum);
+  const taxAmount = taxNum > 0 ? Math.round(ajratNum * (taxNum / 100)) : 0;
+  const finalPrice = Math.round(basePrice + ajratNum + taxAmount);
   const activePalette = THEME_PALETTES.find(p => p.id === themePalette) ?? THEME_PALETTES[0];
 
   return (
@@ -623,6 +630,8 @@ export default function AdminSettingsPage() {
       <SliderTextSettings />
 
       <GuidePagesSettings />
+
+      <ProductPageSettings />
 
       <AboutPageSettings />
 
@@ -1072,10 +1081,11 @@ export default function AdminSettingsPage() {
           <TrendingUp size={16} color="#d4af37" />
           <h3 style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>قیمت لحظه‌ای طلا (۱۸ عیار)</h3>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
           {[
             { label: "قیمت بازار", value: loadingPrice ? "..." : `${basePrice.toLocaleString("fa-IR")} ت` },
             { label: "سود شما", value: `${markupNum}% + ${fixedNum.toLocaleString("fa-IR")} ت` },
+            { label: "مالیات بر اجرت", value: `${taxNum}%` },
             { label: "قیمت فروش", value: loadingPrice ? "..." : `${finalPrice.toLocaleString("fa-IR")} ت`, highlight: true },
           ].map((item, i) => (
             <div key={i} style={{ backgroundColor: item.highlight ? "rgba(212,175,55,0.1)" : "#121212", border: `1px solid ${item.highlight ? "rgba(212,175,55,0.3)" : "#2a2a2a"}`, borderRadius: "8px", padding: "12px", textAlign: "center" }}>
@@ -1111,6 +1121,13 @@ export default function AdminSettingsPage() {
             اجرت ثابت (تومان) <span style={{ color: "#555", fontSize: "11px" }}>— مبلغ ثابت به هر گرم افزوده می‌شود</span>
           </label>
           <input type="number" value={fixedFee} onChange={e => setFixedFee(e.target.value)} min="0" step="1000" style={inp} />
+        </div>
+
+        <div style={{ marginBottom: "24px" }}>
+          <label style={{ color: "#888", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+            مالیات بر ارزش افزوده (٪) <span style={{ color: "#555", fontSize: "11px" }}>— طبق قانون فقط روی اجرت و سود اعمال می‌شود، نه روی اصل طلا</span>
+          </label>
+          <input type="number" value={tax} onChange={e => setTax(e.target.value)} min="0" max="100" step="0.5" style={inp} />
         </div>
 
         {saved && (

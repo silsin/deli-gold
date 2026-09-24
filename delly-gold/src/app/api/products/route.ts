@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { products } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { serializeProduct } from "@/lib/serialize";
+import { normalizeVariants, normalizeSpecs, serializeVariants, serializeSpecs } from "@/lib/product-variants";
 import { ok, created, error, serverError } from "@/lib/response";
 
 export async function GET(req: NextRequest) {
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, ajrat_override, ajrat_percent, ajrat_fixed } = body;
+    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, ajrat_override, ajrat_percent, ajrat_fixed, variants, specs } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -52,6 +53,8 @@ export async function POST(req: NextRequest) {
       ajrat_override: ajrat_override ? 1 : 0,
       ajrat_percent: ajrat_override && ajrat_percent !== undefined ? parseFloat(ajrat_percent) : null,
       ajrat_fixed: ajrat_override && ajrat_fixed !== undefined ? parseFloat(ajrat_fixed) : null,
+      variants: serializeVariants(normalizeVariants(variants)),
+      specs: serializeSpecs(normalizeSpecs(specs)),
     }));
   } catch (e) { console.error(e); return serverError(); }
 }

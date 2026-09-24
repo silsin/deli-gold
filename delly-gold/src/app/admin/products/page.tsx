@@ -12,8 +12,15 @@ interface Product {
   low_wage: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
   images: string; videos: string; category: { name: string };
+  variants?: { id: string; weight: number; price: number; stock: number }[];
+  specs?: { label: string; value: string }[];
 }
 interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; }
+
+/** Weight choices (وزن) — kept as strings while editing the form. */
+interface VariantDraft { id: string; weight: string; price: string; stock: string; }
+/** «خصوصیات محصولات طلا» rows shown on the product page. */
+interface SpecDraft { label: string; value: string; }
 
 const empty = {
   name: "", slug: "", description: "", price: "", weight: "", karat: "18",
@@ -22,6 +29,7 @@ const empty = {
   low_wage: false,
   images: [] as string[], videos: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
+  variants: [] as VariantDraft[], specs: [] as SpecDraft[],
 };
 
 export default function AdminProductsPage() {
@@ -81,6 +89,10 @@ export default function AdminProductsPage() {
       ajrat_override: p.ajrat_override === 1,
       ajrat_percent: p.ajrat_percent !== null ? String(p.ajrat_percent) : "",
       ajrat_fixed:   p.ajrat_fixed   !== null ? String(p.ajrat_fixed)   : "",
+      variants: (p.variants ?? []).map(v => ({
+        id: v.id, weight: String(v.weight), price: String(v.price), stock: String(v.stock),
+      })),
+      specs: (p.specs ?? []).map(s => ({ label: s.label, value: s.value })),
     });
     setErr(""); setShowModal(true);
   }
@@ -127,6 +139,12 @@ export default function AdminProductsPage() {
         ajrat_override: form.ajrat_override,
         ajrat_percent: form.ajrat_override && form.ajrat_percent !== "" ? parseFloat(form.ajrat_percent) : null,
         ajrat_fixed:   form.ajrat_override && form.ajrat_fixed   !== "" ? parseFloat(form.ajrat_fixed)   : null,
+        variants: form.variants
+          .map(v => ({ id: v.id, weight: parseFloat(v.weight), price: parseFloat(v.price), stock: parseInt(v.stock) || 0 }))
+          .filter(v => v.weight > 0 && v.price > 0),
+        specs: form.specs
+          .map(s => ({ label: s.label.trim(), value: s.value.trim() }))
+          .filter(s => s.label && s.value),
       };
       const res = await fetch(editId ? `/api/products/${editId}` : "/api/products", {
         method: editId ? "PUT" : "POST",
@@ -157,6 +175,15 @@ export default function AdminProductsPage() {
   const inp: React.CSSProperties = {
     width: "100%", backgroundColor: "#121212", border: "1px solid #333",
     borderRadius: "6px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "inherit",
+  };
+
+  const lb: React.CSSProperties = {
+    color: "#888", fontSize: "12px", display: "block", marginBottom: "4px",
+  };
+
+  const st: React.CSSProperties = {
+    width: "100%", backgroundColor: "#121212", border: "1px solid #333",
+    borderRadius: "6px", padding: "6px 8px", color: "#fff", fontSize: "12px", outline: "none", fontFamily: "inherit",
   };
 
   return (
@@ -375,6 +402,70 @@ export default function AdminProductsPage() {
                         <label style={{ color:"#888", fontSize:"12px", display:"block", marginBottom:"4px" }}>اجرت ثابت (ت/گرم)</label>
                         <input type="number" style={{...inp,direction:"ltr"}} value={form.ajrat_fixed} onChange={e=>setForm(f=>({...f,ajrat_fixed:e.target.value}))} min="0" step="1000" placeholder={gs.gold_fixed_fee}/>
                       </div>
+                    </div>
+                  )}
+                </div>
+                {/* Weight variants — the PDP turns each row into a selectable weight pill */}
+                <div style={{ marginBottom:"18px" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"8px" }}>
+                    <label style={{ ...lb, marginBottom:0 }}>تنوع وزنی (اختیاری)</label>
+                    <button type="button" onClick={()=>setForm(f=>({ ...f, variants:[...f.variants,{ id:`v${Date.now()}`, weight:"", price:"", stock:"0" }] }))}
+                      style={{ backgroundColor:"#2a2a2a", color:"#d4af37", border:"none", borderRadius:"6px", padding:"5px 10px", fontSize:"11px", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", gap:4 }}>
+                      <Plus size={12}/> افزودن وزن
+                    </button>
+                  </div>
+                  {form.variants.length===0?(
+                    <p style={{ color:"#555", fontSize:"10px", margin:0 }}>بدون تنوع، وزن و قیمت اصلی محصول استفاده می‌شود</p>
+                  ):(
+                    <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px", gap:"6px" }}>
+                        <span style={{ color:"#555", fontSize:"9px" }}>وزن (گرم)</span>
+                        <span style={{ color:"#555", fontSize:"9px" }}>قیمت پایه (تومان)</span>
+                        <span style={{ color:"#555", fontSize:"9px" }}>موجودی</span>
+                        <span/>
+                      </div>
+                      {form.variants.map((v,i)=>(
+                        <div key={v.id+i} style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px", gap:"6px", alignItems:"center" }}>
+                          <input style={st} type="number" min="0" step="0.001" value={v.weight} placeholder="0.5"
+                            onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, weight:e.target.value }:x) }))}/>
+                          <input style={st} type="number" min="0" step="1000" value={v.price} placeholder="4300000"
+                            onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, price:e.target.value }:x) }))}/>
+                          <input style={st} type="number" min="0" value={v.stock} placeholder="0"
+                            onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, stock:e.target.value }:x) }))}/>
+                          <button type="button" title="حذف" onClick={()=>setForm(f=>({ ...f, variants:f.variants.filter((_,j)=>j!==i) }))}
+                            style={{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", padding:4 }}>
+                            <Trash2 size={14}/>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Spec rows for the «خصوصیات محصولات طلا» table on the PDP */}
+                <div style={{ marginBottom:"18px" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"8px" }}>
+                    <label style={{ ...lb, marginBottom:0 }}>مشخصات محصول (جدول صفحه محصول)</label>
+                    <button type="button" onClick={()=>setForm(f=>({ ...f, specs:[...f.specs,{ label:"", value:"" }] }))}
+                      style={{ backgroundColor:"#2a2a2a", color:"#d4af37", border:"none", borderRadius:"6px", padding:"5px 10px", fontSize:"11px", cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", gap:4 }}>
+                      <Plus size={12}/> افزودن مشخصه
+                    </button>
+                  </div>
+                  {form.specs.length===0?(
+                    <p style={{ color:"#555", fontSize:"10px", margin:0 }}>در صورت خالی بودن، مشخصات پیش‌فرض (عیار/وزن/بسته‌بندی...) نمایش داده می‌شود</p>
+                  ):(
+                    <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                      {form.specs.map((s,i)=>(
+                        <div key={i} style={{ display:"grid", gridTemplateColumns:"1fr 1.6fr 30px", gap:"6px", alignItems:"center" }}>
+                          <input style={st} value={s.label} placeholder="عیار طلا"
+                            onChange={e=>setForm(f=>({ ...f, specs:f.specs.map((x,j)=>j===i?{ ...x, label:e.target.value }:x) }))}/>
+                          <input style={st} value={s.value} placeholder="18 عیار (750)"
+                            onChange={e=>setForm(f=>({ ...f, specs:f.specs.map((x,j)=>j===i?{ ...x, value:e.target.value }:x) }))}/>
+                          <button type="button" title="حذف" onClick={()=>setForm(f=>({ ...f, specs:f.specs.filter((_,j)=>j!==i) }))}
+                            style={{ background:"none", border:"none", color:"#ef4444", cursor:"pointer", padding:4 }}>
+                            <Trash2 size={14}/>
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
