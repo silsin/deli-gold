@@ -26,18 +26,22 @@ const CARD_GAP = 10;
 
 /**
  * «سکه و آبشده» — same card/carousel design as «محصولات کم اُجرت» but with
- * a gold panel and a «سکه و آبشده» badge. Products are managed from the
- * dedicated «سکه و آبشده» admin page (/admin/coin-products) which flags
- * products with coin=1.
+ * a plain (gradient-free) panel with a header row on top — title (start),
+ * live-gold chip (middle) and «مشاهده همه» (end of the left) — above a
+ * full-width carousel. Products are managed from the dedicated «سکه و آبشده»
+ * admin page (/admin/coin-products), which flags products with coin=1.
  */
 const CSS = `
 .dg-cn-wrap{max-width:1280px;margin:0 auto;padding:0 16px;}
-.dg-cn-panel{border-radius:15px;padding:10px 15px;}
+.dg-cn-panel{border-radius:15px;background:#fafafa;border:1px solid #f0f0f0;padding:10px 15px;}
 .dg-cn-row{display:flex;flex-wrap:wrap;align-items:stretch;}
-.dg-cn-aside{flex:0 0 100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:4px 0 12px;}
-.dg-cn-title,.dg-cn-aside-info,.dg-cn-aside-btn{flex:0 0 33.3333%;max-width:33.3333%;display:flex;align-items:center;justify-content:center;margin:0;}
-.dg-cn-title{color:#fff;font-size:15px;font-weight:700;line-height:1.7;text-align:center;}
-.dg-cn-shipbox{display:flex;align-items:center;gap:8px;background:#fff;color:#c8a12a;font-weight:700;font-size:13px;padding:10px 16px;border-radius:6px;white-space:nowrap;}
+.dg-cn-aside{flex:0 0 100%;max-width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:2px 0 10px;}
+.dg-cn-title,.dg-cn-aside-info,.dg-cn-aside-btn{flex:0 0 auto;display:flex;align-items:center;margin:0;}
+.dg-cn-title{color:#c8a12a;font-size:15px;font-weight:700;line-height:1.7;text-align:right;}
+/* Mobile: title + view-all share the first line (space-between → button at the left
+   end); the gold-price chip drops to its own centered line instead of pushing them apart. */
+.dg-cn-aside-info{order:3;flex:0 0 100%;justify-content:center;}
+.dg-cn-shipbox{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(200,161,42,.35);color:#c8a12a;font-weight:700;font-size:13px;padding:10px 16px;border-radius:6px;white-space:nowrap;}
 .dg-cn-viewall{display:inline-block;background:#c8a12a;color:#fff;border-radius:4px;padding:8px 18px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background-color .3s ease;}
 .dg-cn-viewall:hover{background:#000;color:#fff;}
 
@@ -45,7 +49,7 @@ const CSS = `
 .dg-cn-main{flex:0 0 100%;max-width:100%;min-width:0;position:relative;}
 .dg-cn-track{display:flex;gap:10px;overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none;padding:2px;}
 .dg-cn-track::-webkit-scrollbar{display:none;}
-.dg-cn-card{flex:0 0 calc(33.3333% - 7px);max-width:calc(33.3333% - 7px);background:#fff;display:flex;flex-direction:column;text-align:center;overflow:hidden;border-radius:10px;}
+.dg-cn-card{flex:0 0 calc(33.3333% - 7px);max-width:calc(33.3333% - 7px);background:#fff;border:1px solid #f0f0f0;display:flex;flex-direction:column;text-align:center;overflow:hidden;border-radius:10px;}
 .dg-cn-media{position:relative;display:block;background:#d7d7d7;aspect-ratio:1/1;overflow:hidden;}
 .dg-cn-img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .4s ease;}
 .dg-cn-media:hover .dg-cn-img{transform:scale(1.06);}
@@ -82,12 +86,9 @@ const CSS2 = `
 .dg-cn-nav-right{right:2px;}
 
 @media (min-width:768px){
-  .dg-cn-row{flex-wrap:nowrap;}
-  .dg-cn-aside{flex:0 0 16.6667%;max-width:16.6667%;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:center;gap:0;padding:0 6px;}
-  .dg-cn-title,.dg-cn-aside-info,.dg-cn-aside-btn{flex:0 0 auto;max-width:100%;}
-  .dg-cn-title{font-size:18px;line-height:40px;margin-bottom:14px;}
-  .dg-cn-aside-info{margin-bottom:16px;}
-  .dg-cn-main{flex:1 1 0;min-width:0;max-width:none;}
+  .dg-cn-aside{flex-wrap:nowrap;padding:2px 6px 12px;}
+  .dg-cn-title{font-size:18px;}
+  .dg-cn-aside-info{order:0;flex:0 0 auto;}
 }
 @media (min-width:992px){
   .dg-cn-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
@@ -158,24 +159,23 @@ export default function CoinProducts() {
     <section style={{ marginBottom: "32px" }}>
       <style>{CSS + CSS2}</style>
       <div className="dg-cn-wrap">
-        <div className="dg-cn-panel" style={{ background: "linear-gradient(90deg, rgb(200,161,42) 0%, rgb(240,215,137) 50%, rgb(122,92,16) 100%)" }}>
-          <div className="dg-cn-row">
-
-            {/* Panel side column: title + low-wage note + view-all */}
-            <div className="dg-cn-aside">
-              <h3 className="dg-cn-title">سکه و آبشده</h3>
-              <div className="dg-cn-aside-info">
-                <div className="dg-cn-shipbox">
-                  <Coins size={20} />
-                  <span>قیمت لحظه‌ای طلا</span>
-                </div>
-              </div>
-              <div className="dg-cn-aside-btn">
-                <Link href="/products?coin=true" className="dg-cn-viewall">مشاهده همه</Link>
+        <div className="dg-cn-panel">
+          {/* Header row: title (start) · live-gold note · view-all (end of the left) */}
+          <div className="dg-cn-aside">
+            <h3 className="dg-cn-title">سکه و آبشده</h3>
+            <div className="dg-cn-aside-info">
+              <div className="dg-cn-shipbox">
+                <Coins size={20} />
+                <span>قیمت لحظه‌ای طلا</span>
               </div>
             </div>
+            <div className="dg-cn-aside-btn">
+              <Link href="/products?coin=true" className="dg-cn-viewall">مشاهده همه</Link>
+            </div>
+          </div>
 
-            {/* Product carousel */}
+          <div className="dg-cn-row">
+            {/* Product carousel — full panel width */}
             <div className="dg-cn-main">
               <button type="button" className="dg-cn-nav dg-cn-nav-left" onClick={() => scroll("left")} aria-label="قبلی">
                 <ChevronLeft size={18} />

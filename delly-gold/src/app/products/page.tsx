@@ -146,16 +146,16 @@ function ProductsInner() {
         </div>
       </div>
 
-      {/* Gold hero banner — only on the «سکه و آبشده» listing */}
+      {/* Coin hero banner (plain, gradient-free) — only on the «سکه و آبشده» listing */}
       {coin && (
-        <div style={{ background: "linear-gradient(90deg, rgb(200,161,42) 0%, rgb(240,215,137) 50%, rgb(122,92,16) 100%)", padding: "30px 0" }}>
+        <div style={{ background: "#fafafa", borderBottom: "1px solid #f0f0f0", padding: "30px 0" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", backgroundColor: "rgba(200,161,42,0.12)", border: "1px solid rgba(200,161,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#c8a12a", flexShrink: 0 }}>
               <Coins size={26} />
             </div>
             <div>
-              <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>سکه و آبشده</h1>
-              <p style={{ color: "rgba(255,255,255,0.92)", fontSize: 12, margin: "5px 0 0" }}>خرید سکه و طلای آبشده بر اساس قیمت لحظه‌ای طلا</p>
+              <h1 style={{ color: "#c8a12a", fontSize: 20, fontWeight: 700, margin: 0 }}>سکه و آبشده</h1>
+              <p style={{ color: "#888", fontSize: 12, margin: "5px 0 0" }}>خرید سکه و طلای آبشده بر اساس قیمت لحظه‌ای طلا</p>
             </div>
           </div>
         </div>
