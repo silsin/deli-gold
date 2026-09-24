@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Heart, ShoppingCart, Check, ChevronLeft, ChevronRight, Shield, Truck,
   RotateCcw, Coins, Play, Minus, Plus, Star, CreditCard, Gift,
+  Maximize2, X,
 } from "lucide-react";
 import PageLayout from "../../components/PageLayout";
 import { useCart, cartLineKey } from "../../components/CartContext";
@@ -16,7 +17,7 @@ import {
   type ProductVariant, type ProductSpec,
 } from "@/lib/product-variants";
 import {
-  parseProductPageSettings, NO_POSTCARD_LABEL, type ProductPageSettings,
+  parseProductPageSettings, NO_POSTCARD_LABEL,
 } from "@/lib/product-page-settings";
 
 interface Product {
@@ -85,6 +86,18 @@ const CSS = `
 .pd-badge{position:absolute;z-index:2;top:12px;right:12px;background:#c8a12a;color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;}
 .pd-oos{position:absolute;inset:0;z-index:3;background:rgba(255,255,255,.82);display:flex;align-items:center;justify-content:center;}
 .pd-oos span{color:#dc2626;font-size:16px;font-weight:700;border:1px solid rgba(220,38,38,.3);padding:8px 20px;border-radius:8px;background:#fff;}
+.pd-fs-btn{position:absolute;z-index:4;top:12px;left:12px;width:34px;height:34px;border-radius:8px;border:none;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(0,0,0,.15);color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;opacity:.9;}
+.pd-fs-btn:hover{background:#c8a12a;color:#fff;opacity:1;}
+.pd-fs{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;animation:pd-fs-in .18s ease;}
+@keyframes pd-fs-in{from{opacity:0;}to{opacity:1;}}
+.pd-fs-media{max-width:100vw;max-height:100vh;object-fit:contain;display:block;cursor:default;}
+.pd-fs-close{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;}
+.pd-fs-close:hover{background:rgba(255,255,255,.28);}
+.pd-fs-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;}
+.pd-fs-nav:hover{background:rgba(255,255,255,.28);}
+.pd-fs-nav.prev{right:16px;}
+.pd-fs-nav.next{left:16px;}
+.pd-fs-count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.75);font-size:13px;background:rgba(255,255,255,.1);padding:4px 14px;border-radius:20px;direction:ltr;}
 .pd-cat{display:inline-flex;align-items:center;gap:4px;color:#c8a12a;font-size:12px;font-weight:600;text-decoration:none;margin-bottom:8px;}
 .pd-title{color:#222;font-size:22px;font-weight:800;line-height:1.5;margin:0 0 8px;}
 .pd-stars{display:inline-flex;align-items:center;gap:2px;}
@@ -261,6 +274,7 @@ export default function ProductDetailPage() {
   const [giftPack, setGiftPack]   = useState("");
   const [postcard, setPostcard]   = useState(NO_POSTCARD_LABEL);
   const [zoom, setZoom]           = useState({ active: false, x: 50, y: 50 });
+  const [fsOpen, setFsOpen]       = useState(false);
   const [openFaq, setOpenFaq]     = useState<number | null>(0);
   const [reviews, setReviews]     = useState<Review[]>([]);
   const [summary, setSummary]     = useState<ReviewSummary>({ count: 0, average: 0 });
@@ -354,6 +368,24 @@ export default function ProductDetailPage() {
     ...parseMedia(product.videos).map(src => ({ type: "video" as const, src })),
     ...images.map(src => ({ type: "image" as const, src })),
   ] : []), [product, images]);
+
+  // Fullscreen lightbox — Esc closes, arrow keys navigate (RTL: left = next),
+  // and the page behind is scroll-locked while it's open.
+  useEffect(() => {
+    if (!fsOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFsOpen(false);
+      else if (media.length > 1 && e.key === "ArrowLeft") setActiveImg(i => (i + 1) % media.length);
+      else if (media.length > 1 && e.key === "ArrowRight") setActiveImg(i => (i - 1 + media.length) % media.length);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [fsOpen, media.length]);
 
   const lineKey   = product ? cartLineKey({ productId: product.id, variantWeight: selectedVariant?.weight }) : "";
   const inCartQty = items.find(i => cartLineKey(i) === lineKey)?.quantity ?? 0;
@@ -498,6 +530,12 @@ export default function ProductDetailPage() {
                   <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc" }}>
                     <Coins size={34} />
                   </div>
+                )}
+                {media[activeImg]?.type === "image" && (
+                  <button type="button" className="pd-fs-btn" title="نمایش تمام‌صفحه" aria-label="نمایش تمام‌صفحه"
+                    onClick={() => setFsOpen(true)}>
+                    <Maximize2 size={15} />
+                  </button>
                 )}
                 {product.featured === 1 && <span className="pd-badge">ویژه</span>}
                 {oos && <div className="pd-oos"><span>ناموجود</span></div>}
@@ -810,6 +848,38 @@ export default function ProductDetailPage() {
           </button>
         </div>
       </div>
+      {/* ── Fullscreen lightbox for the gallery image ── */}
+      {fsOpen && media[activeImg] && (
+        <div className="pd-fs" onClick={() => setFsOpen(false)} role="dialog" aria-modal="true" aria-label="نمایش تمام‌صفحه">
+          <button type="button" className="pd-fs-close" title="بستن" aria-label="بستن"
+            onClick={() => setFsOpen(false)}>
+            <X size={20} />
+          </button>
+          {media.length > 1 && (
+            <>
+              <button type="button" className="pd-fs-nav prev" title="قبلی" aria-label="قبلی"
+                onClick={e => { e.stopPropagation(); setActiveImg(i => (i - 1 + media.length) % media.length); }}>
+                <ChevronRight size={22} />
+              </button>
+              <button type="button" className="pd-fs-nav next" title="بعدی" aria-label="بعدی"
+                onClick={e => { e.stopPropagation(); setActiveImg(i => (i + 1) % media.length); }}>
+                <ChevronLeft size={22} />
+              </button>
+            </>
+          )}
+          {media[activeImg].type === "video" ? (
+            <video key={media[activeImg].src} src={media[activeImg].src} controls autoPlay playsInline
+              className="pd-fs-media" style={{ backgroundColor: "#000", cursor: "default" }}
+              onClick={e => e.stopPropagation()} />
+          ) : (
+            <img src={media[activeImg].src} alt={product.name} className="pd-fs-media"
+              onClick={e => e.stopPropagation()} />
+          )}
+          {media.length > 1 && (
+            <span className="pd-fs-count">{activeImg + 1} / {media.length}</span>
+          )}
+        </div>
+      )}
     </PageLayout>
   );
 }
