@@ -89,6 +89,33 @@ const CSS2 = `
   .dg-cn-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
   .dg-cn-nav{display:flex;}
 }
+
+/* ── Mobile: keep the panel header, card body and every price readable ── */
+@media (max-width:767px){
+  .dg-cn-wrap{padding:0 10px;}
+  .dg-cn-panel{padding:8px 10px;border-radius:12px;}
+  .dg-cn-aside{gap:8px;padding:2px 0 10px;}
+  .dg-cn-title{font-size:14px;}
+  .dg-cn-viewall{padding:7px 12px;font-size:11px;}
+  .dg-cn-track{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+  .dg-cn-card{scroll-snap-align:start;border-radius:8px;}
+  .dg-cn-body{padding:8px 9px 12px;}
+  .dg-cn-name{height:auto;min-height:34px;font-size:12px;line-height:1.5;}
+  .dg-cn-price{margin-top:10px;gap:4px;}
+  .dg-cn-new{font-size:14px;}
+  .dg-cn-unit{font-size:10px;}
+  .dg-cn-badge{font-size:10px;padding:2px 7px;top:6px;right:6px;}
+  .dg-cn-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
+  .dg-cn-wish{width:26px;height:26px;top:6px;left:6px;}
+  .dg-cn-cart{gap:4px;padding:9px 4px;font-size:11px;}
+  .dg-cn-nav{display:none;}
+}
+@media (max-width:575px){
+  /* Two cards per view instead of three so nothing is squeezed out */
+  .dg-cn-card{flex:0 0 calc(50% - 5px);max-width:calc(50% - 5px);}
+  /* Safety net: the cart label may shrink/ellipsis but never widen the card */
+  .dg-cn-cart span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}
 `;
 
 export default function CoinProducts() {

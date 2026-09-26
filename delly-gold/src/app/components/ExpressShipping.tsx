@@ -90,6 +90,38 @@ const CSS = `
   .dg-ex-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
   .dg-ex-nav{display:flex;}
 }
+
+/* ── Mobile: keep the panel header, card body and every price readable ── */
+@media (max-width:767px){
+  .dg-ex-wrap{padding:0 10px;}
+  .dg-ex-panel{padding:8px 10px;border-radius:12px;}
+  .dg-ex-aside{gap:8px;padding:2px 0 10px;}
+  .dg-ex-title{font-size:14px;}
+  .dg-ex-shipbox{gap:6px;padding:7px 10px;font-size:11px;}
+  .dg-ex-viewall{padding:7px 12px;font-size:11px;}
+  .dg-ex-track{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+  .dg-ex-card{scroll-snap-align:start;border-radius:8px;}
+  .dg-ex-body{padding:8px 9px 12px;}
+  .dg-ex-name{height:auto;min-height:34px;font-size:12px;line-height:1.5;}
+  .dg-ex-price{margin-top:10px;gap:4px;}
+  .dg-ex-new{font-size:14px;}
+  .dg-ex-unit{font-size:10px;}
+  .dg-ex-badge{font-size:10px;padding:2px 7px;top:6px;right:6px;}
+  .dg-ex-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
+  .dg-ex-wish{width:26px;height:26px;top:6px;left:6px;}
+  .dg-ex-cart{gap:4px;padding:9px 4px;font-size:11px;}
+  .dg-ex-nav{display:none;}
+}
+@media (max-width:575px){
+  /* Title on its own line, «ارسال فوری» chip + «مشاهده همه» centered below it */
+  .dg-ex-title{flex:0 0 100%;max-width:100%;font-size:15px;}
+  .dg-ex-aside-info{flex:0 1 auto;max-width:none;}
+  .dg-ex-aside-btn{flex:0 0 auto;max-width:none;}
+  /* Two cards per view instead of three so nothing is squeezed out */
+  .dg-ex-card{flex:0 0 calc(50% - 5px);max-width:calc(50% - 5px);}
+  /* Safety net: the cart label may shrink/ellipsis but never widen the card */
+  .dg-ex-cart span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}
 `;
 
 export default function ExpressShipping() {

@@ -103,6 +103,41 @@ const CSS = `
   .dg-so-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
   .dg-so-nav{display:flex;}
 }
+
+/* ── Mobile: keep the panel header, card body and every price readable ── */
+@media (max-width:767px){
+  .dg-so-wrap{padding:0 10px;}
+  .dg-so-panel{padding:8px 10px;border-radius:12px;}
+  .dg-so-aside{gap:8px;padding:2px 0 10px;}
+  .dg-so-title{font-size:14px;}
+  .dg-so-countdown{gap:3px;}
+  .dg-so-box{width:34px;height:34px;font-size:15px;border-radius:5px;}
+  .dg-so-colon{font-size:16px;}
+  .dg-so-viewall{padding:7px 12px;font-size:11px;}
+  .dg-so-track{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+  .dg-so-card{scroll-snap-align:start;border-radius:8px;}
+  .dg-so-body{padding:8px 9px 12px;}
+  .dg-so-name{height:auto;min-height:34px;font-size:12px;line-height:1.5;}
+  .dg-so-price{margin-top:10px;gap:4px;}
+  .dg-so-new{font-size:14px;}
+  .dg-so-old{font-size:11px;padding:2px 5px;}
+  .dg-so-unit{font-size:10px;}
+  .dg-so-badge{font-size:12px;padding:2px 7px;min-width:0;top:6px;right:6px;}
+  .dg-so-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
+  .dg-so-wish{width:26px;height:26px;top:6px;left:6px;}
+  .dg-so-cart{gap:4px;padding:9px 4px;font-size:11px;}
+  .dg-so-nav{display:none;}
+}
+@media (max-width:575px){
+  /* Title on its own line, countdown + «مشاهده همه» centered below it */
+  .dg-so-title{flex:0 0 100%;max-width:100%;font-size:15px;}
+  .dg-so-aside-cd{flex:0 1 auto;max-width:none;}
+  .dg-so-aside-btn{flex:0 0 auto;max-width:none;}
+  /* Two cards per view instead of three so nothing is squeezed out */
+  .dg-so-card{flex:0 0 calc(50% - 5px);max-width:calc(50% - 5px);}
+  /* Safety net: the cart label may shrink/ellipsis but never widen the card */
+  .dg-so-cart span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+}
 `;
 export default function SpecialOffers() {
   const [offers, setOffers]     = useState<OfferWithProduct[]>([]);
