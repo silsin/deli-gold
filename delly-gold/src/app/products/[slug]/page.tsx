@@ -196,6 +196,7 @@ const CSS = `
 .pd-bar-btn:disabled{background:#e0e0e0;cursor:not-allowed;}
 @media (max-width:900px){.pd-card{flex:0 0 calc(40% - 8px);max-width:calc(40% - 8px);}}
 @media (max-width:768px){
+  .pd-wrap{padding:20px 12px 32px;}
   .pd-grid{grid-template-columns:1fr;gap:20px;}
   .pd-sticky{position:static;}
   .pd-gallery{flex-direction:column-reverse;}
@@ -206,6 +207,26 @@ const CSS = `
   .pd-table td{padding:9px 10px;}
   .pd-card{flex:0 0 calc(62% - 6px);max-width:calc(62% - 6px);}
   .pd-h2{font-size:16px;}
+  .pd-qty-row{flex-wrap:wrap;}
+  .pd-bar-inner{gap:10px;padding:8px 12px;}
+  .pd-bar-thumb{width:38px;height:38px;}
+  .pd-bar-name{font-size:12px;}
+  .pd-bar-price{font-size:13px;}
+  .pd-bar-btn{padding:9px 14px;font-size:12px;}
+  .pd-fs-nav{width:38px;height:38px;}
+  .pd-fs-nav.prev{right:8px;}
+  .pd-fs-nav.next{left:8px;}
+  .pd-fs-close{top:10px;left:10px;width:36px;height:36px;}
+}
+@media (max-width:480px){
+  .pd-title{font-size:18px;}
+  .pd-card{flex:0 0 calc(72% - 6px);max-width:calc(72% - 6px);}
+  .pd-price-num{font-size:24px;}
+  .pd-qty{flex:1;}
+  .pd-add{padding:12px 10px;font-size:13px;}
+  .pd-bar-name{display:none;}
+  .pd-bar-btn{flex:1;justify-content:center;}
+  .pd-review header{flex-wrap:wrap;row-gap:4px;}
 }
 `;
 /** Horizontal product rail — used for «محصولات مرتبط» and «محصولاتی که شاید بپسندید». */

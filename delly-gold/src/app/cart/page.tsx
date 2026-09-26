@@ -150,11 +150,11 @@ export default function CartPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start" }} className="cart-grid">
 
             {/* Items list */}
-            <div>
+            <div style={{ minWidth: 0 }}>
               {step === "cart" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {items.map(item => (
-                    <div key={cartLineKey(item)} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
+                    <div key={cartLineKey(item)} className="cart-item" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
                       {/* Image */}
                       <div style={{ width: 80, height: 80, borderRadius: 8, overflow: "hidden", flexShrink: 0, border: "1px solid var(--theme-border)" }}>
                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -305,6 +305,7 @@ export default function CartPage() {
         @media (max-width: 768px) {
           .cart-grid { grid-template-columns: 1fr !important; }
           .checkout-shipping-grid { grid-template-columns: 1fr !important; }
+          .cart-item { flex-wrap: wrap; padding: 12px !important; gap: 12px !important; }
         }
       `}</style>
     </PageLayout>

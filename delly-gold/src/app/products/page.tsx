@@ -164,7 +164,7 @@ function ProductsInner() {
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "20px 16px" }}>
 
         {/* ── Filter / sort bar ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "10px", flexWrap: "wrap" }}>
+        <div className="filter-search-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "10px", flexWrap: "wrap" }}>
           {/* Right: count + filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button onClick={() => setShowFilter(true)}
@@ -183,6 +183,7 @@ function ProductsInner() {
               <Search size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "#bbb" }} />
               <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
                 placeholder="جستجو..."
+                className="filter-search-input"
                 style={{ border: "1px solid #ddd", borderRadius: "7px", padding: "7px 30px 7px 10px", fontSize: "13px", outline: "none", color: "#333", width: "160px", fontFamily: "inherit" }}
                 onFocus={e => (e.target.style.borderColor = "#c8a12a")}
                 onBlur={e => (e.target.style.borderColor = "#ddd")} />
@@ -375,7 +376,12 @@ function ProductsInner() {
         @keyframes shimmer { 0%,100%{opacity:0.5} 50%{opacity:0.8} }
         @media(max-width:1100px){.prod-grid{grid-template-columns:repeat(3,1fr)!important}}
         @media(max-width:768px){.prod-grid{grid-template-columns:repeat(2,1fr)!important}}
-        @media(max-width:480px){.prod-grid{grid-template-columns:1fr!important}}
+        @media(max-width:480px){
+          .prod-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px !important;}
+          .filter-search-row{flex-direction:column !important;align-items:stretch !important;}
+          .filter-search-row > div{width:100% !important;}
+          .filter-search-input{width:100% !important;}
+        }
       `}</style>
     </PageLayout>
   );

@@ -89,6 +89,53 @@ nav a, header a, .cat-nav-row a {
 
 a { color: inherit; }
 
+img, video, canvas {
+  max-width: 100%;
+}
+
+video {
+  height: auto;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+input, select, textarea, button {
+  max-width: 100%;
+}
+
+.pd-table, .table-scroll {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-slider: 30px;
+  }
+  .hs-title-inner {
+    font-size: var(--font-size-slider) !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+  }
+  .hs-title-inner.hs-title-accent {
+    font-size: calc(var(--font-size-slider) * 1.2) !important;
+  }
+  .hs-subtitle {
+    white-space: normal !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --font-size-slider: 24px;
+    --font-size-heading: 22px;
+  }
+}
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #f5f5f5; }
 ::-webkit-scrollbar-thumb { background: #c8a12a; border-radius: 3px; }

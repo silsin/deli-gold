@@ -44,8 +44,8 @@ export default function CollectionsPage() {
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, transparent, rgba(14,14,14,0.7))" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <p style={{ color: "var(--theme-accent)", fontSize: 13, marginBottom: 8 }}>دلی گلد</p>
-          <h1 style={{ color: "var(--theme-text)", fontSize: 36, fontWeight: 800, marginBottom: 8 }}>کالکشن‌ها</h1>
-          <p style={{ color: "var(--theme-text-muted)", fontSize: 15 }}>مجموعه‌ای از بهترین طلاها برای هر سلیقه</p>
+          <h1 className="hero-title" style={{ color: "var(--theme-text)", fontWeight: 800, marginBottom: 8 }}>کالکشن‌ها</h1>
+          <p className="hero-sub" style={{ color: "var(--theme-text-muted)" }}>مجموعه‌ای از بهترین طلاها برای هر سلیقه</p>
         </div>
       </div>
 
@@ -55,7 +55,11 @@ export default function CollectionsPage() {
         <h2 style={{ color: "var(--theme-text)", fontSize: 22, fontWeight: 700, marginBottom: 24 }}>کالکشن‌های ویژه</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 56 }} className="highlights-grid">
           {highlights.map((h, i) => (
-            <Link key={i} href="/products" style={{ textDecoration: "none", display: "block", borderRadius: 12, overflow: "hidden", position: "relative", height: 240, border: "1px solid var(--theme-border)", transition: "border-color 0.2s" }}
+            <Link
+              key={i}
+              href="/products"
+              className="highlight-card"
+              style={{ textDecoration: "none", display: "block", borderRadius: 12, overflow: "hidden", position: "relative", height: 240, border: "1px solid var(--theme-border)", transition: "border-color 0.2s" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)"}>
               <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${h.image})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.45)", transition: "filter 0.3s" }} />
@@ -82,7 +86,11 @@ export default function CollectionsPage() {
             {categories.map((cat, i) => {
               const img = collectionImages[cat.slug] || fallbacks[i % fallbacks.length];
               return (
-                <Link key={cat.id} href={`/products?category=${cat.id}`} style={{ textDecoration: "none", display: "block", borderRadius: 12, overflow: "hidden", position: "relative", height: 320, border: "1px solid var(--theme-border)", transition: "border-color 0.2s, transform 0.2s" }}
+                <Link
+                  key={cat.id}
+                  href={`/products?category=${cat.id}`}
+                  className="collection-card"
+                  style={{ textDecoration: "none", display: "block", borderRadius: 12, overflow: "hidden", position: "relative", height: 320, border: "1px solid var(--theme-border)", transition: "border-color 0.2s, transform 0.2s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-accent)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--theme-border)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}>
                   <img src={img} alt={cat.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.5)" }} />
@@ -105,8 +113,19 @@ export default function CollectionsPage() {
       </div>
 
       <style>{`
+        .hero-title { font-size: 36px; }
+        .hero-sub { font-size: 15px; }
         @media (max-width: 768px) {
           .highlights-grid { grid-template-columns: 1fr !important; }
+          .hero-title { font-size: 27px; }
+          .hero-sub { font-size: 13px; }
+          .highlight-card { height: 200px !important; }
+          .collection-card { height: 260px !important; }
+        }
+        @media (max-width: 480px) {
+          .hero-title { font-size: 24px; }
+          .highlight-card { height: 180px !important; }
+          .collection-card { height: 230px !important; }
         }
       `}</style>
     </PageLayout>
