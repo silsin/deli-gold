@@ -35,6 +35,7 @@ import PriceBarContent from "@/app/components/PriceBarContent";
 import SliderTextSettings from "@/app/admin/components/SliderTextSettings";
 import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
 import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
+import CollabPageSettings from "@/app/admin/components/CollabPageSettings";
 import GuidePagesSettings from "@/app/admin/components/GuidePagesSettings";
 import ProductPageSettings from "@/app/admin/components/ProductPageSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
@@ -636,6 +637,8 @@ export default function AdminSettingsPage() {
       <AboutPageSettings />
 
       <ContactPageSettings />
+
+      <CollabPageSettings />
 
       {/* ── Site Info ── */}
       <div style={{ ...cardStyle, marginBottom: "24px" }}>

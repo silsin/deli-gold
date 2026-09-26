@@ -19,6 +19,7 @@ const footerLinks = {
   "دلی گلد": [
     { label: "درباره ما",  href: "/about" },
     { label: "تماس با ما", href: "/contact" },
+    { label: "همکاری با ما", href: "/collab" },
     { label: "محصولات",    href: "/products" },
   ],
 };

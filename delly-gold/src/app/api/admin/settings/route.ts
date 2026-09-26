@@ -21,6 +21,11 @@ import {
   serializeGuidePagesSettings,
 } from "@/lib/guide-pages-settings";
 import {
+  COLLAB_PAGE_SETTING_KEY,
+  DEFAULT_COLLAB_PAGE_SETTINGS,
+  serializeCollabPageSettings,
+} from "@/lib/collab-page-settings";
+import {
   HOME_SECTIONS_SETTING_KEY,
   parseHomeSectionOrder,
 } from "@/lib/home-sections";
@@ -96,6 +101,9 @@ export async function GET(req: NextRequest) {
     }
     if (!settings[GUIDE_PAGES_SETTING_KEY]) {
       settings[GUIDE_PAGES_SETTING_KEY] = serializeGuidePagesSettings(emptyGuidePagesSettings());
+    }
+    if (!settings[COLLAB_PAGE_SETTING_KEY]) {
+      settings[COLLAB_PAGE_SETTING_KEY] = serializeCollabPageSettings(DEFAULT_COLLAB_PAGE_SETTINGS);
     }
     if (!settings[PRODUCT_PAGE_SETTING_KEY]) {
       settings[PRODUCT_PAGE_SETTING_KEY] = serializeProductPageSettings(parseProductPageSettings(null));
