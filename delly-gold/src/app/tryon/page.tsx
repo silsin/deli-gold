@@ -373,10 +373,10 @@ export default function TryOnPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px" }}>
+      <div className="tryon-wrap" style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <h1 style={{ color: "#222", fontSize: "26px", fontWeight: "900", marginBottom: "6px" }}>
+          <h1 className="tryon-title" style={{ color: "#222", fontSize: "26px", fontWeight: "900", marginBottom: "6px" }}>
             ✨ پرو مجازی طلا
           </h1>
           <p style={{ color: "#888", fontSize: "14px" }}>
@@ -385,7 +385,7 @@ export default function TryOnPage() {
         </div>
 
         {/* Tab switcher */}
-        <div style={{ display: "flex", backgroundColor: "#f5f5f5", borderRadius: "12px", padding: "4px", maxWidth: "400px", margin: "0 auto 28px" }}>
+        <div className="tryon-tabs" style={{ display: "flex", backgroundColor: "#f5f5f5", borderRadius: "12px", padding: "4px", maxWidth: "400px", margin: "0 auto 28px" }}>
           {([
             { key: "manual", label: "پرو دستی", icon: <ImageIcon size={15} /> },
             { key: "ai",     label: "تولید با هوش مصنوعی", icon: <Sparkles size={15} /> },
@@ -436,7 +436,7 @@ export default function TryOnPage() {
               )}
 
               {/* Canvas */}
-              <div style={{ position: "relative", border: "1px solid #ebebeb", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8f8f8", minHeight: "380px" }}>
+              <div className="tryon-canvas-box" style={{ position: "relative", border: "1px solid #ebebeb", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8f8f8", minHeight: "380px" }}>
                 {!userPhoto && !cameraOn && (
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "10px", pointerEvents: "none" }}>
                     <div style={{ width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "#fdf8ee", border: "2px dashed #c8a12a", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -604,7 +604,7 @@ export default function TryOnPage() {
               </div>
 
               {/* Result */}
-              <div style={{ position: "relative", border: "1px solid #ebebeb", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8f8f8", minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div className="tryon-canvas-box" style={{ position: "relative", border: "1px solid #ebebeb", borderRadius: "10px", overflow: "hidden", backgroundColor: "#f8f8f8", minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {aiLoading && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", padding: "40px" }}>
                     <div style={{ width: "56px", height: "56px", borderRadius: "50%", backgroundColor: "#fdf8ee", border: "3px solid #c8a12a", display: "flex", alignItems: "center", justifyContent: "center", animation: "spin 1.5s linear infinite" }}>
@@ -743,7 +743,17 @@ export default function TryOnPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media(max-width:900px){ .tryon-grid{ grid-template-columns: 1fr !important; } }
+        @media(max-width:900px){
+          .tryon-grid{ grid-template-columns: 1fr !important; }
+          .tryon-canvas-box{ min-height: 260px !important; }
+        }
+        @media(max-width:600px){
+          .tryon-wrap{ padding: 16px 12px !important; }
+          .tryon-title{ font-size: 21px !important; }
+          .tryon-tabs{ max-width: 100% !important; }
+          .tryon-tabs button{ font-size: 12px !important; padding: 9px 6px !important; white-space: nowrap; }
+          .tryon-canvas-box{ min-height: 220px !important; }
+        }
       `}</style>
       </>
       )}

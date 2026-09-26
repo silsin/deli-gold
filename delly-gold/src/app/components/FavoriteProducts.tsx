@@ -54,31 +54,31 @@ export default function FavoriteProducts() {
   return (
     <section style={{ marginBottom: "32px" }}>
       {/* Gold header bar */}
-      <div style={{ backgroundColor: "#c8a12a", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "1280px", margin: "0 auto", borderRadius: "10px" }}>
-        <Link href="/products" style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", textDecoration: "none", fontSize: "12px", fontWeight: "700", padding: "7px 16px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.4)" }}
+      <div className="fav-header" style={{ backgroundColor: "#c8a12a", padding: "0 24px", height: "58px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "1280px", margin: "0 auto", borderRadius: "10px" }}>
+        <Link href="/products" className="fav-all" style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(255,255,255,0.2)", color: "#fff", textDecoration: "none", fontSize: "12px", fontWeight: "700", padding: "7px 16px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.4)" }}
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.35)"}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.2)"}>
           مشاهده همه پرفروش‌ها
         </Link>
-        <h2 style={{ color: "#fff", fontSize: "18px", fontWeight: "800", margin: 0 }}>پرفروش‌ترین محصولات</h2>
+        <h2 className="fav-title" style={{ color: "#fff", fontSize: "18px", fontWeight: "800", margin: 0 }}>پرفروش‌ترین محصولات</h2>
       </div>
 
       {/* Scroll row */}
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", position: "relative" }}>
-        <button onClick={() => scroll("left")} aria-label="قبلی"
+        <button onClick={() => scroll("left")} aria-label="قبلی" className="fav-arrow"
           style={{ position: "absolute", left: "0", top: "50%", transform: "translateY(-50%)", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#555", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#c8a12a"; el.style.color = "#fff"; el.style.borderColor = "#c8a12a"; }}
           onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#fff"; el.style.color = "#555"; el.style.borderColor = "#e0e0e0"; }}>
           <ChevronLeft size={18}/>
         </button>
-        <button onClick={() => scroll("right")} aria-label="بعدی"
+        <button onClick={() => scroll("right")} aria-label="بعدی" className="fav-arrow"
           style={{ position: "absolute", right: "0", top: "50%", transform: "translateY(-50%)", width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#555", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#c8a12a"; el.style.color = "#fff"; el.style.borderColor = "#c8a12a"; }}
           onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.backgroundColor = "#fff"; el.style.color = "#555"; el.style.borderColor = "#e0e0e0"; }}>
           <ChevronRight size={18}/>
         </button>
 
-        <div ref={scrollRef} style={{ display: "flex", overflowX: "auto", scrollbarWidth: "none", padding: "20px 24px", margin: "0 -16px" }}>
+        <div ref={scrollRef} className="fav-row" style={{ display: "flex", overflowX: "auto", scrollbarWidth: "none", padding: "20px 24px", margin: "0 -16px" }}>
           <style>{`::-webkit-scrollbar{display:none}`}</style>
           {products.map(p => {
             const img       = getImg(p.images);
@@ -138,6 +138,15 @@ export default function FavoriteProducts() {
           })}
         </div>
       </div>
+      <style>{`
+        @media (max-width: 700px) {
+          .fav-header { height: auto !important; min-height: 52px; padding: 8px 12px !important; gap: 8px; flex-wrap: wrap; }
+          .fav-title { font-size: 15px !important; }
+          .fav-all { font-size: 11px !important; padding: 6px 12px !important; }
+          .fav-arrow { display: none !important; }
+          .fav-row { padding: 14px 16px !important; -webkit-overflow-scrolling: touch; }
+        }
+      `}</style>
     </section>
   );
 }

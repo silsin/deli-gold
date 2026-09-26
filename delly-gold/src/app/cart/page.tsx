@@ -126,7 +126,7 @@ export default function CartPage() {
 
   return (
     <PageLayout>
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
+      <div className="cart-body" style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
           <ShoppingCart size={22} color="var(--theme-accent)" />
@@ -306,6 +306,7 @@ export default function CartPage() {
           .cart-grid { grid-template-columns: 1fr !important; }
           .checkout-shipping-grid { grid-template-columns: 1fr !important; }
           .cart-item { flex-wrap: wrap; padding: 12px !important; gap: 12px !important; }
+          .cart-body { padding: 20px 12px 32px !important; }
         }
       `}</style>
     </PageLayout>

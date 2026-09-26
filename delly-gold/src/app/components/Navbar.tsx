@@ -90,7 +90,7 @@ export default function Navbar() {
 
       {/* ── Row 2: Main nav ── */}
       <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #ebebeb", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 20px", height: "66px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="nav-main-row" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 20px", height: "66px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
 
           {/* LEFT: social icons + phone — desktop only */}
           <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
@@ -121,7 +121,7 @@ export default function Navbar() {
               </Link>
               {authDone && !authUser && (
                 <Link href="/login" style={{ display: "flex", alignItems: "center", gap: "4px", color: "#555", textDecoration: "none", fontSize: "12px", fontWeight: "600" }}>
-                  <User size={16} /> عضویت/ورود
+                  <User size={16} /> <span className="nav-mobile-login-label">عضویت/ورود</span>
                 </Link>
               )}
               {authDone && authUser && (
@@ -129,8 +129,8 @@ export default function Navbar() {
                   <User size={16} />
                 </Link>
               )}
-              <button aria-label="منو" onClick={() => setMenuOpen(o => !o)}
-                style={{ color: "#c8a12a", background: "none", border: "1px solid #e0d4b0", borderRadius: "7px", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <button aria-label="منو" onClick={() => setMenuOpen(o => !o)} className="nav-burger"
+                style={{ color: "#c8a12a", background: "none", border: "1px solid #e0d4b0", borderRadius: "7px", width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                 {menuOpen ? <X size={18} /> : <Menu size={18} />}
               </button>
             </div>
@@ -208,7 +208,7 @@ export default function Navbar() {
             </div>
 
             {/* Logo */}
-            <Link href="/" style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Link href="/" className="nav-logo" style={{ textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div style={{ fontFamily: "serif", fontSize: "26px", fontWeight: "900", letterSpacing: "1px", lineHeight: 1 }}>
                 <span style={{ color: "#c8a12a" }}>D</span>
                 <span style={{ color: "#222" }}>ELLY</span>
@@ -320,6 +320,11 @@ export default function Navbar() {
           .nav-desktop-actions { display: none !important; }
           .nav-mobile-icons  { display: flex !important; }
           .cat-nav-row       { display: none !important; }
+        }
+        @media(max-width: 480px) {
+          .nav-main-row { padding: 0 12px !important; height: 60px !important; }
+          .nav-logo > div:first-child { font-size: 22px !important; }
+          .nav-mobile-login-label { display: none !important; }
         }
       `}</style>
     </header>

@@ -99,14 +99,14 @@ export default function ContactPage() {
   return (
     <PageLayout>
       {hasHero && (
-        <div style={{ position: "relative", height: 240, overflow: "hidden" }}>
+        <div className="contact-hero" style={{ position: "relative", height: 240, overflow: "hidden" }}>
           {content.heroImage && (
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${content.heroImage})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25)" }} />
           )}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, transparent, rgba(14,14,14,0.7))" }} />
           <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
             {content.heroTitle && (
-              <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{content.heroTitle}</h1>
+              <h1 className="contact-hero-title" style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{content.heroTitle}</h1>
             )}
             {content.heroSubtitle && (
               <p style={{ color: "var(--theme-text-muted)", fontSize: 14 }}>{content.heroSubtitle}</p>
@@ -115,7 +115,7 @@ export default function ContactPage() {
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 16px" }}>
+      <div className="contact-page-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 16px" }}>
         {contactCards.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 56 }} className="info-grid">
             {contactCards.map((c, i) => (
@@ -256,6 +256,9 @@ export default function ContactPage() {
         @media (max-width: 900px) {
           .info-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .form-grid { grid-template-columns: 1fr !important; }
+          .contact-page-body { padding: 28px 14px 40px !important; }
+          .contact-hero { height: 180px !important; }
+          .contact-hero-title { font-size: 24px !important; }
         }
         @media (max-width: 480px) {
           .info-grid { grid-template-columns: 1fr !important; }

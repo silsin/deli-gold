@@ -71,17 +71,17 @@ export default function ShowcasePage() {
   return (
     <PageLayout>
       {/* Hero */}
-      <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
+      <div className="showcase-hero" style={{ position: "relative", height: 260, overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${activeShowcase.image})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3)", transition: "all 0.5s" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, transparent, rgba(14,14,14,0.8))" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <p style={{ color: "var(--theme-accent)", fontSize: 13, marginBottom: 8 }}>دلی گلد</p>
-          <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>ویترین‌ها</h1>
+          <h1 className="showcase-hero-title" style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 8 }}>ویترین‌ها</h1>
           <p style={{ color: "var(--theme-text-muted)", fontSize: 14 }}>مجموعه‌های ویژه برای هر بودجه و سلیقه</p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 16px" }}>
+      <div className="showcase-page-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 16px" }}>
 
         {/* Tab buttons */}
         <div style={{ display: "flex", gap: 12, marginBottom: 40, flexWrap: "wrap" }}>
@@ -98,7 +98,7 @@ export default function ShowcasePage() {
         </div>
 
         {/* Active showcase info */}
-        <div style={{ backgroundColor: "var(--theme-card)", border: `1px solid ${activeShowcase.color}40`, borderRadius: 12, padding: "24px 28px", marginBottom: 36, display: "flex", alignItems: "center", gap: 20 }} className="showcase-info">
+        <div className="showcase-info" style={{ backgroundColor: "var(--theme-card)", border: `1px solid ${activeShowcase.color}40`, borderRadius: 12, padding: "24px 28px", marginBottom: 36, display: "flex", alignItems: "center", gap: 20 }}>
           <span style={{ fontSize: 40 }}>{activeShowcase.icon}</span>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -173,7 +173,10 @@ export default function ShowcasePage() {
       <style>{`
         @media (max-width: 768px) {
           .reviews-grid { grid-template-columns: 1fr !important; }
-          .showcase-info { flex-direction: column; text-align: center; }
+          .showcase-info { flex-direction: column; text-align: center; padding: 18px 16px !important; gap: 12px !important; }
+          .showcase-page-body { padding: 26px 14px 36px !important; }
+          .showcase-hero { height: 190px !important; }
+          .showcase-hero-title { font-size: 25px !important; }
         }
       `}</style>
     </PageLayout>

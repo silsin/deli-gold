@@ -105,7 +105,7 @@ export default function CollabPage() {
   return (
     <PageLayout>
       {hasHero && (
-        <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
+        <div className="collab-hero" style={{ position: "relative", height: 300, overflow: "hidden" }}>
           {content.heroImage && (
             <div
               style={{
@@ -156,7 +156,7 @@ export default function CollabPage() {
               <Handshake size={28} />
             </div>
             {content.heroTitle && (
-              <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>{content.heroTitle}</h1>
+              <h1 className="collab-hero-title" style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>{content.heroTitle}</h1>
             )}
             {content.heroSubtitle && (
               <p style={{ color: "var(--theme-text-muted)", fontSize: 15, maxWidth: 560, lineHeight: 1.9 }}>{content.heroSubtitle}</p>
@@ -165,7 +165,7 @@ export default function CollabPage() {
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "52px 16px" }}>
+      <div className="collab-page-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "52px 16px" }}>
         {hasIntro && (
           <section style={{ marginBottom: 64, textAlign: "center" }}>
             {content.introTitle && (
@@ -407,6 +407,9 @@ export default function CollabPage() {
           .collab-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
           .collab-grid-2 { grid-template-columns: 1fr !important; }
           .form-grid { grid-template-columns: 1fr !important; }
+          .collab-page-body { padding: 30px 14px 40px !important; }
+          .collab-hero { height: 200px !important; }
+          .collab-hero-title { font-size: 24px !important; }
         }
         @media (max-width: 480px) {
           .collab-grid-4 { grid-template-columns: 1fr !important; }

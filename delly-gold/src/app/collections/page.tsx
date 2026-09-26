@@ -39,7 +39,7 @@ export default function CollectionsPage() {
   return (
     <PageLayout>
       {/* Hero */}
-      <div style={{ position: "relative", height: 280, overflow: "hidden", marginBottom: 0 }}>
+      <div className="collection-hero" style={{ position: "relative", overflow: "hidden", marginBottom: 0 }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=1400&q=80)`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.3)" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, transparent, rgba(14,14,14,0.7))" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -49,7 +49,7 @@ export default function CollectionsPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 16px" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 16px" }} className="collections-body">
 
         {/* Featured collections row */}
         <h2 style={{ color: "var(--theme-text)", fontSize: 22, fontWeight: 700, marginBottom: 24 }}>کالکشن‌های ویژه</h2>
@@ -76,7 +76,7 @@ export default function CollectionsPage() {
         {/* Categories */}
         <h2 style={{ color: "var(--theme-text)", fontSize: 22, fontWeight: 700, marginBottom: 24 }}>دسته‌بندی محصولات</h2>
         {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="cat-skeleton-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} style={{ backgroundColor: "var(--theme-card)", borderRadius: 12, height: 320, border: "1px solid var(--theme-border)", opacity: 0.4 }} />
             ))}
@@ -99,7 +99,7 @@ export default function CollectionsPage() {
                     <span style={{ backgroundColor: "color-mix(in srgb, var(--theme-accent) 20%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 40%, transparent)", color: "var(--theme-accent)", fontSize: 11, padding: "3px 10px", borderRadius: 20, marginBottom: 8, display: "inline-block" }}>
                       {cat.product_count} محصول
                     </span>
-                    <h3 style={{ color: "var(--theme-text)", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{cat.name}</h3>
+                    <h3 className="collection-card-title" style={{ color: "var(--theme-text)", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{cat.name}</h3>
                     {cat.description && <p style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{cat.description}</p>}
                     <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 4, color: "var(--theme-accent)", fontSize: 13 }}>
                       مشاهده کالکشن <ChevronLeft size={14} />
@@ -115,17 +115,24 @@ export default function CollectionsPage() {
       <style>{`
         .hero-title { font-size: 36px; }
         .hero-sub { font-size: 15px; }
+        .collection-hero { height: 280px; }
+        .collections-body { padding: 48px 16px; }
         @media (max-width: 768px) {
+          .collections-body { padding: 28px 14px 40px !important; }
           .highlights-grid { grid-template-columns: 1fr !important; }
           .hero-title { font-size: 27px; }
           .hero-sub { font-size: 13px; }
           .highlight-card { height: 200px !important; }
           .collection-card { height: 260px !important; }
+          .collection-card-title { font-size: 18px !important; }
+          .collection-hero { height: 200px !important; }
+          .cat-skeleton-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 480px) {
           .hero-title { font-size: 24px; }
           .highlight-card { height: 180px !important; }
           .collection-card { height: 230px !important; }
+          .cat-skeleton-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </PageLayout>

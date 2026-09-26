@@ -161,13 +161,14 @@ function ProductsInner() {
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "20px 16px" }}>
+      <div className="products-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "20px 16px" }}>
 
         {/* ── Filter / sort bar ── */}
         <div className="filter-search-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px", gap: "10px", flexWrap: "wrap" }}>
           {/* Right: count + filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <button onClick={() => setShowFilter(true)}
+              className="filter-open-btn"
               style={{ display: "flex", alignItems: "center", gap: "6px", border: "1px solid #ddd", borderRadius: "7px", padding: "7px 14px", background: "#fff", fontSize: "13px", cursor: "pointer", color: "#555", fontFamily: "inherit", transition: "all 0.15s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#ddd"; (e.currentTarget as HTMLElement).style.color = "#555"; }}>
@@ -202,7 +203,7 @@ function ProductsInner() {
 
         {/* ── Product grid ── */}
         {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }} className="prod-grid prod-skeleton">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} style={{ backgroundColor: "#f8f8f8", borderRadius: "10px", height: "360px", border: "1px solid #f0f0f0", animation: "shimmer 1.5s ease-in-out infinite" }} />
             ))}
@@ -258,7 +259,7 @@ function ProductsInner() {
 
                   {/* Product image */}
                   <Link href={`/products/${p.slug}`} style={{ display: "block", textDecoration: "none" }}>
-                    <div style={{ padding: "24px 16px 12px", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "180px", position: "relative", backgroundColor: "#fff" }}>
+                    <div className="prod-card-media" style={{ padding: "24px 16px 12px", display: "flex", alignItems: "center", justifyContent: "center", minHeight: "180px", position: "relative", backgroundColor: "#fff" }}>
                       <img src={img} alt={p.name}
                         style={{ maxWidth: "85%", maxHeight: "140px", objectFit: "contain", transition: "transform 0.35s ease", filter: oos ? "grayscale(1) opacity(0.4)" : "none" }}
                         onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform = "scale(1.08)"}
@@ -375,12 +376,17 @@ function ProductsInner() {
       <style>{`
         @keyframes shimmer { 0%,100%{opacity:0.5} 50%{opacity:0.8} }
         @media(max-width:1100px){.prod-grid{grid-template-columns:repeat(3,1fr)!important}}
-        @media(max-width:768px){.prod-grid{grid-template-columns:repeat(2,1fr)!important}}
+        @media(max-width:768px){
+          .prod-grid{grid-template-columns:repeat(2,1fr)!important}
+          .products-body{padding:16px 12px !important;}
+        }
         @media(max-width:480px){
-          .prod-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px !important;}
+          .prod-grid,.prod-skeleton{grid-template-columns:repeat(2,1fr)!important;gap:10px !important;}
           .filter-search-row{flex-direction:column !important;align-items:stretch !important;}
-          .filter-search-row > div{width:100% !important;}
+          .filter-search-row > div{width:100% !important;justify-content:space-between !important;}
           .filter-search-input{width:100% !important;}
+          .filter-open-btn{width:100% !important;justify-content:center !important;font-size:12px !important;padding:8px 10px !important;}
+          .prod-card-media{min-height:140px !important;padding:14px 10px 8px !important;}
         }
       `}</style>
     </PageLayout>

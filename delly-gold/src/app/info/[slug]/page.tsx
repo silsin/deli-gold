@@ -53,17 +53,17 @@ export default function GuidePage() {
 
   return (
     <PageLayout>
-      <div style={{ position: "relative", height: 220, overflow: "hidden", background: "linear-gradient(135deg, #1a1208 0%, #2a2010 100%)" }}>
+      <div className="guide-hero" style={{ position: "relative", height: 220, overflow: "hidden", background: "linear-gradient(135deg, #1a1208 0%, #2a2010 100%)" }}>
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 20%, transparent), transparent)" }} />
         <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
-          <h1 style={{ color: "#fff", fontSize: 30, fontWeight: 800, marginBottom: 10 }}>{title}</h1>
+          <h1 className="guide-hero-title" style={{ color: "#fff", fontSize: 30, fontWeight: 800, marginBottom: 10 }}>{title}</h1>
           {content.heroSubtitle && (
-            <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, maxWidth: 560, lineHeight: 1.7 }}>{content.heroSubtitle}</p>
+            <p className="guide-hero-sub" style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, maxWidth: 560, lineHeight: 1.7 }}>{content.heroSubtitle}</p>
           )}
         </div>
       </div>
 
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "48px 16px 72px" }}>
+      <div className="guide-body" style={{ maxWidth: 860, margin: "0 auto", padding: "48px 16px 72px" }}>
         {!hasContent ? (
           <div style={{ backgroundColor: "#f8f8f8", border: "1px dashed #ddd", borderRadius: 12, padding: "32px 24px", textAlign: "center" }}>
             <p style={{ color: "#888", fontSize: 14, lineHeight: 1.8 }}>
@@ -101,6 +101,19 @@ export default function GuidePage() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .guide-hero { height: 180px !important; }
+          .guide-hero-title { font-size: 23px !important; }
+          .guide-hero-sub { font-size: 13px !important; }
+          .guide-body { padding: 28px 14px 48px !important; }
+        }
+        @media (max-width: 480px) {
+          .guide-hero { height: 160px !important; }
+          .guide-hero-title { font-size: 20px !important; }
+        }
+      `}</style>
     </PageLayout>
   );
 }

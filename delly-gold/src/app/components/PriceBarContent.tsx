@@ -75,6 +75,7 @@ export default function PriceBarContent({
   const iconPx = Math.max(12, Math.round(basePx * 1.1));
   return (
     <div
+      className="pb-content"
       style={{
         display: "flex",
         alignItems: "center",
@@ -87,11 +88,11 @@ export default function PriceBarContent({
         fontSize: resolvedSize,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", justifyContent: "center", minWidth: 0 }}>
         {showDecorations && (
           <>
-            <span style={{ color: "#c8a12a", fontSize: decoFontSize, opacity: 0.9, fontFamily: resolvedFamily }}>✦</span>
-            <svg width={iconPx} height={iconPx} viewBox="0 0 24 24" fill="#c8a12a" opacity={0.85} aria-hidden style={{ flexShrink: 0 }}>
+            <span className="pb-deco" style={{ color: "#c8a12a", fontSize: decoFontSize, opacity: 0.9, fontFamily: resolvedFamily }}>✦</span>
+            <svg className="pb-deco" width={iconPx} height={iconPx} viewBox="0 0 24 24" fill="#c8a12a" opacity={0.85} aria-hidden style={{ flexShrink: 0 }}>
               <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" />
             </svg>
           </>
@@ -115,13 +116,21 @@ export default function PriceBarContent({
 
         {showDecorations && (
           <>
-            <svg width={iconPx} height={iconPx} viewBox="0 0 24 24" fill="#c8a12a" opacity={0.85} aria-hidden style={{ flexShrink: 0 }}>
+            <svg className="pb-deco" width={iconPx} height={iconPx} viewBox="0 0 24 24" fill="#c8a12a" opacity={0.85} aria-hidden style={{ flexShrink: 0 }}>
               <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" />
             </svg>
-            <span style={{ color: "#c8a12a", fontSize: decoFontSize, opacity: 0.9, fontFamily: resolvedFamily }}>✦</span>
+            <span className="pb-deco" style={{ color: "#c8a12a", fontSize: decoFontSize, opacity: 0.9, fontFamily: resolvedFamily }}>✦</span>
           </>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 600px) {
+          .pb-content { justify-content: center !important; }
+          .pb-content > div { gap: 6px !important; }
+          .pb-deco { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

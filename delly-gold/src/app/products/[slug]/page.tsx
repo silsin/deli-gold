@@ -748,16 +748,18 @@ export default function ProductDetailPage() {
         {/* ── «خصوصیات محصولات طلا» ── */}
         <section className="pd-section">
           <h2 className="pd-h2"><Coins size={18} color="#c8a12a" /> خصوصیات محصولات طلا</h2>
-          <table className="pd-table">
-            <tbody>
-              {specs.map(s => (
-                <tr key={s.label}>
-                  <th>{s.label}</th>
-                  <td>{s.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="pd-table-wrap">
+            <table className="pd-table">
+              <tbody>
+                {specs.map(s => (
+                  <tr key={s.label}>
+                    <th>{s.label}</th>
+                    <td>{s.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* ── Description ── */}

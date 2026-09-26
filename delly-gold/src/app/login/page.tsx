@@ -100,7 +100,7 @@ function LoginForm() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8f8f8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+    <div className="login-wrap" style={{ minHeight: "100vh", backgroundColor: "#f8f8f8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
       <Link href="/" style={{ textDecoration: "none", marginBottom: "28px", textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
@@ -125,7 +125,7 @@ function LoginForm() {
           ))}
         </div>
 
-        <div style={{ padding: "26px" }}>
+        <div className="login-card-body" style={{ padding: "26px" }}>
           {error && (
             <div style={{ backgroundColor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "7px", padding: "10px 14px", color: "#dc2626", fontSize: "13px", marginBottom: "16px" }}>
               {error}
@@ -219,6 +219,13 @@ function LoginForm() {
       <Link href="/" style={{ color: "#aaa", textDecoration: "none", marginTop: "18px", fontSize: "13px", display: "flex", alignItems: "center", gap: "4px" }}>
         <ChevronLeft size={13} /> بازگشت به صفحه اصلی
       </Link>
+
+      <style>{`
+        @media (max-width: 480px) {
+          .login-wrap { padding: 16px 12px !important; }
+          .login-card-body { padding: 18px 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }

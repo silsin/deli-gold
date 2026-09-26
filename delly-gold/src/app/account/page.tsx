@@ -225,7 +225,7 @@ export default function AccountPage() {
 
   return (
     <PageLayout>
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px" }}>
+      <div className="account-body" style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px" }}>
 
         {/* Header card */}
         <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: "22px 24px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
@@ -260,7 +260,7 @@ export default function AccountPage() {
         {/* ── Profile Tab ── */}
         {tab === "profile" && (
           <form onSubmit={handleSaveProfile}>
-            <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 24 }}>
+            <div className="account-card" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 24 }}>
               <h2 style={{ color: "var(--theme-text)", fontSize: 16, fontWeight: 700, marginBottom: 22 }}>ویرایش اطلاعات شخصی</h2>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }} className="profile-grid">
@@ -331,7 +331,7 @@ export default function AccountPage() {
                   const isExpanded = expandedOrder === order.id;
                   return (
                     <div key={order.id} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, overflow: "hidden" }}>
-                      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                      <div className="order-row" style={{ padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                         <span style={{ color: "var(--theme-text-muted)", fontSize: 12, fontFamily: "monospace", flex: 1, minWidth: 0 }}>#{order.id.slice(0, 10)}</span>
                         <span style={{ color: "var(--theme-text-muted)", fontSize: 12 }}>{orderDate(order)}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 5, backgroundColor: `${st.color}18`, border: `1px solid ${st.color}40`, borderRadius: 20, padding: "3px 10px" }}>
@@ -372,7 +372,7 @@ export default function AccountPage() {
       </div>
 
       {selectedOrder && <InvoiceModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
-      <style>{`@media(max-width:600px){.profile-grid{grid-template-columns:1fr !important}}`}</style>
+      <style>{`@media(max-width:600px){.profile-grid{grid-template-columns:1fr !important}.account-card{padding:18px 14px !important;}.order-row{padding:12px 14px !important;gap:8px !important;}.account-body{padding:20px 12px 32px !important;}}`}</style>
     </PageLayout>
   );
 }

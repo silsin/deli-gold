@@ -218,6 +218,20 @@ export default function HeroSlider() {
             text-align: right;
           }
           .hs-arrow { width: 36px; height: 36px; }
+          .hs-subtitle { max-width: 100%; }
+        }
+        @media (max-width: 480px) {
+          .hs-wrap { height: 400px; }
+          .hs-arrow { display: none; }
+          .hs-content,
+          .hs-content.pos-right,
+          .hs-content.pos-center,
+          .hs-content.pos-left {
+            padding: 0 14px 66px;
+          }
+          .hs-btns { gap: 8px !important; }
+          .hs-btns a { padding-left: 14px !important; padding-right: 14px !important; font-size: 13px !important; }
+          .hs-dots { bottom: 16px; }
         }
       `}</style>
 

@@ -116,12 +116,14 @@ export default function GapifyChat() {
   if (!websiteToken || isAdmin) return null;
 
   return (
+    <>
     <button
       type="button"
       onClick={openChat}
       disabled={!gapifyReady}
       aria-label="چت آنلاین"
       title={gapifyReady ? "چت آنلاین" : "در حال بارگذاری چت..."}
+      className="gapify-chat-btn"
       style={{
         position: "fixed",
         bottom: "24px",
@@ -150,7 +152,14 @@ export default function GapifyChat() {
       }}
     >
       <MessageCircle size={20} />
-      چت آنلاین
+      <span className="gapify-chat-label">چت آنلاین</span>
     </button>
+    <style>{`
+      @media (max-width: 600px) {
+        .gapify-chat-btn { bottom: 16px !important; left: 12px !important; padding: 12px !important; }
+        .gapify-chat-label { display: none !important; }
+      }
+    `}</style>
+    </>
   );
 }

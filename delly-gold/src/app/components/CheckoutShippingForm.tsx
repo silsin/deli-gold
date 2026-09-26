@@ -105,7 +105,7 @@ export default function CheckoutShippingForm({ form, onChange, fieldErrors = {},
 
   return (
     <>
-      <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 20, marginBottom: 16 }}>
+      <div className="checkout-shipping-card" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: 20, marginBottom: 16 }}>
         <h3 style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
           <User size={16} color="var(--theme-accent)" /> مشخصات فرد دریافت‌کننده
         </h3>
@@ -254,6 +254,13 @@ export default function CheckoutShippingForm({ form, onChange, fieldErrors = {},
           />
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 600px) {
+          .checkout-shipping-grid { grid-template-columns: 1fr !important; }
+          .checkout-shipping-card { padding: 16px 14px !important; }
+        }
+      `}</style>
     </>
   );
 }

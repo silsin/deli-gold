@@ -39,21 +39,21 @@ export default function CategoryIcons() {
 
   return (
     <section style={{ backgroundColor: "#fff", padding: "28px 0 20px" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px", position: "relative" }}>
-        <button onClick={() => scroll("left")} aria-label="قبلی"
+      <div className="cat-icons-inner" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px", position: "relative" }}>
+        <button onClick={() => scroll("left")} aria-label="قبلی" className="cat-icons-arrow"
           style={{ position: "absolute", left: "8px", top: "40px", transform: "translateY(-50%)", width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, boxShadow: "0 1px 4px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#e0e0e0"; (e.currentTarget as HTMLElement).style.color = "#888"; }}>
           <ChevronLeft size={14}/>
         </button>
-        <button onClick={() => scroll("right")} aria-label="بعدی"
+        <button onClick={() => scroll("right")} aria-label="بعدی" className="cat-icons-arrow"
           style={{ position: "absolute", right: "8px", top: "40px", transform: "translateY(-50%)", width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#fff", border: "1px solid #e0e0e0", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5, boxShadow: "0 1px 4px rgba(0,0,0,0.1)", transition: "all 0.2s" }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#e0e0e0"; (e.currentTarget as HTMLElement).style.color = "#888"; }}>
           <ChevronRight size={14}/>
         </button>
 
-        <div ref={scrollRef} style={{ display: "flex", gap: "8px", overflowX: "auto", scrollbarWidth: "none", padding: "0 4px" }}>
+        <div ref={scrollRef} className="cat-icons-track" style={{ display: "flex", gap: "8px", overflowX: "auto", scrollbarWidth: "none", padding: "0 4px" }}>
           <style>{`::-webkit-scrollbar{display:none}`}</style>
           {cats.map(cat => {
             const img = cat.banner_image || cat.image || null;
@@ -74,6 +74,13 @@ export default function CategoryIcons() {
           })}
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .cat-icons-inner { padding: 0 12px !important; }
+          .cat-icons-arrow { display: none !important; }
+          .cat-icons-track { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+        }
+      `}</style>
     </section>
   );
 }

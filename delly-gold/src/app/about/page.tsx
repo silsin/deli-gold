@@ -32,14 +32,14 @@ export default function AboutPage() {
   return (
     <PageLayout>
       {hasHero && (
-        <div style={{ position: "relative", height: 320, overflow: "hidden" }}>
+        <div className="about-hero" style={{ position: "relative", height: 320, overflow: "hidden" }}>
           {content.heroImage && (
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${content.heroImage})`, backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.25)" }} />
           )}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 15%, transparent), transparent)" }} />
           <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
             {content.heroTitle && (
-              <h1 style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>{content.heroTitle}</h1>
+              <h1 className="about-hero-title" style={{ color: "var(--theme-text)", fontSize: 32, fontWeight: 800, marginBottom: 10 }}>{content.heroTitle}</h1>
             )}
             {content.heroSubtitle && (
               <p style={{ color: "var(--theme-text-muted)", fontSize: 15, maxWidth: 500 }}>{content.heroSubtitle}</p>
@@ -48,7 +48,7 @@ export default function AboutPage() {
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "56px 16px" }}>
+      <div className="about-page-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "56px 16px" }}>
         {hasStory && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, marginBottom: 72, alignItems: "center" }} className="story-grid">
             <div>
@@ -65,7 +65,7 @@ export default function AboutPage() {
             </div>
             {content.storyImage && (
               <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--theme-border)" }}>
-                <img src={content.storyImage} alt={content.storyTitle || ""} style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
+                <img className="about-story-img" src={content.storyImage} alt={content.storyTitle || ""} style={{ width: "100%", height: 320, objectFit: "cover", display: "block" }} />
               </div>
             )}
           </div>
@@ -139,6 +139,10 @@ export default function AboutPage() {
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .values-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .team-grid { grid-template-columns: 1fr !important; }
+          .about-page-body { padding: 32px 14px 44px !important; }
+          .about-hero { height: 220px !important; }
+          .about-hero-title { font-size: 24px !important; }
+          .about-story-img { height: 210px !important; }
         }
       `}</style>
     </PageLayout>
