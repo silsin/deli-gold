@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       express: searchParams.get("express") === "true" ? true : undefined,
       lowWage: searchParams.get("lowWage") === "true" ? true : undefined,
       coin: searchParams.get("coin") === "true" ? true : undefined,
+      discount: searchParams.get("discount") === "true" ? true : undefined,
       search: searchParams.get("search") || undefined,
       limit, offset: (page - 1) * limit,
       adminMode,

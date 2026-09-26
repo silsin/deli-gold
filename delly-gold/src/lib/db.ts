@@ -405,17 +405,30 @@ export interface Product {
 }
 
 export const products = {
-  list(opts: { categoryId?: string; featured?: boolean; express?: boolean; lowWage?: boolean; coin?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
-    const { categoryId, featured, express, lowWage, coin, search, limit = 12, offset = 0, adminMode = false } = opts;
+  list(opts: { categoryId?: string; featured?: boolean; express?: boolean; lowWage?: boolean; coin?: boolean; discount?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
+    const { categoryId, featured, express, lowWage, coin, discount, search, limit = 12, offset = 0, adminMode = false } = opts;
     const db = getDb();
     const conditions: string[] = [];
     const params: unknown[] = [];
     if (!adminMode) { conditions.push("p.published = 1"); }
-    if (categoryId) { conditions.push("p.category_id = ?"); params.push(categoryId); }
+    if (categoryId) {
+      // `?category=` is used with two different values across the app: the raw
+      // id (collections page, category icons, admin) and the slug (top menu,
+      // product page). Resolve either one to the real id so both forms work.
+      const resolved = db
+        .prepare("SELECT id FROM categories WHERE id = ? OR slug = ?")
+        .get(categoryId, categoryId) as { id: string } | undefined;
+      conditions.push("p.category_id = ?");
+      params.push(resolved ? resolved.id : categoryId);
+    }
     if (featured !== undefined) { conditions.push("p.featured = ?"); params.push(featured ? 1 : 0); }
     if (express !== undefined) { conditions.push("p.express_shipping = ?"); params.push(express ? 1 : 0); }
     if (lowWage !== undefined) { conditions.push("p.low_wage = ?"); params.push(lowWage ? 1 : 0); }
     if (coin !== undefined) { conditions.push("p.coin = ?"); params.push(coin ? 1 : 0); }
+    if (discount !== undefined) {
+      // Same rule the listing uses to draw the red % badge (see products page).
+      conditions.push("(p.ajrat_override = 1 AND p.ajrat_percent IS NOT NULL AND p.ajrat_percent < 5)");
+    }
     if (search) { conditions.push("(p.name LIKE ? OR p.description LIKE ?)"); params.push(`%${search}%`, `%${search}%`); }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const rows = db.prepare(

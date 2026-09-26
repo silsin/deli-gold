@@ -50,6 +50,9 @@ function ProductsInner() {
   const [selectedCat, setSelectedCat] = useState(searchParams.get("category") || "");
   const lowWage = searchParams.get("lowWage") === "true";
   const coin = searchParams.get("coin") === "true";
+  const express = searchParams.get("express") === "true";
+  const featured = searchParams.get("featured") === "true";
+  const discount = searchParams.get("discount") === "true";
   const [sort, setSort]             = useState("newest");
   const [liked, setLiked]           = useState<Set<string>>(new Set());
   const [addedId, setAddedId]       = useState<string | null>(null);
@@ -65,6 +68,9 @@ function ProductsInner() {
     if (selectedCat) params.set("category", selectedCat);
     if (lowWage) params.set("lowWage", "true");
     if (coin) params.set("coin", "true");
+    if (express) params.set("express", "true");
+    if (featured) params.set("featured", "true");
+    if (discount) params.set("discount", "true");
     const res = await fetch(`/api/products?${params}`);
     const data = await res.json();
     if (data.success) {
@@ -75,7 +81,7 @@ function ProductsInner() {
       setPagination(data.data.pagination);
     }
     setLoading(false);
-  }, [search, selectedCat, sort, page, lowWage, coin]);
+  }, [search, selectedCat, sort, page, lowWage, coin, express, featured, discount]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -88,7 +94,9 @@ function ProductsInner() {
    */
   const urlFilterKey = useRef<string | null>(null);
   useEffect(() => {
-    const key = `${searchParams.get("search") ?? ""}\u0000${searchParams.get("category") ?? ""}`;
+    const key = ["search", "category", "lowWage", "coin", "express", "featured", "discount"]
+      .map(k => searchParams.get(k) ?? "")
+      .join("\u0000");
     if (urlFilterKey.current === key) return;
     urlFilterKey.current = key;
     setSearch(searchParams.get("search") || "");
@@ -119,8 +127,14 @@ function ProductsInner() {
     ? "سکه و آبشده"
     : lowWage
     ? "محصولات کم اُجرت"
+    : express
+    ? "ارسال فوری"
+    : featured
+    ? "پیشنهادهای ویژه"
+    : discount
+    ? "تخفیف‌دار"
     : selectedCat
-      ? categories.find(c => c.id === selectedCat)?.name || "محصولات"
+      ? categories.find(c => c.id === selectedCat || c.slug === selectedCat)?.name || "محصولات"
       : "همه محصولات";
 
   return (
@@ -139,7 +153,7 @@ function ProductsInner() {
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", overflowX: "auto", scrollbarWidth: "none" }}>
           <style>{`::-webkit-scrollbar{display:none}`}</style>
           {[{ id: "", name: "همه" }, ...categories].map(c => {
-            const isActive = selectedCat === c.id;
+            const isActive = selectedCat === c.id || ("slug" in c && selectedCat === c.slug);
             return (
               <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); }}
                 style={{
