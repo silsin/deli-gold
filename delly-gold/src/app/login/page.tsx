@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LogIn, UserPlus, ChevronLeft, Phone, MessageSquare, ArrowRight } from "lucide-react";
@@ -21,6 +21,17 @@ function LoginForm() {
   const [otp, setOtp]     = useState("");
 
   const redirect = searchParams.get("redirect") || "/";
+
+  // /login?tab=register must also work when this component is already mounted
+  // (same-route navigation in the App Router does not remount it). Only react
+  // to a real URL change so the tab chosen via the buttons is never reverted.
+  const urlTab = useRef(searchParams.get("tab"));
+  useEffect(() => {
+    const next = searchParams.get("tab");
+    if (next === urlTab.current) return;
+    urlTab.current = next;
+    setTab((next as Tab) || "login");
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => {

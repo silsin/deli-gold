@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   User, Package, LogOut, Save, Phone, MapPin, Mail,
@@ -130,15 +130,28 @@ function InvoiceModal({ order, onClose }: { order: Order; onClose: () => void })
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────
-export default function AccountPage() {
+function AccountContent() {
   const router = useRouter();
-  const [tab, setTab]           = useState<Tab>("profile");
+  const searchParams = useSearchParams();
+  const [tab, setTab]           = useState<Tab>((searchParams.get("tab") as Tab) === "orders" ? "orders" : "profile");
   const [profile, setProfile]   = useState<UserProfile | null>(null);
   const [loading, setLoading]   = useState(true);
   const [orders, setOrders]     = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+
+  // «سفارش‌های من» links to /account?tab=orders — a same-route navigation keeps
+  // this component mounted, so the useState initialiser never re-runs. Re-read
+  // the URL whenever it actually changes (the ref guard keeps a locally picked
+  // tab intact even if the searchParams context re-renders).
+  const urlTab = useRef(searchParams.get("tab"));
+  useEffect(() => {
+    const next = searchParams.get("tab");
+    if (next === urlTab.current) return;
+    urlTab.current = next;
+    setTab(next === "orders" ? "orders" : "profile");
+  }, [searchParams]);
 
   // Profile form
   const [name, setName]       = useState("");
@@ -374,5 +387,17 @@ export default function AccountPage() {
       {selectedOrder && <InvoiceModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />}
       <style>{`@media(max-width:600px){.profile-grid{grid-template-columns:1fr !important}.account-card{padding:18px 14px !important;}.order-row{padding:12px 14px !important;gap:8px !important;}.account-body{padding:20px 12px 32px !important;}}`}</style>
     </PageLayout>
+  );
+}
+
+/**
+ * `useSearchParams` needs a Suspense boundary when the page is prerendered, so
+ * the account page renders `AccountContent` (which reads `?tab=`) inside one.
+ */
+export default function AccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountContent />
+    </Suspense>
   );
 }

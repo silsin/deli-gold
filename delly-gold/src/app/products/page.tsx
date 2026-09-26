@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
@@ -78,6 +78,25 @@ function ProductsInner() {
   }, [search, selectedCat, sort, page, lowWage, coin]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  /**
+   * The top menu / footer link to `/products?category=…` and `/products?search=…`.
+   * On a same-route navigation Next.js keeps this component mounted, so the
+   * useState initialisers above never re-run — read the URL whenever it changes.
+   * The ref guard makes sure we only react to a real URL change, so a category
+   * picked from the tab row (which updates state only) is never overwritten.
+   */
+  const urlFilterKey = useRef<string | null>(null);
+  useEffect(() => {
+    const key = `${searchParams.get("search") ?? ""}\u0000${searchParams.get("category") ?? ""}`;
+    if (urlFilterKey.current === key) return;
+    urlFilterKey.current = key;
+    setSearch(searchParams.get("search") || "");
+    setSelectedCat(searchParams.get("category") || "");
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   useEffect(() => {
     fetch("/api/categories").then(r => r.json()).then(d => { if (d.success) setCategories(d.data); });
     fetch("/api/admin/settings").then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });

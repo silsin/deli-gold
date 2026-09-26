@@ -242,6 +242,13 @@ export default function Navbar() {
           <div style={{ display: "flex", alignItems: "center", height: "40px", minWidth: "max-content" }}>
             {catLinks.map((link, i) => (
               <Link key={i} href={link.href}
+                onClick={() => {
+                  // Identical URL → Next.js performs no navigation at all, so give
+                  // the user visible feedback («we are already there»).
+                  if (typeof window === "undefined") return;
+                  const current = `${pathname}${window.location.search}`;
+                  if (link.href === current) window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
                 style={{ display: "flex", alignItems: "center", height: "100%", padding: "0 16px",
                   color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#444",
                   textDecoration: "none", fontSize: "13px", fontWeight: "500",
