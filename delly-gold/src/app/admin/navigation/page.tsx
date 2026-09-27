@@ -11,6 +11,7 @@ type LinkTargetKind =
   | "collections"
   | "showcase"
   | "tryon"
+  | "rates"
   | "about"
   | "contact"
   | "collab"
@@ -51,6 +52,7 @@ function LinkEditor({
     switch (kind) {
       case "products":    return "/products";
       case "collections": return "/collections";
+      case "rates":       return "/rates-board";
       case "showcase":    return "/showcase";
       case "tryon":       return "/tryon";
       case "about":       return "/about";
@@ -75,6 +77,7 @@ function LinkEditor({
     if (!h || h === "/products") return { kind: "products", ref: "" };
     const simple: Record<string, LinkTargetKind> = {
       "/collections": "collections", "/showcase": "showcase", "/tryon": "tryon",
+      "/rates-board": "rates",
       "/about": "about", "/contact": "contact", "/collab": "collab",
       "/cart": "cart", "/account": "account",
     };
@@ -143,6 +146,7 @@ function LinkEditor({
           <option value="category">دسته‌بندی…</option>
           <option value="filter">فیلتر محصولات…</option>
           <option value="collections">کالکشن‌ها</option>
+          <option value="rates">تابلو طلا</option>
           <option value="showcase">ویترین‌ها</option>
           <option value="tryon">پرو مجازی</option>
           <option value="guide">صفحه راهنما…</option>

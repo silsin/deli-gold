@@ -1,8 +1,21 @@
 import { NextRequest } from "next/server";
 import { ok, serverError } from "@/lib/response";
 
-// Cache for 30 seconds for near-real-time updates
-let cache: {
+export interface GoldRates {
+  gold18k?: number;
+  gold24k?: number;
+  ounceDollar?: number;
+  mazanehTehran?: number;
+  coinOld?: number;
+  coinNew?: number;
+  coinHalf?: number;
+  coinQuarter?: number;
+  coinGram?: number;
+}
+
+export interface GoldMarketData {
+  source: "estjt" | "tgju" | "fallback";
+  sourceTitle: string;
   price: number;
   history: number[];
   dates: string[];
@@ -13,9 +26,25 @@ let cache: {
   changePercent: string;
   isUp: boolean;
   updatedAt: number;
-} | null = null;
+  rates?: GoldRates;
+  cached?: boolean;
+  stale?: boolean;
+  fallback?: boolean;
+}
 
-const CACHE_TTL = 30 * 1000; // 30 seconds
+/** In-memory cache for 60s (1 minute). */
+let cache: GoldMarketData | null = null;
+const CACHE_TTL = 60 * 1000;
+
+const p2e: Record<string, string> = {
+  "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+  "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+};
+
+function parsePersianInt(str: string): number {
+  const digits = String(str || "").replace(/[۰-۹]/g, (m) => p2e[m] ?? "").replace(/[^0-9]/g, "");
+  return parseInt(digits, 10) || 0;
+}
 
 interface TgjuRow {
   close: number;
@@ -38,56 +67,165 @@ function stripHtml(raw: string): string {
   return String(raw ?? "").replace(/<[^>]+>/g, "").trim();
 }
 
-async function fetchGoldPrice() {
-  const res = await fetch(
-    "https://api.tgju.org/v1/market/indicator/summary-table-data/geram18",
-    {
-      // No Next.js cache — we do our own in-memory cache
+/**
+ * Source 1: اتحادیه فروشندگان و سازندگان طلا و جواهر تهران (estjt.ir)
+ * Fetches real-time reference rates for 18k/24k gold, mazaneh, and all coin variants.
+ */
+async function fetchFromEstjt(): Promise<GoldMarketData | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch("https://www.estjt.ir/price/", {
       cache: "no-store",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    const trRegex = /<tr[\s\S]*?<\/tr>/gi;
+    const thtdRegex = /<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi;
+
+    const parsed: Record<
+      string,
+      { currentRial: number; yesterdayRial: number; isUp: boolean }
+    > = {};
+
+    const trs = html.match(trRegex) || [];
+    for (const tr of trs) {
+      const cells = (tr.match(thtdRegex) || []).map((c) =>
+        c.replace(/<[^>]+>/g, "").trim().replace(/\s+/g, " ")
+      );
+      if (cells.length >= 6) {
+        const title = cells[0];
+        const currentRial = parsePersianInt(cells[1]);
+        const yesterdayRial = parsePersianInt(cells[4]);
+        const isUp = tr.includes('class="asc"') || !tr.includes('class="desc"');
+        if (currentRial > 0) {
+          parsed[title] = { currentRial, yesterdayRial, isUp };
+        }
+      }
     }
-  );
 
-  if (!res.ok) throw new Error(`TGJU API error: ${res.status}`);
+    const gold18 = parsed["طلای ۱۸ عیار"];
+    if (!gold18 || gold18.currentRial <= 0) return null;
 
-  const json = await res.json();
-  // Each row: [close, open, high, low, changeHTML, changePctHTML, dateGregorian, dateJalali]
-  const rows: string[][] = json?.data ?? [];
+    const priceToman = Math.round(gold18.currentRial / 10);
+    const yesterdayToman = Math.round(gold18.yesterdayRial / 10);
+    const changeAmount = Math.abs(priceToman - yesterdayToman);
+    const changePercentNum = yesterdayToman > 0
+      ? (((priceToman - yesterdayToman) / yesterdayToman) * 100).toFixed(2)
+      : "0.00";
 
-  const parsed: TgjuRow[] = rows
-    .slice(0, 20)
-    .map((row: string[]) => {
-      const close = parseRial(row[0]);
-      const open = parseRial(row[1]);
-      const high = parseRial(row[2]);
-      const low = parseRial(row[3]);
-      const changeHtml = stripHtml(row[4] ?? "");
-      const changePctHtml = stripHtml(row[5] ?? "");
-      const date = String(row[6] ?? "").trim(); // Gregorian date
+    const rates: GoldRates = {
+      gold18k: priceToman,
+      gold24k: Math.round((parsed["طلای ۲۴ عیار"]?.currentRial ?? 0) / 10) || undefined,
+      mazanehTehran: Math.round((parsed["مظنه تهران"]?.currentRial ?? 0) / 10) || undefined,
+      ounceDollar: parsed["انس طلا"]?.currentRial || undefined,
+      coinOld: Math.round((parsed["سکه طرح قدیم"]?.currentRial ?? 0) / 10) || undefined,
+      coinNew: Math.round((parsed["سکه طرح جدید"]?.currentRial ?? 0) / 10) || undefined,
+      coinHalf: Math.round((parsed["نیم سکه"]?.currentRial ?? 0) / 10) || undefined,
+      coinQuarter: Math.round((parsed["ربع سکه"]?.currentRial ?? 0) / 10) || undefined,
+      coinGram: Math.round((parsed["سکه یک گرمی"]?.currentRial ?? 0) / 10) || undefined,
+    };
 
-      const changeAmount = parseRial(changeHtml.replace(/[^0-9,]/g, ""));
-      const changePercent = changePctHtml.replace(/[^0-9.%]/g, "");
+    const prevHist = cache?.history?.length ? cache.history : [yesterdayToman, priceToman];
+    const history = [...prevHist.slice(-19), priceToman];
 
-      // Detect direction from the HTML class
-      const isUp = String(row[4] ?? "").includes("high");
+    return {
+      source: "estjt",
+      sourceTitle: "اتحادیه طلا و جواهر تهران",
+      price: priceToman,
+      open: yesterdayToman || priceToman,
+      high: Math.max(priceToman, yesterdayToman),
+      low: Math.min(priceToman, yesterdayToman || priceToman),
+      changeAmount,
+      changePercent: changePercentNum,
+      isUp: gold18.isUp,
+      history,
+      dates: [new Date().toISOString().slice(0, 10)],
+      updatedAt: Date.now(),
+      rates,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-      return { close, open, high, low, changeAmount, changePercent, isUp, date };
-    })
-    .filter((r) => r.close > 0)
-    .reverse(); // oldest first
+/**
+ * Source 2: شبکه اطلاع‌رسانی طلا و ارز (TGJU) — reliable fallback
+ */
+async function fetchFromTgju(): Promise<GoldMarketData | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
 
-  const latest = parsed[parsed.length - 1];
+  try {
+    const res = await fetch(
+      "https://api.tgju.org/v1/market/indicator/summary-table-data/geram18",
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    );
 
-  return {
-    price: latest?.close ?? 0,
-    open: latest?.open ?? 0,
-    high: latest?.high ?? 0,
-    low: latest?.low ?? 0,
-    changeAmount: latest?.changeAmount ?? 0,
-    changePercent: latest?.changePercent ?? "0",
-    isUp: latest?.isUp ?? false,
-    history: parsed.map((r) => r.close),
-    dates: parsed.map((r) => r.date),
-  };
+    if (!res.ok) return null;
+
+    const json = await res.json();
+    const rows: string[][] = json?.data ?? [];
+
+    const parsed: TgjuRow[] = rows
+      .slice(0, 20)
+      .map((row: string[]) => {
+        const close = parseRial(row[0]);
+        const open = parseRial(row[1]);
+        const high = parseRial(row[2]);
+        const low = parseRial(row[3]);
+        const changeHtml = stripHtml(row[4] ?? "");
+        const changePctHtml = stripHtml(row[5] ?? "");
+        const date = String(row[6] ?? "").trim();
+
+        const changeAmount = parseRial(changeHtml.replace(/[^0-9,]/g, ""));
+        const changePercent = changePctHtml.replace(/[^0-9.%]/g, "");
+        const isUp = String(row[4] ?? "").includes("high");
+
+        return { close, open, high, low, changeAmount, changePercent, isUp, date };
+      })
+      .filter((r) => r.close > 0)
+      .reverse();
+
+    if (parsed.length === 0) return null;
+    const latest = parsed[parsed.length - 1];
+
+    return {
+      source: "tgju",
+      sourceTitle: "شبکه اطلاع‌رسانی طلا و ارز (TGJU)",
+      price: latest.close,
+      open: latest.open,
+      high: latest.high,
+      low: latest.low,
+      changeAmount: latest.changeAmount,
+      changePercent: latest.changePercent || "0",
+      isUp: latest.isUp,
+      history: parsed.map((r) => r.close),
+      dates: parsed.map((r) => r.date),
+      updatedAt: Date.now(),
+      rates: {
+        gold18k: latest.close,
+      },
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function GET(_req: NextRequest) {
@@ -98,12 +236,46 @@ export async function GET(_req: NextRequest) {
       return ok({ ...cache, cached: true });
     }
 
-    const data = await fetchGoldPrice();
-    cache = { ...data, updatedAt: now };
+    // Priority 1: اتحادیه طلا و جواهر تهران (estjt.ir)
+    let freshData = await fetchFromEstjt();
 
+    // Priority 2: TGJU API as reliable fallback
+    if (!freshData) {
+      freshData = await fetchFromTgju();
+    }
+
+    if (freshData) {
+      cache = { ...freshData, updatedAt: now };
+      return ok({
+        ...cache,
+        cached: false,
+        updatedAt: new Date(now).toISOString(),
+      });
+    }
+
+    if (cache) {
+      return ok({ ...cache, cached: true, stale: true });
+    }
+
+    // Priority 3: Fallback data
+    const fallbackPrice = 23865400;
     return ok({
-      ...data,
+      source: "fallback",
+      sourceTitle: "نرخ پایه سامانه",
+      price: fallbackPrice,
+      open: fallbackPrice,
+      high: fallbackPrice,
+      low: fallbackPrice,
+      changeAmount: 0,
+      changePercent: "0.00",
+      isUp: true,
+      history: [fallbackPrice],
+      dates: [],
       cached: false,
+      fallback: true,
+      rates: {
+        gold18k: fallbackPrice,
+      },
       updatedAt: new Date(now).toISOString(),
     });
   } catch (e) {
@@ -113,25 +285,25 @@ export async function GET(_req: NextRequest) {
       return ok({ ...cache, cached: true, stale: true });
     }
 
-    // Hardcoded fallback
-    const now = Date.now();
+    const fallbackPrice = 23865400;
     return ok({
-      price: 18005700,
-      open: 17891600,
-      high: 18122700,
-      low: 17925100,
-      changeAmount: 138100,
-      changePercent: "0.77",
-      isUp: false,
-      history: [
-        19149800, 19217900, 19388400, 19506200, 19588500, 19586400, 19287600,
-        19147900, 18259100, 18560200, 18281400, 18213200, 18230200, 18133200,
-        18005700,
-      ],
+      source: "fallback",
+      sourceTitle: "نرخ پایه سامانه",
+      price: fallbackPrice,
+      open: fallbackPrice,
+      high: fallbackPrice,
+      low: fallbackPrice,
+      changeAmount: 0,
+      changePercent: "0.00",
+      isUp: true,
+      history: [fallbackPrice],
       dates: [],
       cached: false,
       fallback: true,
-      updatedAt: new Date(now).toISOString(),
+      rates: {
+        gold18k: fallbackPrice,
+      },
+      updatedAt: new Date().toISOString(),
     });
   }
 }

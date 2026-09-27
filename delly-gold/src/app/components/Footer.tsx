@@ -21,6 +21,7 @@ const footerLinks = {
     { label: "تماس با ما", href: "/contact" },
     { label: "همکاری با ما", href: "/collab" },
     { label: "محصولات",    href: "/products" },
+    { label: "تابلو طلا",  href: "/rates-board" },
   ],
 };
 

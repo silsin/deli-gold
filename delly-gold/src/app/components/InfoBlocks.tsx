@@ -6,7 +6,7 @@ import Link from "next/link";
 interface GoldData {
   price: number; open: number; high: number; low: number;
   changePercent: string; isUp: boolean; history: number[]; dates: string[];
-  fallback?: boolean; stale?: boolean;
+  fallback?: boolean; stale?: boolean; sourceTitle?: string;
 }
 
 function formatDate(d: string) {
@@ -48,7 +48,8 @@ export default function InfoBlocks() {
   const [markup, setMarkup] = useState(5);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [countdown, setCountdown] = useState(30);
+  // Live tickers poll the API every 60s; CountdownDial separately counts that minute down.
+  const [countdown, setCountdown] = useState(60);
   const cRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchPrice = useCallback(async (spinner = false) => {
@@ -62,13 +63,13 @@ export default function InfoBlocks() {
       if (pj.success) setGoldData(pj.data);
       if (sj.success) setMarkup(parseFloat(sj.data?.gold_markup_percent ?? "5") || 5);
     } catch {}
-    finally { setLoading(false); setRefreshing(false); setCountdown(30); }
+    finally { setLoading(false); setRefreshing(false); setCountdown(60); }
   }, []);
 
   useEffect(() => {
     fetchPrice();
-    const iv = setInterval(() => fetchPrice(), 30_000);
-    cRef.current = setInterval(() => setCountdown(c => c <= 1 ? 30 : c - 1), 1000);
+    const iv = setInterval(() => fetchPrice(), 60_000);
+    cRef.current = setInterval(() => setCountdown(c => c <= 1 ? 60 : c - 1), 1000);
     return () => { clearInterval(iv); if (cRef.current) clearInterval(cRef.current); };
   }, [fetchPrice]);
 
@@ -149,7 +150,9 @@ export default function InfoBlocks() {
                   <Activity size={18} color="#c8a12a" />
                 </div>
                 <div>
-                  <p style={{ color: "#aaa", fontSize: "10px" }}>داده از TGJU · هر ۳۰ ثانیه</p>
+                  <p style={{ color: "#aaa", fontSize: "10px" }}>
+                    {goldData?.sourceTitle ? `داده از ${goldData.sourceTitle} · هر ۱ دقیقه` : "داده از اتحادیه طلا و TGJU · هر ۱ دقیقه"}
+                  </p>
                   <h3 style={{ color: "#222", fontSize: "14px", fontWeight: "700" }}>قیمت لحظه‌ای طلا ۱۸ عیار</h3>
                 </div>
               </div>

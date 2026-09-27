@@ -17,7 +17,8 @@ export default function GoldTicker() {
   const [data, setData] = useState<GoldData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [countdown, setCountdown] = useState(30);
+  // Live tickers poll the API every 60s; CountdownDial separately counts that minute down.
+  const [countdown, setCountdown] = useState(60);
   const [markup, setMarkup] = useState(5);
   // Mini calculator
   const [grams, setGrams] = useState("");
@@ -36,13 +37,13 @@ export default function GoldTicker() {
       if (pj.success) setData(pj.data);
       if (sj.success) setMarkup(parseFloat(sj.data?.gold_markup_percent ?? "5") || 5);
     } catch {}
-    finally { setLoading(false); setRefreshing(false); setCountdown(30); }
+    finally { setLoading(false); setRefreshing(false); setCountdown(60); }
   }, []);
 
   useEffect(() => {
     fetch_();
-    const iv = setInterval(() => fetch_(), 30_000);
-    countdownRef.current = setInterval(() => setCountdown(c => c <= 1 ? 30 : c - 1), 1000);
+    const iv = setInterval(() => fetch_(), 60_000);
+    countdownRef.current = setInterval(() => setCountdown(c => c <= 1 ? 60 : c - 1), 1000);
     return () => { clearInterval(iv); if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [fetch_]);
 

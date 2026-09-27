@@ -1,0 +1,438 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowLeftRight,
+  BadgeDollarSign,
+  Banknote,
+  Calculator,
+  Coins,
+  Gem,
+  LayoutGrid,
+  Minus,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import PageLayout from "../components/PageLayout";
+
+interface Rates {
+  gold18k?: number;
+  gold24k?: number;
+  ounceDollar?: number;
+  mazanehTehran?: number;
+  coinOld?: number;
+  coinNew?: number;
+  coinHalf?: number;
+  coinQuarter?: number;
+  coinGram?: number;
+}
+
+interface MarketPayload {
+  source?: string;
+  sourceTitle?: string;
+  price: number;
+  open: number;
+  high: number;
+  low: number;
+  changeAmount: number;
+  changePercent: string;
+  isUp: boolean;
+  rates?: Rates;
+}
+
+interface RowDef {
+  key: keyof Rates;
+  title: string;
+  hint: string;
+  href?: string;
+  accent: string;
+}
+
+const GOLD_ROWS: RowDef[] = [
+  { key: "gold18k", title: "طلای ۱۸ عیار (گرم)", hint: "نرخ پایه طلافروشی", href: "/products", accent: "#c8a12a" },
+  { key: "gold24k", title: "طلای ۲۴ عیار (گرم)", hint: "طلای خالص", accent: "#b45309" },
+  { key: "mazanehTehran", title: "مظنه تهران (مثقال)", hint: "آبشده نقدی", href: "/products?coin=true", accent: "#0ea5e9" },
+  { key: "ounceDollar", title: "انس جهانی طلا (دلار)", hint: "بازار جهانی", accent: "#22c55e" },
+];
+
+const COIN_ROWS: RowDef[] = [
+  { key: "coinNew", title: "سکه امامی (طرح جدید)", hint: "تمام بهار آزادی", href: "/products?coin=true", accent: "#7c3aed" },
+  { key: "coinOld", title: "سکه بهار آزادی (طرح قدیم)", hint: "تمام بهار آزادی", href: "/products?coin=true", accent: "#6d28d9" },
+  { key: "coinHalf", title: "نیم سکه", hint: "بهار آزادی", href: "/products?coin=true", accent: "#2563eb" },
+  { key: "coinQuarter", title: "ربع سکه", hint: "بهار آزادی", href: "/products?coin=true", accent: "#0891b2" },
+  { key: "coinGram", title: "سکه گرمی", hint: "یک گرمی بانک مرکزی", href: "/products?coin=true", accent: "#059669" },
+];
+
+function faNum(n: number): string {
+  if (!n || Number.isNaN(n)) return "—";
+  return Math.round(n).toLocaleString("fa-IR");
+}
+
+function faSigned(n: number): string {
+  if (!n || Number.isNaN(n)) return "—";
+  return (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("fa-IR");
+}
+
+function RateCard({ row, index, value }: { row: RowDef; index: number; value?: number }) {
+  const inner = (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+        <span
+          style={{
+            width: 30, height: 30, borderRadius: 10, display: "inline-flex",
+            alignItems: "center", justifyContent: "center", flexShrink: 0,
+            color: row.accent, backgroundColor: `${row.accent}14`,
+            border: `1px solid ${row.accent}33`, fontSize: 12, fontWeight: 800,
+          }}
+        >
+          {(index + 1).toLocaleString("fa-IR")}
+        </span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {row.title}
+          </p>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "2px 0 0" }}>{row.hint}</p>
+        </div>
+      </div>
+      <p style={{ color: value ? row.accent : "var(--theme-text-muted)", fontSize: 19, fontWeight: 800, margin: "0 0 2px", direction: "ltr" }}>
+        {value ? faNum(value) : "—"}
+      </p>
+      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: 0 }}>تومان</p>
+    </>
+  );
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: "var(--theme-card)",
+    border: "1px solid var(--theme-border)",
+    borderRadius: 14,
+    padding: 16,
+    display: "block",
+    minWidth: 0,
+  };
+
+  return row.href ? (
+    <Link href={row.href} style={{ ...cardStyle, textDecoration: "none" }}>{inner}</Link>
+  ) : (
+    <div style={cardStyle}>{inner}</div>
+  );
+}
+
+export function SkeletonGrid({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)",
+            borderRadius: 14, padding: 16, minHeight: 132, opacity: 0.55,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+export function RatesBoardSkeleton() {
+  return (
+    <PageLayout>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "56px 16px" }}>
+        <div style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 16, marginBottom: 22, minHeight: 120, opacity: 0.6 }} />
+        <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
+          <SkeletonGrid count={4} />
+        </div>
+        <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          <SkeletonGrid count={5} />
+        </div>
+      </div>
+    </PageLayout>
+  );
+}
+
+export default function RatesBoard() {
+  const [data, setData] = useState<MarketPayload | null>(null);
+  const [settings, setSettings] = useState<{ gold_markup_percent?: string; gold_fixed_fee?: string }>({});
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [grams, setGrams] = useState("");
+  const [karat, setKarat] = useState<18 | 24>(18);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clock = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchRates = async (spinner = false) => {
+    if (spinner) setRefreshing(true);
+    try {
+      const [pr, sr] = await Promise.all([
+        fetch("/api/admin/gold-price", { cache: "no-store" }),
+        fetch("/api/admin/settings", { cache: "no-store" }),
+      ]);
+      const pj = await pr.json();
+      const sj = await sr.json();
+      if (pj.success && pj.data) setData(pj.data);
+      if (sj.success) setSettings(sj.data ?? {});
+      setCountdown(60);
+    } catch {
+      /* keep the last good values on screen */
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+    timer.current = setInterval(() => fetchRates(), 60_000);
+    clock.current = setInterval(() => setCountdown(c => (c <= 1 ? 60 : c - 1)), 1000);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+      if (clock.current) clearInterval(clock.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const now = new Date();
+  const nowFa = now.toLocaleDateString("fa-IR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const nowTime = now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+
+  const changePct = parseFloat(data?.changePercent ?? "0") || 0;
+  const trendDown = !!data && !data.isUp && changePct < 0;
+  const trendUp = !!data && !trendDown && changePct !== 0;
+
+  const base = data?.price ?? 0;
+  const markupPct = parseFloat(settings.gold_markup_percent ?? "5") || 0;
+  const fixedFee = parseFloat(settings.gold_fixed_fee ?? "0") || 0;
+  const perGram18 = Math.round(base * (1 + markupPct / 100) + fixedFee);
+  const perGram24 = Math.round(base * (24 / 18) * (1 + markupPct / 100) + fixedFee);
+  const calcRate = karat === 24 ? perGram24 : perGram18;
+  const gramsNum = parseFloat(grams) || 0;
+  const calcTotal = gramsNum > 0 ? Math.round(gramsNum * calcRate) : 0;
+  const valueOf = (r: Rates | undefined, key: keyof Rates) => r?.[key] ?? 0;
+
+  return (
+    <PageLayout>
+      {/* Hero */}
+      <div style={{ position: "relative", overflow: "hidden", backgroundColor: "#181305" }}>
+        <div
+          style={{
+            position: "absolute", inset: 0,
+            backgroundImage: "url(https://images.unsplash.com/photo-1610375461246-83df859d849d?w=1600&q=80)",
+            backgroundSize: "cover", backgroundPosition: "center", filter: "brightness(0.35)",
+          }}
+        />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to left, rgba(10,8,2,0.85), rgba(10,8,2,0.15))" }} />
+        <div style={{ position: "relative", maxWidth: 1280, margin: "0 auto", padding: "44px 16px", color: "#fff" }}>
+          <p style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#0b0b0b", backgroundColor: "#c8a12a", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 800, margin: "0 0 12px" }}>
+            <LayoutGrid size={13} /> تابلو زنده بازار
+          </p>
+          <h1 style={{ fontSize: 34, fontWeight: 900, margin: "0 0 8px" }}>تابلو طلا</h1>
+          <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 14, margin: 0, lineHeight: 1.9 }}>
+            نرخ لحظه‌ای طلا و سکه — به‌روزرسانی خودکار هر ۱ دقیقه از {data?.sourceTitle ?? "اتحادیه طلا و جواهر تهران"}
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 16, fontSize: 12, color: "rgba(255,255,255,0.85)" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 20, padding: "6px 12px" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22c55e", animation: "board-pulse 1.6s ease-in-out infinite" }} />
+              {nowFa} · ساعت {nowTime}
+            </span>
+            <button
+              type="button"
+              onClick={() => fetchRates(true)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer",
+                backgroundColor: "rgba(200,161,42,0.18)", color: "#f4d97b",
+                border: "1px solid rgba(200,161,42,0.45)", borderRadius: 20, padding: "6px 14px",
+                fontSize: 12, fontWeight: 700, fontFamily: "inherit",
+              }}
+            >
+              <RefreshCw size={13} style={{ animation: refreshing ? "board-spin 1s linear infinite" : "none" }} />
+              {refreshing ? "در حال به‌روزرسانی…" : `به‌روزرسانی تا ${countdown.toLocaleString("fa-IR")} ثانیه`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCalcOpen(o => !o)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer",
+                backgroundColor: "#c8a12a", color: "#0b0b0b",
+                border: "none", borderRadius: 20, padding: "6px 14px",
+                fontSize: 12, fontWeight: 800, fontFamily: "inherit",
+              }}
+            >
+              <Calculator size={13} /> ماشین‌حساب طلا
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="rates-body" style={{ maxWidth: 1280, margin: "0 auto", padding: "26px 16px 48px" }}>
+        {/* Hero 18k spotlight */}
+        <div className="rates-spot" style={{
+          display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap",
+          backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)",
+          borderRadius: 16, padding: "20px 24px", marginBottom: 22,
+          boxShadow: "0 10px 30px rgba(200,161,42,0.10)",
+        }}>
+          <div style={{ width: 58, height: 58, borderRadius: 16, background: "linear-gradient(135deg,#c8a12a,#8a6d1c)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Gem size={26} color="#fff" />
+          </div>
+          <div style={{ flex: "1 1 220px", minWidth: 200 }}>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: "0 0 4px" }}>طلای ۱۸ عیار · هر گرم</p>
+            <p style={{ color: "var(--theme-text)", fontSize: 30, fontWeight: 900, margin: 0, direction: "ltr" }}>
+              {loading ? "…" : faNum(base)} <span style={{ fontSize: 13, fontWeight: 400, color: "var(--theme-text-muted)" }}>تومان</span>
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span className="rate-trend" style={{
+              display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 20, padding: "6px 14px",
+              fontSize: 13, fontWeight: 800,
+              color: trendDown ? "#dc2626" : "#16a34a",
+              backgroundColor: trendDown ? "#fef2f2" : "#f0fdf4",
+              border: `1px solid ${trendDown ? "#fecaca" : "#bbf0d0"}`,
+            }}>
+              {trendDown ? <TrendingDown size={14} /> : trendUp ? <TrendingUp size={14} /> : <Minus size={14} />}
+              {changePct === 0 ? "بدون تغییر" : `${faSigned(changePct)}٪`}
+            </span>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 10, margin: "0 0 2px" }}>تغییر امروز</p>
+              <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 700, margin: 0 }}>
+                {loading ? "…" : `${faSigned(data?.changeAmount ?? 0)} تومان`}
+              </p>
+            </div>
+          </div>
+        </div>
+        {calcOpen && (
+          <div className="rates-calc" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 18, marginBottom: 22 }}>
+
+            <p style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 800, margin: "0 0 4px" }}>قیمت طلای شما چقدر می‌شود؟</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: "0 0 14px" }}>بر اساس نرخ لحظه‌ای ۱۸ عیار {base > 0 ? `(${faNum(base)} تومان)` : ""} + اجرت فروشگاه</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
+              <div style={{ display: "flex", backgroundColor: "var(--theme-surface)", borderRadius: 10, padding: 4, gap: 4 }}>
+                {([18, 24] as const).map(k => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKarat(k)}
+                    style={{
+                      border: "none", borderRadius: 7, padding: "8px 18px", fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit",
+                      backgroundColor: karat === k ? "#c8a12a" : "transparent",
+                      color: karat === k ? "#0b0b0b" : "var(--theme-text-muted)",
+                    }}
+                  >
+                    {k.toLocaleString("fa-IR")} عیار
+                  </button>
+                ))}
+              </div>
+              <div style={{ flex: "1 1 160px", minWidth: 140 }}>
+                <label style={{ display: "block", color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 6 }}>وزن (گرم)</label>
+                <input
+                  value={grams}
+                  onChange={e => setGrams(e.target.value.replace(/[^0-9.]/g, ""))}
+                  inputMode="decimal"
+                  placeholder="مثلاً ۵.۲"
+                  style={{
+                    width: "100%", backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)",
+                    borderRadius: 10, padding: "10px 14px", color: "var(--theme-text)", fontSize: 14,
+                    outline: "none", fontFamily: "inherit", direction: "ltr", textAlign: "center",
+                  }}
+                />
+              </div>
+              <div style={{ flex: "1 1 220px", minWidth: 200, backgroundColor: "color-mix(in srgb, var(--theme-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)", borderRadius: 10, padding: "10px 16px", textAlign: "center" }}>
+                <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "0 0 4px" }}>مبلغ تقریبی</p>
+                <p style={{ color: "var(--theme-accent)", fontSize: 20, fontWeight: 900, margin: 0 }}>
+                  {calcTotal > 0 ? faNum(calcTotal) : "—"} <span style={{ fontSize: 11, fontWeight: 400 }}>تومان</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Gold rates */}
+        <div className="rates-sec" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, backgroundColor: "#fdf3dd", color: "#c8a12a" }}>
+            <Banknote size={17} />
+          </span>
+          <h2 style={{ color: "var(--theme-text)", fontSize: 18, fontWeight: 800, margin: 0 }}>نرخ طلا</h2>
+          <span style={{ flex: 1, height: 1, backgroundColor: "var(--theme-border)" }} />
+        </div>
+        <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
+          {loading
+            ? <SkeletonGrid count={4} />
+            : GOLD_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} />)}
+        </div>
+
+        {/* Coin rates */}
+        <div className="rates-sec" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, backgroundColor: "#f3ecff", color: "#7c3aed" }}>
+            <Coins size={17} />
+          </span>
+          <h2 style={{ color: "var(--theme-text)", fontSize: 18, fontWeight: 800, margin: 0 }}>نرخ سکه</h2>
+          <span style={{ flex: 1, height: 1, backgroundColor: "var(--theme-border)" }} />
+        </div>
+        <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
+          {loading
+            ? <SkeletonGrid count={5} />
+            : COIN_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} />)}
+        </div>
+
+
+        {/* Open / high / low */}
+        <div className="rates-meta" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 22 }}>
+          {[
+            { label: "نرخ بازگشایی امروز", value: data?.open ?? 0 },
+            { label: "بالاترین امروز", value: data?.high ?? 0 },
+            { label: "پایین‌ترین امروز", value: data?.low ?? 0 },
+          ].map(m => (
+            <div key={m.label} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: "12px 16px", textAlign: "center" }}>
+              <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "0 0 4px" }}>{m.label}</p>
+              <p style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 800, margin: 0 }}>
+                {loading ? "…" : faNum(m.value)} <span style={{ fontSize: 10, fontWeight: 400 }}>تومان</span>
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Source + shop CTA */}
+        <div className="rates-cta" style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap",
+          backgroundColor: "color-mix(in srgb, var(--theme-accent) 8%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--theme-accent) 28%, transparent)",
+          borderRadius: 14, padding: "16px 20px",
+        }}>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+            <ArrowLeftRight size={13} />
+            منبع نرخ‌ها: {data?.sourceTitle ?? "اتحادیه طلا و جواهر تهران"} · به‌روزرسانی خودکار هر ۱ دقیقه
+          </p>
+          <Link
+            href="/products?coin=true"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, backgroundColor: "#c8a12a", color: "#0b0b0b",
+              textDecoration: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 800,
+            }}
+          >
+            <BadgeDollarSign size={15} /> خرید سکه و آبشده
+          </Link>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes board-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+        @keyframes board-spin { to { transform: rotate(360deg); } }
+        @media (max-width: 1024px) {
+          .rates-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 600px) {
+          .rates-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .rates-meta { grid-template-columns: 1fr !important; }
+          .rates-body { padding: 18px 12px 36px !important; }
+          .rates-spot { padding: 16px !important; gap: 12px !important; }
+          .rates-cta { flex-direction: column; align-items: stretch !important; text-align: center; }
+          .rates-cta a { justify-content: center; }
+        }
+      `}</style>
+    </PageLayout>
+  );
+}
+
