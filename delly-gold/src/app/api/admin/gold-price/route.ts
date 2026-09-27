@@ -353,6 +353,17 @@ async function fetchFromTgju(
     if (i + 3 < TGJU_INDICATORS.length) await new Promise(r => setTimeout(r, 200));
   }
 
+  // Anything we could not reach this cycle keeps its last known value —
+  // a tight budget must never turn into an empty card.
+  for (const ind of TGJU_INDICATORS) {
+    if (rates[ind.key]) continue;
+    const memo = tgjuMemo[ind.key] ?? fallback?.[ind.key];
+    if (!memo) continue;
+    rates[ind.key] = memo.value;
+    changes[ind.key] = { amount: memo.amount, percent: memo.percent, isUp: memo.isUp };
+    staleRates.push(ind.key);
+  }
+
   if (!rates.gold18k) return null;
   const head = changes.gold18k;
   const price = rates.gold18k;
