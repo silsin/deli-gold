@@ -20,6 +20,16 @@ export function getSetting(key: string): string | null {
   return row?.value ?? null;
 }
 
+export function setSetting(key: string, value: string): void {
+  ensureSettingsTable();
+  getDb()
+    .prepare(
+      "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now')) " +
+      "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at"
+    )
+    .run(key, value);
+}
+
 export function getHuggingfaceToken(): string | null {
   const dbToken = getSetting("huggingface_api_token")?.trim();
   if (dbToken) return dbToken;

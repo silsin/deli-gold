@@ -45,6 +45,7 @@ import SocialIcon from "@/app/components/SocialIcon";
 interface GoldData {
   price: number;
   history: number[];
+  sourceTitle?: string;
   fallback?: boolean;
   stale?: boolean;
 }
@@ -72,6 +73,7 @@ export default function AdminSettingsPage() {
   const [markup, setMarkup] = useState("5");
   const [fixedFee, setFixedFee] = useState("0");
   const [tax, setTax] = useState("0");
+  const [priceSource, setPriceSource] = useState("auto");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [priceBar, setPriceBar] = useState<PriceBarStyle>(DEFAULT_PRICE_BAR_STYLE);
@@ -169,6 +171,11 @@ export default function AdminSettingsPage() {
           setMarkup(d.data.gold_markup_percent ?? "5");
           setFixedFee(d.data.gold_fixed_fee ?? "0");
           setTax(d.data.gold_tax_percent ?? "0");
+          setPriceSource(
+            d.data.gold_price_source === "estjt" || d.data.gold_price_source === "tgju"
+              ? d.data.gold_price_source
+              : "auto"
+          );
           setPriceBar(parsePriceBarStyle(d.data));
           const theme = parseThemeSettings(d.data);
           setThemePalette(theme.theme_palette);
@@ -233,6 +240,7 @@ export default function AdminSettingsPage() {
         gold_markup_percent: markup,
         gold_fixed_fee: fixedFee,
         gold_tax_percent: tax,
+        gold_price_source: priceSource,
       }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
@@ -1131,6 +1139,20 @@ export default function AdminSettingsPage() {
             مالیات بر ارزش افزوده (٪) <span style={{ color: "#555", fontSize: "11px" }}>— طبق قانون فقط روی اجرت و سود اعمال می‌شود، نه روی اصل طلا</span>
           </label>
           <input type="number" value={tax} onChange={e => setTax(e.target.value)} min="0" max="100" step="0.5" style={inp} />
+        </div>
+
+        <div style={{ marginBottom: "24px" }}>
+          <label style={{ color: "#888", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+            منبع نرخ طلا <span style={{ color: "#555", fontSize: "11px" }}>— نوار قیمت، تابلو طلا و صفحه محصول از این منبع می‌خوانند</span>
+          </label>
+          <select value={priceSource} onChange={e => setPriceSource(e.target.value)} style={{ ...inp, cursor: "pointer" }}>
+            <option value="auto">خودکار — اتحادیه تهران + TGJU (پیشنهادی)</option>
+            <option value="estjt">اتحادیه طلا و جواهر تهران (estjt.ir)</option>
+            <option value="tgju">شبکه اطلاع‌رسانی طلا و ارز (TGJU)</option>
+          </select>
+          <p style={{ color: "#555", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.9 }}>
+            منبع فعلی: {goldData?.sourceTitle ?? "در حال دریافت…"} — در صفحه «تابلو طلا» می‌توانید منبع را جداگانه عوض کنید.
+          </p>
         </div>
 
         {saved && (

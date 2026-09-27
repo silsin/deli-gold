@@ -29,6 +29,12 @@ interface Rates {
   coinGram?: number;
 }
 
+interface RateChange {
+  amount: number;
+  percent: number;
+  isUp: boolean;
+}
+
 interface MarketPayload {
   source?: string;
   sourceTitle?: string;
@@ -40,6 +46,14 @@ interface MarketPayload {
   changePercent: string;
   isUp: boolean;
   rates?: Rates;
+  changes?: Partial<Record<keyof Rates, RateChange>>;
+  sourceKey?: "estjt" | "tgju" | "fallback";
+  requested?: string;
+  partial?: boolean;
+  merged?: boolean;
+  stale?: boolean;
+  staleRates?: string[];
+  note?: string;
 }
 
 interface RowDef {
@@ -75,7 +89,23 @@ function faSigned(n: number): string {
   return (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("fa-IR");
 }
 
-function RateCard({ row, index, value }: { row: RowDef; index: number; value?: number }) {
+/** Signed percentage with 2 decimals: «+۰٫۱۵» / «−۰٫۲۸». */
+function faSignedPct(n: number): string {
+  if (!n || Number.isNaN(n)) return "۰٫۰۰";
+  const sign = n > 0 ? "+" : n < 0 ? "−" : "";
+  return sign + Math.abs(n).toLocaleString("fa-IR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+type SourceChoice = "auto" | "estjt" | "tgju";
+
+const SOURCE_OPTIONS: { id: SourceChoice; label: string; hint: string }[] = [
+  { id: "auto",  label: "خودکار",        hint: "اتحادیه + TGJU (تکمیل خودکار)" },
+  { id: "estjt", label: "اتحادیه تهران", hint: "فقط estjt.ir" },
+  { id: "tgju",  label: "TGJU",          hint: "فقط شبکه طلا و ارز" },
+];
+
+function RateCard({ row, index, value, chg }: { row: RowDef; index: number; value?: number; chg?: RateChange }) {
+  const unit = row.key === "ounceDollar" ? "دلار" : "تومان";
   const inner = (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -99,7 +129,18 @@ function RateCard({ row, index, value }: { row: RowDef; index: number; value?: n
       <p style={{ color: value ? row.accent : "var(--theme-text-muted)", fontSize: 19, fontWeight: 800, margin: "0 0 2px", direction: "ltr" }}>
         {value ? faNum(value) : "—"}
       </p>
-      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: 0 }}>تومان</p>
+      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: 0 }}>{unit}</p>
+      {chg && (chg.amount !== 0 || chg.percent !== 0) && (
+        <p
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 4, margin: "8px 0 0",
+            fontSize: 11, fontWeight: 800, color: chg.isUp ? "#16a34a" : "#dc2626",
+          }}
+        >
+          {chg.isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          {faSigned(chg.amount)} {unit} · {faSignedPct(chg.percent)}٪
+        </p>
+      )}
     </>
   );
 
@@ -154,6 +195,7 @@ export function RatesBoardSkeleton() {
 export default function RatesBoard() {
   const [data, setData] = useState<MarketPayload | null>(null);
   const [settings, setSettings] = useState<{ gold_markup_percent?: string; gold_fixed_fee?: string }>({});
+  const [source, setSource] = useState<SourceChoice>("auto");
   const [calcOpen, setCalcOpen] = useState(false);
   const [grams, setGrams] = useState("");
   const [karat, setKarat] = useState<18 | 24>(18);
@@ -163,11 +205,11 @@ export default function RatesBoard() {
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const clock = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchRates = async (spinner = false) => {
+  const fetchRates = async (spinner = false, src: SourceChoice = source) => {
     if (spinner) setRefreshing(true);
     try {
       const [pr, sr] = await Promise.all([
-        fetch("/api/admin/gold-price", { cache: "no-store" }),
+        fetch(`/api/admin/gold-price?source=${src}`, { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
       ]);
       const pj = await pr.json();
@@ -183,8 +225,16 @@ export default function RatesBoard() {
     }
   };
 
+  // Restore the operator's saved source choice (if any).
   useEffect(() => {
-    fetchRates();
+    try {
+      const saved = localStorage.getItem("dg_price_source");
+      if (saved === "auto" || saved === "estjt" || saved === "tgju") setSource(saved);
+    } catch { /* private mode — stay on auto */ }
+  }, []);
+
+  useEffect(() => {
+    fetchRates(true);
     timer.current = setInterval(() => fetchRates(), 60_000);
     clock.current = setInterval(() => setCountdown(c => (c <= 1 ? 60 : c - 1)), 1000);
     return () => {
@@ -192,7 +242,13 @@ export default function RatesBoard() {
       if (clock.current) clearInterval(clock.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [source]);
+
+  const pickSource = (c: SourceChoice) => {
+    if (c === source) return;
+    setSource(c);
+    try { localStorage.setItem("dg_price_source", c); } catch { /* ignore */ }
+  };
 
   const now = new Date();
   const nowFa = now.toLocaleDateString("fa-IR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -211,6 +267,7 @@ export default function RatesBoard() {
   const gramsNum = parseFloat(grams) || 0;
   const calcTotal = gramsNum > 0 ? Math.round(gramsNum * calcRate) : 0;
   const valueOf = (r: Rates | undefined, key: keyof Rates) => r?.[key] ?? 0;
+  const chgOf = (key: keyof Rates): RateChange | undefined => data?.changes?.[key];
 
   return (
     <PageLayout>
@@ -262,6 +319,42 @@ export default function RatesBoard() {
             >
               <Calculator size={13} /> ماشین‌حساب طلا
             </button>
+          </div>
+
+          {/* Price-source picker — عامل می‌تواند منبع نرخ‌ها را عوض کند */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.62)" }}>منبع نرخ‌ها:</span>
+            <div style={{ display: "flex", backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: 3 }}>
+              {SOURCE_OPTIONS.map(o => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => pickSource(o.id)}
+                  style={{
+                    border: "none", borderRadius: 18, padding: "6px 14px",
+                    fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                    backgroundColor: source === o.id ? "#c8a12a" : "transparent",
+                    color: source === o.id ? "#0b0b0b" : "rgba(255,255,255,0.78)",
+                    transition: "background-color .15s ease",
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
+              {SOURCE_OPTIONS.find(o => o.id === source)?.hint}
+              {refreshing ? " · در حال دریافت…" : ""}
+            </span>
+            {data?.partial && (
+              <span style={{
+                fontSize: 11, fontWeight: 700, color: "#fbbf24",
+                border: "1px solid rgba(251,191,36,0.4)", backgroundColor: "rgba(251,191,36,0.12)",
+                borderRadius: 14, padding: "3px 10px",
+              }}>
+                برخی نرخ‌ها در این منبع ارائه نمی‌شود
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -360,7 +453,7 @@ export default function RatesBoard() {
         <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
           {loading
             ? <SkeletonGrid count={4} />
-            : GOLD_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} />)}
+            : GOLD_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} chg={chgOf(r.key)} />)}
         </div>
 
         {/* Coin rates */}
@@ -374,21 +467,52 @@ export default function RatesBoard() {
         <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
           {loading
             ? <SkeletonGrid count={5} />
-            : COIN_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} />)}
+            : COIN_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} chg={chgOf(r.key)} />)}
         </div>
 
 
-        {/* Open / high / low */}
-        <div className="rates-meta" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 22 }}>
+        {/* Today's summary — only figures the sources actually publish */}
+        <div className="rates-meta" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 22 }}>
           {[
-            { label: "نرخ بازگشایی امروز", value: data?.open ?? 0 },
-            { label: "بالاترین امروز", value: data?.high ?? 0 },
-            { label: "پایین‌ترین امروز", value: data?.low ?? 0 },
+            {
+              label: "تغییر امروز (۱۸ عیار)",
+              value: faSigned(data?.changeAmount ?? 0),
+              unit: "تومان",
+              tone: (data?.changeAmount ?? 0) > 0 ? "up" : (data?.changeAmount ?? 0) < 0 ? "down" : "",
+            },
+            {
+              label: "درصد تغییر",
+              value: faSignedPct(changePct),
+              unit: "٪",
+              tone: trendDown ? "down" : trendUp ? "up" : "",
+            },
+            {
+              label: "میانگین دیروز",
+              value: faNum((data?.price ?? 0) - (data?.changeAmount ?? 0)),
+              unit: "تومان",
+              tone: "",
+            },
+            {
+              label: "منبع نرخ",
+              value: data?.sourceTitle ?? "—",
+              unit: "",
+              tone: "",
+            },
           ].map(m => (
             <div key={m.label} style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 12, padding: "12px 16px", textAlign: "center" }}>
               <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "0 0 4px" }}>{m.label}</p>
-              <p style={{ color: "var(--theme-text)", fontSize: 15, fontWeight: 800, margin: 0 }}>
-                {loading ? "…" : faNum(m.value)} <span style={{ fontSize: 10, fontWeight: 400 }}>تومان</span>
+              <p
+                style={{
+                  color: m.tone === "up" ? "#16a34a" : m.tone === "down" ? "#dc2626" : "var(--theme-text)",
+                  fontSize: m.unit ? 15 : 13,
+                  fontWeight: 800,
+                  margin: 0,
+                  lineHeight: 1.7,
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {loading ? "…" : m.value}
+                {m.unit ? <span style={{ fontSize: 10, fontWeight: 400 }}> {m.unit}</span> : null}
               </p>
             </div>
           ))}
@@ -401,9 +525,12 @@ export default function RatesBoard() {
           border: "1px solid color-mix(in srgb, var(--theme-accent) 28%, transparent)",
           borderRadius: 14, padding: "16px 20px",
         }}>
-          <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <ArrowLeftRight size={13} />
-            منبع نرخ‌ها: {data?.sourceTitle ?? "اتحادیه طلا و جواهر تهران"} · به‌روزرسانی خودکار هر ۱ دقیقه
+            منبع نرخ‌ها: {data?.sourceTitle ?? "در حال دریافت…"} · حالت انتخابی: {SOURCE_OPTIONS.find(o => o.id === source)?.label}
+            {data?.note ? ` · ${data.note}` : ""}
+            {data?.staleRates && data.staleRates.length > 0 ? ` · ${data.staleRates.length.toLocaleString("fa-IR")} نرخ از آخرین داده دریافتی` : ""}
+            {data?.stale ? " · کش قدیمی (منبع در دسترس نبود)" : ""} · به‌روزرسانی خودکار هر ۱ دقیقه
           </p>
           <Link
             href="/products?coin=true"
@@ -422,6 +549,7 @@ export default function RatesBoard() {
         @keyframes board-spin { to { transform: rotate(360deg); } }
         @media (max-width: 1024px) {
           .rates-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .rates-meta { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 600px) {
           .rates-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }

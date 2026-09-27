@@ -195,6 +195,10 @@ export async function POST(req: NextRequest) {
         const n = parseFloat(String(value));
         value = String(Number.isNaN(n) ? 0 : Math.min(100, Math.max(0, n)));
       }
+      if (key === "gold_price_source") {
+        const v = String(value);
+        value = v === "estjt" || v === "tgju" || v === "auto" ? v : "auto";
+      }
       if (key === PRODUCT_PAGE_SETTING_KEY) {
         // Normalize the gift options / packaging line / FAQ accordion
         value = serializeProductPageSettings(parseProductPageSettings(String(value)));

@@ -1,8 +1,8 @@
 ▲ Next.js 16.2.7 (Turbopack)
-- Local:         http://localhost:3461
-- Network:       http://10.176.81.86:3461
+- Local:         http://localhost:3338
+- Network:       http://10.185.170.235:3338
 - Environments: .env
-✓ Ready in 816ms
+✓ Ready in 1600ms
 ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
  We detected multiple lockfiles and selected the directory of D:\package-lock.json as the root directory.
  To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
@@ -11,5 +11,3 @@
    * D:\deligold\delly-gold\package-lock.json
 
 
- GET / 200 in 819ms (next.js: 348ms, application-code: 470ms)
- GET /admin/login?from=%2Fadmin%2Fspecial-offers 200 in 191ms (next.js: 51ms, proxy.ts: 9ms, application-code: 132ms)
