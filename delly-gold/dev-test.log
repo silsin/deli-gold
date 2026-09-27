@@ -11,3 +11,8 @@
    * D:\deligold\delly-gold\package-lock.json
 
 
+(node:203884) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ GET /api/admin/gold-price?source=auto 200 in 4.2s (next.js: 741ms, application-code: 3.5s)
+ GET /api/admin/gold-price?source=estjt 200 in 2.4s (next.js: 9ms, application-code: 2.4s)
+ GET /api/admin/gold-price?source=auto 200 in 13.0s (next.js: 108ms, application-code: 12.9s)
