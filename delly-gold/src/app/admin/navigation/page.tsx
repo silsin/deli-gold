@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Save, RefreshCw, GripVertical, X } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 
-interface NavLink { label: string; href: string; }
+interface NavLink { label: string; href: string; children?: NavLink[]; }
 
 const inp: React.CSSProperties = {
   backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px",
@@ -13,10 +13,11 @@ const inp: React.CSSProperties = {
 };
 
 function LinkEditor({
-  title, description, links, onChange,
+  title, description, links, onChange, allowChildren = false, childrenHint,
 }: {
   title: string; description: string;
   links: NavLink[]; onChange: (links: NavLink[]) => void;
+  allowChildren?: boolean; childrenHint?: string;
 }) {
   function addLink() {
     onChange([...links, { label: "", href: "/products" }]);
@@ -29,6 +30,27 @@ function LinkEditor({
     next[i] = { ...next[i], [field]: val };
     onChange(next);
   }
+  function addChild(i: number) {
+    const next = [...links];
+    const kids = [...(next[i].children ?? [])];
+    kids.push({ label: "", href: "/products" });
+    next[i] = { ...next[i], children: kids };
+    onChange(next);
+  }
+  function removeChild(i: number, j: number) {
+    const next = [...links];
+    const kids = (next[i].children ?? []).filter((_, idx) => idx !== j);
+    const { children: _drop, ...rest } = next[i];
+    next[i] = kids.length > 0 ? { ...rest, children: kids } : rest;
+    onChange(next);
+  }
+  function updateChild(i: number, j: number, field: "label" | "href", val: string) {
+    const next = [...links];
+    const kids = [...(next[i].children ?? [])];
+    kids[j] = { ...kids[j], [field]: val };
+    next[i] = { ...next[i], children: kids };
+    onChange(next);
+  }
 
   return (
     <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "20px", marginBottom: "24px" }}>
@@ -39,16 +61,41 @@ function LinkEditor({
 
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "14px" }}>
         {links.map((link, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#121212", borderRadius: "8px", padding: "8px 10px", border: "1px solid #2a2a2a" }}>
-            <GripVertical size={14} color="#444" style={{ flexShrink: 0 }} />
-            <input value={link.label} onChange={e => updateLink(i, "label", e.target.value)}
-              style={{ ...inp, flex: "0 0 160px", padding: "6px 10px", direction: "rtl" }} placeholder="عنوان لینک" />
-            <input value={link.href} onChange={e => updateLink(i, "href", e.target.value)}
-              style={{ ...inp, flex: 1, padding: "6px 10px", direction: "ltr", fontSize: "12px" }} placeholder="/products" />
-            <button onClick={() => removeLink(i)}
-              style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: "6px", padding: "5px 7px", cursor: "pointer", flexShrink: 0 }}>
-              <X size={13} />
-            </button>
+          <div key={i}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#121212", borderRadius: "8px", padding: "8px 10px", border: "1px solid #2a2a2a" }}>
+              <GripVertical size={14} color="#444" style={{ flexShrink: 0 }} />
+              <input value={link.label} onChange={e => updateLink(i, "label", e.target.value)}
+                style={{ ...inp, flex: "0 0 160px", padding: "6px 10px", direction: "rtl" }} placeholder="عنوان لینک" />
+              <input value={link.href} onChange={e => updateLink(i, "href", e.target.value)}
+                style={{ ...inp, flex: 1, padding: "6px 10px", direction: "ltr", fontSize: "12px" }} placeholder="/products" />
+              <button onClick={() => removeLink(i)}
+                style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: "6px", padding: "5px 7px", cursor: "pointer", flexShrink: 0 }}>
+                <X size={13} />
+              </button>
+            </div>
+            {allowChildren && (
+              <div style={{ marginRight: 22, marginTop: 6, display: "flex", flexDirection: "column", gap: 6 }}>
+                {(link.children ?? []).map((child, j) => (
+                  <div key={j} style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#101418", borderRadius: "8px", padding: "7px 10px", border: "1px dashed #2a2a2a" }}>
+                    <span style={{ color: "#c8a12a", fontSize: 10, flexShrink: 0 }}>◆</span>
+                    <input value={child.label} onChange={e => updateChild(i, j, "label", e.target.value)}
+                      style={{ ...inp, flex: "0 0 140px", padding: "6px 10px", direction: "rtl" }} placeholder="عنوان زیرمنو" />
+                    <input value={child.href} onChange={e => updateChild(i, j, "href", e.target.value)}
+                      style={{ ...inp, flex: 1, padding: "6px 10px", direction: "ltr", fontSize: "12px" }} placeholder="/products?category=..." />
+                    <button onClick={() => removeChild(i, j)}
+                      style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: "6px", padding: "5px 7px", cursor: "pointer", flexShrink: 0 }}>
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+                <div>
+                  <button onClick={() => addChild(i)}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "transparent", border: "1px dashed rgba(200,161,42,0.5)", borderRadius: "7px", padding: "6px 12px", color: "#c8a12a", cursor: "pointer", fontSize: "11px", fontFamily: "inherit" }}>
+                    <Plus size={12} /> افزودن زیرمنو
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
         {links.length === 0 && (
@@ -60,6 +107,9 @@ function LinkEditor({
         style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "rgba(212,175,55,0.1)", border: "1px dashed rgba(212,175,55,0.4)", borderRadius: "8px", padding: "8px 14px", color: "#d4af37", cursor: "pointer", fontSize: "12px", fontFamily: "inherit" }}>
         <Plus size={14} /> افزودن لینک
       </button>
+      {allowChildren && childrenHint && (
+        <p style={{ color: "#555", fontSize: "11px", marginTop: "10px", lineHeight: 1.8 }}>{childrenHint}</p>
+      )}
     </div>
   );
 }
@@ -118,9 +168,11 @@ export default function AdminNavigationPage() {
             {/* Nav links */}
             <LinkEditor
               title="منوی ناوبری (ردیف دسته‌بندی‌ها)"
-              description="لینک‌های ردیف سفید زیر هدر. ترتیب نمایش از راست به چپ است."
+              description="لینک‌های ردیف سفید زیر هدر. ترتیب نمایش از راست به چپ است. برای هر آیتم می‌توانید زیرمنو (hover) اضافه کنید."
               links={navLinks}
               onChange={setNavLinks}
+              allowChildren
+              childrenHint="زیرمنوها روی دسکتاپ با هاور (حرکت موس روی آیتم) باز می‌شوند و در موبایل با دکمه‌ی «باز کردن زیرمنو» نمایش داده می‌شوند."
             />
             {savedNav && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ منوی ناوبری ذخیره شد</div>}
             <button onClick={saveNavLinks} disabled={savingNav}

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ShoppingCart, Menu, X, LogOut, Package, LogIn, User, ChevronDown, Search } from "lucide-react";
+import { ShoppingCart, Menu, X, LogOut, Package, LogIn, User, ChevronDown, ChevronLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "./CartContext";
@@ -10,7 +10,33 @@ import SocialIconLink from "./SocialIconLink";
 
 interface AuthUser { id: string; name: string; email: string; role: string; }
 
-interface NavLink { label: string; href: string; }
+interface NavLink { label: string; href: string; children?: NavLink[]; }
+
+/**
+ * Keep only real {label, href} entries plus one level of submenus, so a broken
+ * admin value can never render an empty item or an empty dropdown.
+ */
+function normalizeNavLinks(links: unknown[]): NavLink[] {
+  if (!Array.isArray(links)) return [];
+  const clean = (l: unknown): NavLink | null => {
+    if (!l || typeof l !== "object") return null;
+    const label = String((l as { label?: unknown }).label ?? "").trim();
+    const href = String((l as { href?: unknown }).href ?? "").trim() || "/products";
+    if (!label) return null;
+    return { label, href };
+  };
+  const out: NavLink[] = [];
+  for (const l of links) {
+    const top = clean(l);
+    if (!top) continue;
+    const rawKids = (l as { children?: unknown }).children;
+    const kids = Array.isArray(rawKids)
+      ? (rawKids.map(clean).filter((c): c is NavLink => c !== null))
+      : [];
+    out.push(kids.length > 0 ? { ...top, children: kids } : top);
+  }
+  return out;
+}
 
 const DEFAULT_CAT_LINKS: NavLink[] = [
   { label: "هدیه",         href: "/products" },
@@ -30,6 +56,8 @@ const DEFAULT_CAT_LINKS: NavLink[] = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen]     = useState(false);
+  const [openMenu, setOpenMenu]     = useState<number | null>(null);
+  const [expandedSub, setExpandedSub] = useState<Record<number, boolean>>({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal]   = useState("");
   const [userOpen, setUserOpen]     = useState(false);
@@ -40,6 +68,9 @@ export default function Navbar() {
   const [catLinks, setCatLinks]     = useState<NavLink[]>(DEFAULT_CAT_LINKS);
 
   const uT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const menuWrapRefs = useRef<(HTMLDivElement | null)[]>([]);
   const pathname = usePathname();
   const router   = useRouter();
   const { count } = useCart();
@@ -61,7 +92,7 @@ export default function Navbar() {
       const tryonOn = isTryonEnabled(d.data.tryon_enabled);
       let links = DEFAULT_CAT_LINKS;
       if (d.data.nav_links) {
-        try { const parsed = JSON.parse(d.data.nav_links); if (Array.isArray(parsed) && parsed.length > 0) links = parsed; } catch {}
+        try { const parsed = normalizeNavLinks(JSON.parse(d.data.nav_links)); if (parsed.length > 0) links = parsed; } catch {}
       }
       setCatLinks(filterTryonNavLinks(links, tryonOn));
     }).catch(() => {});
@@ -84,6 +115,33 @@ export default function Navbar() {
   }
 
   const active = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const navChildren = (link: NavLink): NavLink[] => link.children ?? [];
+
+  const sameUrl = (href: string) => {
+    if (typeof window === "undefined") return false;
+    return href === `${pathname}${window.location.search}`;
+  };
+
+  const cancelMenuTimer = () => {
+    if (openT.current) { clearTimeout(openT.current); openT.current = null; }
+  };
+  const scheduleMenuClose = () => {
+    if (openT.current) clearTimeout(openT.current);
+    openT.current = setTimeout(() => setOpenMenu(null), 160);
+  };
+
+  // The dropdown is viewport-fixed, so any scroll/resize invalidates its anchor.
+  useEffect(() => {
+    if (openMenu === null) return;
+    const close = () => setOpenMenu(null);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [openMenu]);
 
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 100 }}>
@@ -239,29 +297,129 @@ export default function Navbar() {
       {/* ── Category links row ── */}
       <nav style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }} className="cat-nav-row">
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" }}>
-          <div style={{ display: "flex", alignItems: "center", height: "40px", minWidth: "max-content" }}>
-            {catLinks.map((link, i) => (
-              <Link key={i} href={link.href}
-                onClick={() => {
-                  // Identical URL → Next.js performs no navigation at all, so give
-                  // the user visible feedback («we are already there»).
-                  if (typeof window === "undefined") return;
-                  const current = `${pathname}${window.location.search}`;
-                  if (link.href === current) window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                style={{ display: "flex", alignItems: "center", height: "100%", padding: "0 16px",
-                  color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#444",
-                  textDecoration: "none", fontSize: "13px", fontWeight: "500",
-                  borderLeft: i < catLinks.length - 1 ? "1px solid #f0f0f0" : "none",
-                  whiteSpace: "nowrap", transition: "color 0.2s, background-color 0.15s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#c8a12a"; (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#444"; (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}>
-                {link.label}
-              </Link>
-            ))}
+          <div style={{ display: "flex", alignItems: "stretch", height: "40px", minWidth: "max-content" }}>
+            {catLinks.map((link, i) => {
+              const kids = navChildren(link);
+              const hasKids = kids.length > 0;
+              const linkActive = active(link.href) || kids.some(k => active(k.href));
+              return (
+                <div
+                  key={i}
+                  style={{ position: "relative", height: "100%", flexShrink: 0 }}
+                  onMouseEnter={e => {
+                    cancelMenuTimer();
+                    if (!hasKids) {
+                      setOpenMenu(null);
+                      return;
+                    }
+                    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    setMenuPos({ top: Math.round(r.bottom + 6), right: Math.max(8, Math.round(window.innerWidth - r.right - 8)) });
+                    setOpenMenu(i);
+                  }}
+                  onMouseLeave={scheduleMenuClose}
+                >
+                  <Link
+                    href={link.href}
+                    aria-haspopup={hasKids ? "menu" : undefined}
+                    aria-expanded={hasKids ? openMenu === i : undefined}
+                    onClick={() => {
+                      // Identical URL → Next.js performs no navigation at all, so give
+                      // the user visible feedback («we are already there»).
+                      if (sameUrl(link.href)) window.scrollTo({ top: 0, behavior: "smooth" });
+                      setOpenMenu(null);
+                    }}
+                    onFocus={() => {
+                      if (!hasKids) {
+                        setOpenMenu(null);
+                        return;
+                      }
+                      const el = menuWrapRefs.current[i];
+                      if (el) {
+                        const r = el.getBoundingClientRect();
+                        setMenuPos({ top: Math.round(r.bottom + 6), right: Math.max(8, Math.round(window.innerWidth - r.right - 8)) });
+                      }
+                      setOpenMenu(i);
+                    }}
+                    onBlur={e => {
+                      if (!(e.relatedTarget instanceof HTMLElement) || !e.currentTarget.parentElement?.contains(e.relatedTarget)) {
+                        scheduleMenuClose();
+                      }
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", height: "100%", padding: "0 16px",
+                      color: linkActive && link.href !== "/products" ? "#c8a12a" : "#444",
+                      textDecoration: "none", fontSize: "13px", fontWeight: "500",
+                      borderLeft: i < catLinks.length - 1 ? "1px solid #f0f0f0" : "none",
+                      whiteSpace: "nowrap", transition: "color 0.2s, background-color 0.15s",
+                      backgroundColor: openMenu === i ? "#fdf8ee" : "transparent",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#c8a12a"; (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#444"; (e.currentTarget as HTMLElement).style.backgroundColor = openMenu === i ? "#fdf8ee" : "transparent"; }}>
+                    {link.label}
+                    {hasKids && (
+                      <ChevronDown
+                        size={12}
+                        style={{
+                          marginRight: 5,
+                          transform: openMenu === i ? "rotate(180deg)" : "rotate(0)",
+                          transition: "transform 0.18s ease",
+                        }}
+                      />
+                    )}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </nav>
+
+      {/* Hover dropdown is viewport-fixed so the row's horizontal scroll never clips it. */}
+      {openMenu !== null && catLinks[openMenu] && navChildren(catLinks[openMenu]).length > 0 && menuPos && (
+        <div
+          role="menu"
+          onMouseEnter={cancelMenuTimer}
+          onMouseLeave={scheduleMenuClose}
+          style={{
+            position: "fixed",
+            top: menuPos.top,
+            right: menuPos.right,
+            zIndex: 500,
+            minWidth: 230,
+            maxWidth: "calc(100vw - 24px)",
+            backgroundColor: "#fff",
+            border: "1px solid #e9e2c9",
+            borderRadius: 12,
+            boxShadow: "0 18px 45px rgba(0,0,0,0.14)",
+            padding: 6,
+            animation: "ddIn 0.16s ease",
+          }}
+        >
+          {navChildren(catLinks[openMenu]).map((child, j) => (
+            <Link
+              key={`${child.href}-${j}`}
+              href={child.href}
+              role="menuitem"
+              onClick={() => {
+                if (sameUrl(child.href)) window.scrollTo({ top: 0, behavior: "smooth" });
+                setOpenMenu(null);
+              }}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 10, padding: "11px 14px", borderRadius: 8,
+                color: active(child.href) ? "#c8a12a" : "#333",
+                backgroundColor: active(child.href) ? "#fdf8ee" : "transparent",
+                textDecoration: "none", fontSize: "13px", fontWeight: active(child.href) ? "700" : "500",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = active(child.href) ? "#fdf8ee" : "transparent"; (e.currentTarget as HTMLElement).style.color = active(child.href) ? "#c8a12a" : "#333"; }}
+            >
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{child.label}</span>
+              <ChevronLeft size={13} style={{ flexShrink: 0, color: "#c8a12a" }} />
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* ── Mobile slide-down menu ── */}
       {menuOpen && (
@@ -292,13 +450,72 @@ export default function Navbar() {
                 <ShoppingCart size={16} /> سبد خرید {count > 0 && <span style={{ backgroundColor: "#c8a12a", color: "#fff", borderRadius: "10px", padding: "1px 7px", fontSize: "11px", fontWeight: "700" }}>{count}</span>}
               </Link>
             </li>
-            {catLinks.map((link, i) => (
-              <li key={i} style={{ borderBottom: "1px solid #f5f5f5" }}>
-                <Link href={link.href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "12px 20px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333", textDecoration: "none", fontSize: "13px" }}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            {catLinks.map((link, i) => {
+              const kids = navChildren(link);
+              const hasKids = kids.length > 0;
+              const isExpanded = expandedSub[i] === true;
+              return (
+                <li key={i} style={{ borderBottom: "1px solid #f5f5f5" }}>
+                  {hasKids ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "stretch" }}>
+                        <Link
+                          href={link.href}
+                          aria-expanded={isExpanded}
+                          onClick={() => setMenuOpen(false)}
+                          style={{
+                            flex: 1, minWidth: 0, display: "block", padding: "12px 20px",
+                            color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333",
+                            textDecoration: "none", fontSize: "13px",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}
+                        >
+                          {link.label}
+                        </Link>
+                        <button
+                          type="button"
+                          aria-label={isExpanded ? `بستن زیرمنوی ${link.label}` : `باز کردن زیرمنوی ${link.label}`}
+                          aria-expanded={isExpanded}
+                          aria-controls={`mobile-submenu-${i}`}
+                          onClick={() => setExpandedSub(prev => ({ ...prev, [i]: !prev[i] }))}
+                          style={{
+                            width: 52, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                            background: "none", border: "none", borderRight: "1px solid #f0f0f0",
+                            color: "#c8a12a", cursor: "pointer", minHeight: 44,
+                          }}
+                        >
+                          <ChevronDown size={16} style={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.18s ease" }} />
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <ul id={`mobile-submenu-${i}`} style={{ listStyle: "none", margin: 0, padding: "0 0 6px", backgroundColor: "#fdfdfa" }}>
+                          {kids.map((child, j) => (
+                            <li key={`${child.href}-${j}`}>
+                              <Link
+                                href={child.href}
+                                onClick={() => setMenuOpen(false)}
+                                style={{
+                                  display: "flex", alignItems: "center", gap: 6, padding: "11px 40px 11px 20px",
+                                  color: active(child.href) ? "#c8a12a" : "#555",
+                                  textDecoration: "none", fontSize: "12.5px", fontWeight: active(child.href) ? "700" : "400",
+                                }}
+                              >
+                                <span style={{ color: "#c8a12a", fontSize: 9 }}>◆</span>
+                                <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{child.label}</span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  ) : (
+                    <Link href={link.href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "12px 20px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333", textDecoration: "none", fontSize: "13px" }}>
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
             {authUser && (
               <li>
                 <button onClick={() => { handleLogout(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "13px 20px", color: "#dc2626", background: "none", border: "none", fontSize: "14px", cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "right" }}>
