@@ -96,6 +96,16 @@ function faSignedPct(n: number): string {
   return sign + Math.abs(n).toLocaleString("fa-IR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** Persian/Arabic digits and separators → ASCII, so «۵٫۲» can be typed. */
+function toLatinDigits(input: string): string {
+  return input
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[٫،,]/g, ".")
+    .replace(/[^0-9.]/g, "")
+    .replace(/(\..*)\./g, "$1");
+}
+
 type SourceChoice = "auto" | "estjt" | "tgju";
 
 const SOURCE_OPTIONS: { id: SourceChoice; label: string; hint: string }[] = [
@@ -194,7 +204,11 @@ export function RatesBoardSkeleton() {
 
 export default function RatesBoard() {
   const [data, setData] = useState<MarketPayload | null>(null);
-  const [settings, setSettings] = useState<{ gold_markup_percent?: string; gold_fixed_fee?: string }>({});
+  const [settings, setSettings] = useState<{
+    gold_markup_percent?: string;
+    gold_fixed_fee?: string;
+    gold_tax_percent?: string;
+  }>({});
   const [source, setSource] = useState<SourceChoice>("auto");
   const [calcOpen, setCalcOpen] = useState(false);
   const [grams, setGrams] = useState("");
@@ -261,11 +275,44 @@ export default function RatesBoard() {
   const base = data?.price ?? 0;
   const markupPct = parseFloat(settings.gold_markup_percent ?? "5") || 0;
   const fixedFee = parseFloat(settings.gold_fixed_fee ?? "0") || 0;
-  const perGram18 = Math.round(base * (1 + markupPct / 100) + fixedFee);
-  const perGram24 = Math.round(base * (24 / 18) * (1 + markupPct / 100) + fixedFee);
-  const calcRate = karat === 24 ? perGram24 : perGram18;
+  const taxPct = parseFloat(settings.gold_tax_percent ?? "0") || 0;
+
+  /**
+   * Mirrors calcFinalPrice() in src/lib/pricing.ts so the board and the
+   * product page always agree:
+   *   اجرت و سود  = نرخ روز × سود٪ + اجرت ثابت هر گرم
+   *   مالیات      = فقط روی اجرت و سود (نه روی اصل طلا)
+   *   قیمت       = (نرخ روز + اجرت و سود + مالیات) × وزن
+   */
+  const dayRatePerGram =
+    karat === 24 ? data?.rates?.gold24k || Math.round(base * (24 / 18)) : base;
+  const ajratPerGram = Math.round(dayRatePerGram * (markupPct / 100) + fixedFee);
+  const taxPerGram = taxPct > 0 ? Math.round(ajratPerGram * (taxPct / 100)) : 0;
+  const calcRate = dayRatePerGram + ajratPerGram + taxPerGram;
   const gramsNum = parseFloat(grams) || 0;
   const calcTotal = gramsNum > 0 ? Math.round(gramsNum * calcRate) : 0;
+
+  const calcRows: { label: string; value: string; unit: string }[] = [
+    {
+      label: `نرخ روز طلای ${karat.toLocaleString("fa-IR")} عیار (هر گرم)`,
+      value: faNum(dayRatePerGram),
+      unit: "تومان",
+    },
+    {
+      label: `اجرت و سود${markupPct > 0 ? ` (${markupPct.toLocaleString("fa-IR")}٪)` : ""}${fixedFee > 0 ? ` + ${faNum(fixedFee)} ت` : ""}`,
+      value: faNum(ajratPerGram),
+      unit: "تومان",
+    },
+  ];
+  if (taxPct > 0) {
+    calcRows.push({
+      label: `مالیات (${taxPct.toLocaleString("fa-IR")}٪ روی اجرت و سود)`,
+      value: faNum(taxPerGram),
+      unit: "تومان",
+    });
+  }
+  calcRows.push({ label: "قیمت هر گرم", value: faNum(calcRate), unit: "تومان" });
+
   const valueOf = (r: Rates | undefined, key: keyof Rates) => r?.[key] ?? 0;
   const chgOf = (key: keyof Rates): RateChange | undefined => data?.changes?.[key];
 
@@ -399,7 +446,9 @@ export default function RatesBoard() {
           <div className="rates-calc" style={{ backgroundColor: "var(--theme-card)", border: "1px solid var(--theme-border)", borderRadius: 14, padding: 18, marginBottom: 22 }}>
 
             <p style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 800, margin: "0 0 4px" }}>قیمت طلای شما چقدر می‌شود؟</p>
-            <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: "0 0 14px" }}>بر اساس نرخ لحظه‌ای ۱۸ عیار {base > 0 ? `(${faNum(base)} تومان)` : ""} + اجرت فروشگاه</p>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: "0 0 14px" }}>
+              بر اساس نرخ لحظه‌ای طلای {karat.toLocaleString("fa-IR")} عیار{dayRatePerGram > 0 ? ` (${faNum(dayRatePerGram)} تومان)` : ""} + اجرت و سود فروشگاه
+            </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
               <div style={{ display: "flex", backgroundColor: "var(--theme-surface)", borderRadius: 10, padding: 4, gap: 4 }}>
                 {([18, 24] as const).map(k => (
@@ -422,7 +471,7 @@ export default function RatesBoard() {
                 <label style={{ display: "block", color: "var(--theme-text-muted)", fontSize: 11, marginBottom: 6 }}>وزن (گرم)</label>
                 <input
                   value={grams}
-                  onChange={e => setGrams(e.target.value.replace(/[^0-9.]/g, ""))}
+                  onChange={e => setGrams(toLatinDigits(e.target.value))}
                   inputMode="decimal"
                   placeholder="مثلاً ۵.۲"
                   style={{
@@ -439,6 +488,27 @@ export default function RatesBoard() {
                 </p>
               </div>
             </div>
+
+            {/* Breakdown — same line items as the product page */}
+            <div
+              className="rates-calc-rows"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginTop: 14 }}
+            >
+              {calcRows.map(row => (
+                <div
+                  key={row.label}
+                  style={{ backgroundColor: "var(--theme-surface)", border: "1px solid var(--theme-border)", borderRadius: 10, padding: "8px 12px" }}
+                >
+                  <p style={{ color: "var(--theme-text-muted)", fontSize: 10, margin: "0 0 3px" }}>{row.label}</p>
+                  <p style={{ color: "var(--theme-text)", fontSize: 13, fontWeight: 800, margin: 0 }}>
+                    {row.value} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--theme-text-muted)" }}>{row.unit}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "10px 0 0", lineHeight: 1.9 }}>
+              فرمول: (نرخ روز + اجرت و سود + مالیات) × وزن — مالیات فقط روی اجرت و سود اعمال می‌شود، نه روی اصل طلا.
+            </p>
           </div>
         )}
 
