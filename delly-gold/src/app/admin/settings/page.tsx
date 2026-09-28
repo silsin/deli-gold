@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, X, MessageCircle, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
+import { Save, RefreshCw, TrendingUp, Palette, Type, Monitor, Smartphone, Upload, Phone, MapPin, Mail, Globe, MessageCircle, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import {
   applyTheme,
   THEME_PALETTES,
@@ -36,6 +36,7 @@ import SliderTextSettings from "@/app/admin/components/SliderTextSettings";
 import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
 import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
 import CollabPageSettings from "@/app/admin/components/CollabPageSettings";
+import BudgetBannersSettings from "@/app/admin/components/BudgetBannersSettings";
 import GuidePagesSettings from "@/app/admin/components/GuidePagesSettings";
 import ProductPageSettings from "@/app/admin/components/ProductPageSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
@@ -647,6 +648,8 @@ export default function AdminSettingsPage() {
       <ContactPageSettings />
 
       <CollabPageSettings />
+
+      <BudgetBannersSettings />
 
       {/* ── Site Info ── */}
       <div style={{ ...cardStyle, marginBottom: "24px" }}>

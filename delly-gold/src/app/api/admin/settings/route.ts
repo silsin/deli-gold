@@ -34,6 +34,12 @@ import {
   parseProductPageSettings,
   serializeProductPageSettings,
 } from "@/lib/product-page-settings";
+import {
+  BUDGET_BANNERS_SETTING_KEY,
+  DEFAULT_BUDGET_BANNERS,
+  parseBudgetBanners,
+  serializeBudgetBanners,
+} from "@/lib/budget-banners";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -107,6 +113,9 @@ export async function GET(req: NextRequest) {
     }
     if (!settings[PRODUCT_PAGE_SETTING_KEY]) {
       settings[PRODUCT_PAGE_SETTING_KEY] = serializeProductPageSettings(parseProductPageSettings(null));
+    }
+    if (!settings[BUDGET_BANNERS_SETTING_KEY]) {
+      settings[BUDGET_BANNERS_SETTING_KEY] = JSON.stringify(DEFAULT_BUDGET_BANNERS);
     }
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));
@@ -202,6 +211,11 @@ export async function POST(req: NextRequest) {
       if (key === PRODUCT_PAGE_SETTING_KEY) {
         // Normalize the gift options / packaging line / FAQ accordion
         value = serializeProductPageSettings(parseProductPageSettings(String(value)));
+      }
+      if (key === BUDGET_BANNERS_SETTING_KEY) {
+        // Normalize the budget banner list (add/remove/rename/recolor) —
+        // colors become valid hex, counts are capped, garbage falls back.
+        value = serializeBudgetBanners(parseBudgetBanners(String(value)));
       }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))

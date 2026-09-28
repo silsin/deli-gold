@@ -1,19 +1,52 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  BUDGET_BANNERS_SETTING_KEY,
+  DEFAULT_BUDGET_BANNERS,
+  parseBudgetBanners,
+  shadeColor,
+  alphaColor,
+  type BudgetBanner,
+} from "@/lib/budget-banners";
 
-const budgets = [
-  { range: "+15",  label: "بالای ۱۵ میلیون تومان", href: "/products" },
-  { range: "8-15", label: "از ۸ تا ۱۵ میلیون تومان", href: "/products" },
-  { range: "3-8",  label: "از ۳ تا ۸ میلیون تومان",  href: "/products" },
-  { range: "1-3",  label: "از ۱ تا ۳ میلیون تومان",  href: "/products" },
-];
-
+/**
+ * بنرهای بودجه — homepage price-range tiles.
+ * List, labels and colors come from Admin → تنظیمات → بنرهای بودجه;
+ * each tile derives its gradient, hover shadow and caption tint from its own color.
+ */
 export default function BudgetBanners() {
+  const [items, setItems] = useState<BudgetBanner[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) { setItems(DEFAULT_BUDGET_BANNERS); return; }
+        setItems(parseBudgetBanners(d.data?.[BUDGET_BANNERS_SETTING_KEY]));
+      })
+      .catch(() => setItems(DEFAULT_BUDGET_BANNERS));
+  }, []);
+
+  if (!items || items.length === 0) return null;
+
+  const cols = Math.min(Math.max(items.length, 1), 4);
+
   return (
     <section style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 32px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px" }} className="bb-grid">
-        {budgets.map((b, i) => (
-          <Link key={i} href={b.href} style={{ textDecoration: "none", display: "block" }}>
+      <div
+        className="bb-grid"
+        style={{ display: "grid", gridTemplateColumns: `repeat(${cols},1fr)`, gap: "10px" }}
+      >
+        {items.map((b, i) => {
+          const c = b.color;
+          const gradient = `linear-gradient(145deg, ${shadeColor(c, 14)} 0%, ${c} 40%, ${shadeColor(c, -22)} 100%)`;
+          const hoverShadow = alphaColor(c, 0.35);
+          const labelBg = alphaColor(c, 0.06);
+          const labelBorder = alphaColor(c, 0.18);
+          const rangeSize = b.range.length > 5 ? 30 : b.range.length > 3 ? 42 : 56;
+          return (
+            <Link key={`${b.range}-${i}`} href={b.href} style={{ textDecoration: "none", display: "block" }}>
             <div style={{
               borderRadius: "12px",
               overflow: "hidden",
@@ -24,7 +57,7 @@ export default function BudgetBanners() {
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.transform = "translateY(-4px)";
-                el.style.boxShadow = "0 12px 28px rgba(180,20,20,0.3)";
+                el.style.boxShadow = `0 12px 28px ${hoverShadow}`;
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement;
@@ -32,9 +65,9 @@ export default function BudgetBanners() {
                 el.style.boxShadow = "none";
               }}
             >
-              {/* Red gradient background */}
+              {/* Colored gradient background (derived from the tile color) */}
               <div style={{
-                background: "linear-gradient(145deg, #c0392b 0%, #96281b 40%, #7b1c12 100%)",
+                background: gradient,
                 padding: "28px 16px 16px",
                 minHeight: "150px",
                 display: "flex",
@@ -69,7 +102,7 @@ export default function BudgetBanners() {
 
                 {/* 3D gold number */}
                 <div style={{
-                  fontSize: b.range.length > 3 ? "42px" : "56px",
+                  fontSize: `${rangeSize}px`,
                   fontWeight: "900",
                   lineHeight: 1,
                   marginBottom: "4px",
@@ -98,10 +131,10 @@ export default function BudgetBanners() {
 
               {/* Label below — white/light background */}
               <div style={{
-                backgroundColor: "#f8f4f4",
+                backgroundColor: labelBg,
                 padding: "10px 14px",
                 textAlign: "center",
-                borderTop: "1px solid #e8e0e0",
+                borderTop: `1px solid ${labelBorder}`,
               }}>
                 <span style={{ color: "#333", fontSize: "12px", fontWeight: "700" }}>
                   {b.label}
@@ -109,7 +142,8 @@ export default function BudgetBanners() {
               </div>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
       <style>{`
         @media(max-width:768px){.bb-grid{grid-template-columns:repeat(2,1fr)!important}}
