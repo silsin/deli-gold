@@ -361,8 +361,8 @@ function ProductsInner() {
                   style={{
                     flexShrink: 0, padding: "8px 14px", border: "none",
                     background: isActive ? "#fdf8ee" : "transparent",
-                    color: isActive ? "#c8a12a" : "#555", fontSize: 13,
-                    fontWeight: isActive ? 700 : 400, cursor: "pointer", fontFamily: "inherit",
+                    color: isActive ? "#c8a12a" : "#555", fontSize: "var(--font-size-nav, 13px)",
+                    fontWeight: isActive ? 700 : 400, cursor: "pointer", fontFamily: "var(--font-nav)",
                     whiteSpace: "nowrap", borderRadius: 8,
                   }}
                 >

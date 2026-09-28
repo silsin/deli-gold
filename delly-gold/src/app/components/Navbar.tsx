@@ -297,7 +297,7 @@ export default function Navbar() {
       {/* ── Category links row ── */}
       <nav style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }} className="cat-nav-row">
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" }}>
-          <div style={{ display: "flex", alignItems: "stretch", height: "40px", minWidth: "max-content" }}>
+          <div style={{ display: "flex", alignItems: "stretch", minHeight: "40px", minWidth: "max-content" }}>
             {catLinks.map((link, i) => {
               const kids = navChildren(link);
               const hasKids = kids.length > 0;
@@ -348,7 +348,7 @@ export default function Navbar() {
                     style={{
                       display: "flex", alignItems: "center", height: "100%", padding: "0 16px",
                       color: linkActive && link.href !== "/products" ? "#c8a12a" : "#444",
-                      textDecoration: "none", fontSize: "13px", fontWeight: "500",
+                      textDecoration: "none", fontFamily: "var(--font-nav)", fontSize: "var(--font-size-nav, 13px)", fontWeight: "500",
                       borderLeft: i < catLinks.length - 1 ? "1px solid #f0f0f0" : "none",
                       whiteSpace: "nowrap", transition: "color 0.2s, background-color 0.15s",
                       backgroundColor: openMenu === i ? "#fdf8ee" : "transparent",
@@ -409,7 +409,7 @@ export default function Navbar() {
                 gap: 10, padding: "11px 14px", borderRadius: 8,
                 color: active(child.href) ? "#c8a12a" : "#333",
                 backgroundColor: active(child.href) ? "#fdf8ee" : "transparent",
-                textDecoration: "none", fontSize: "13px", fontWeight: active(child.href) ? "700" : "500",
+                textDecoration: "none", fontFamily: "var(--font-nav)", fontSize: "var(--font-size-nav, 13px)", fontWeight: active(child.href) ? "700" : "500",
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#fdf8ee"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = active(child.href) ? "#fdf8ee" : "transparent"; (e.currentTarget as HTMLElement).style.color = active(child.href) ? "#c8a12a" : "#333"; }}
@@ -466,7 +466,7 @@ export default function Navbar() {
                           style={{
                             flex: 1, minWidth: 0, display: "block", padding: "12px 20px",
                             color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333",
-                            textDecoration: "none", fontSize: "13px",
+                            textDecoration: "none", fontFamily: "var(--font-nav)", fontSize: "var(--font-size-nav, 13px)",
                             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                           }}
                         >
@@ -497,7 +497,7 @@ export default function Navbar() {
                                 style={{
                                   display: "flex", alignItems: "center", gap: 6, padding: "11px 40px 11px 20px",
                                   color: active(child.href) ? "#c8a12a" : "#555",
-                                  textDecoration: "none", fontSize: "12.5px", fontWeight: active(child.href) ? "700" : "400",
+                                  textDecoration: "none", fontFamily: "var(--font-nav)", fontSize: "var(--font-size-nav, 12.5px)", fontWeight: active(child.href) ? "700" : "400",
                                 }}
                               >
                                 <span style={{ color: "#c8a12a", fontSize: 9 }}>◆</span>
@@ -509,7 +509,7 @@ export default function Navbar() {
                       )}
                     </>
                   ) : (
-                    <Link href={link.href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "12px 20px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333", textDecoration: "none", fontSize: "13px" }}>
+                    <Link href={link.href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "12px 20px", color: active(link.href) && link.href !== "/products" ? "#c8a12a" : "#333", textDecoration: "none", fontFamily: "var(--font-nav)", fontSize: "var(--font-size-nav, 13px)" }}>
                       {link.label}
                     </Link>
                   )}
