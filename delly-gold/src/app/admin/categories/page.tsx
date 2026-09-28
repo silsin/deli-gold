@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { Plus, Pencil, Trash2, X, Upload, ChevronRight, FolderPlus, CornerDownRight } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; slug: string; description: string | null; _count: { products: number }; banner_image?: string; image?: string; parent_id?: string | null; parent_name?: string | null; child_count?: number; }
@@ -18,6 +18,7 @@ export default function AdminCategoriesPage() {
   const [error, setError]           = useState("");
   const [deleteId, setDeleteId]     = useState<string | null>(null);
   const [uploading, setUploading]   = useState(false);
+  const [collapsed, setCollapsed]   = useState<Set<string>>(new Set());
   const fileRef                     = useRef<HTMLInputElement>(null);
 
   const fetchCategories = useCallback(async () => {
@@ -30,7 +31,16 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
-  function openCreate() { setEditId(null); setForm({ ...emptyForm }); setError(""); setShowModal(true); }
+  function openCreate(parentId = "") {
+    setEditId(null);
+    setForm({ ...emptyForm, parent_id: parentId });
+    if (parentId) setCollapsed(prev => { const n = new Set(prev); n.delete(parentId); return n; });
+    setError("");
+    setShowModal(true);
+  }
+
+  /** «افزودن زیردسته» on any node — works at every level of the tree. */
+  function openCreateChild(parent: Category) { openCreate(parent.id); }
 
   function openEdit(c: Category) {
     setEditId(c.id);
@@ -72,66 +82,134 @@ export default function AdminCategoriesPage() {
 
   const inp: React.CSSProperties = { width: "100%", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "inherit" };
 
-  /** Everything except the category being edited (a parent can't be a descendant). */
-  const parentOptions = categories.filter(c => c.id !== editId);
-  const isChild = (c: Category) => !!c.parent_id;
+  /* ── Tree helpers: «منو / زیرمنو» at any depth ── */
+
+  const toggleNode = (id: string) =>
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /** Flatten the list into ordered rows, each with its depth + child count. */
+  const rows = useMemo(() => {
+    const childrenOf = new Map<string | null, Category[]>();
+    for (const c of categories) {
+      const key = c.parent_id ?? null;
+      const arr = childrenOf.get(key);
+      if (arr) arr.push(c);
+      else childrenOf.set(key, [c]);
+    }
+    const out: { cat: Category; depth: number; kids: number }[] = [];
+    const walk = (parent: string | null, depth: number, guard: number) => {
+      if (guard > 12) return;
+      for (const cat of childrenOf.get(parent) ?? []) {
+        const kids = childrenOf.get(cat.id)?.length ?? 0;
+        out.push({ cat, depth, kids });
+        if (kids && !collapsed.has(cat.id)) walk(cat.id, depth + 1, guard + 1);
+      }
+    };
+    walk(null, 0, 0);
+    // Orphaned rows (parent gone) still need to be visible and editable
+    for (const c of categories) {
+      if (c.parent_id && !categories.some(x => x.id === c.parent_id)) {
+        out.push({ cat: c, depth: 0, kids: 0 });
+      }
+    }
+    return out;
+  }, [categories, collapsed]);
+
+  const rootCount = categories.filter(c => !c.parent_id || !categories.some(x => x.id === c.parent_id)).length;
+  const childCount = categories.length - rootCount;
+
+  /** A category can't be moved under itself or under one of its descendants. */
+  const blockedParents = useMemo(() => {
+    const out = new Set<string>();
+    if (editId) {
+      out.add(editId);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const c of categories) {
+          if (c.parent_id && out.has(c.parent_id) && !out.has(c.id)) { out.add(c.id); grew = true; }
+        }
+      }
+    }
+    return out;
+  }, [editId, categories]);
+
+  const parentOptions = rows.filter(r => !blockedParents.has(r.cat.id));
 
   return (
     <AdminGuard>
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <h2 style={{ color: "#fff", fontSize: "20px", fontWeight: "700" }}>مدیریت دسته‌بندی‌ها</h2>
-          <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "6px", padding: "8px 16px", fontWeight: "700", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => openCreate()} style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#d4af37", color: "#000", border: "none", borderRadius: "6px", padding: "8px 16px", fontWeight: "700", fontSize: "13px", cursor: "pointer", fontFamily: "inherit" }}>
             <Plus size={16}/> افزودن دسته‌بندی
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: "12px" }}>
-          {loading ? <p style={{ color: "#555" }}>در حال بارگذاری...</p>
-            : categories.length === 0 ? <p style={{ color: "#555" }}>دسته‌بندی‌ای ثبت نشده</p>
-            : categories.map(c => (
-              <div
-                key={c.id}
-                style={{
-                  backgroundColor: "#1a1a1a", border: `1px solid ${isChild(c) ? "rgba(212,175,55,0.25)" : "#2a2a2a"}`,
-                  borderRadius: "10px", overflow: "hidden",
-                  marginRight: isChild(c) ? 18 : 0, position: "relative",
-                }}
+        {/* «منو و زیرمنو» tree manager */}
+        <div style={{ backgroundColor: "#141414", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 10px" }}>
+            <p style={{ color: "#888", fontSize: "12px", margin: 0 }}>
+              {rootCount.toLocaleString("fa-IR")} دسته اصلی
+              {childCount > 0 && ` · ${childCount.toLocaleString("fa-IR")} زیردسته`}
+            </p>
+            {rows.length > 0 && (
+              <button
+                onClick={() => setCollapsed(collapsed.size ? new Set() : new Set(rows.filter(r => r.kids > 0).map(r => r.cat.id)))}
+                style={{ background: "none", border: "1px solid #333", color: "#888", borderRadius: "6px", padding: "5px 10px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
               >
-                {isChild(c) && (
-                  <span style={{ position: "absolute", top: 14, right: -14, width: 10, height: 10, borderRight: "1px solid #444", borderBottom: "1px solid #444", borderBottomRightRadius: 6 }} />
-                )}
-                {/* Image */}
-                {(c.banner_image || c.image) ? (
-                  <div style={{ height: "120px", backgroundImage: `url(${c.banner_image || c.image})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6), transparent)" }} />
-                  </div>
-                ) : (
-                  <div style={{ height: "80px", backgroundColor: "#121212", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ color: "#444", fontSize: "12px" }}>بدون تصویر</span>
-                  </div>
-                )}
-                <div style={{ padding: "14px 16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                {collapsed.size ? "باز کردن همه" : "بستن همه"}
+              </button>
+            )}
+          </div>
+
+          {loading ? <p style={{ color: "#555", padding: "8px" }}>در حال بارگذاری...</p>
+            : rows.length === 0 ? <p style={{ color: "#555", padding: "8px" }}>دسته‌بندی‌ای ثبت نشده</p>
+            : rows.map(({ cat, depth, kids }) => {
+                const img = cat.banner_image || cat.image;
+                const btn = (bg: string, border: string, color: string, title: string, onClick: () => void, node: React.ReactNode) => (
+                  <button onClick={onClick} title={title} style={{ backgroundColor: bg, border: `1px solid ${border}`, color, borderRadius: "6px", padding: "6px 8px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontSize: "11px", fontFamily: "inherit" }}>{node}</button>
+                );
+                return (
+                  <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0", paddingRight: depth * 24, position: "relative" }}>
+                    {depth > 0 && <span style={{ position: "absolute", right: depth * 24 - 13, top: 0, bottom: 0, borderRight: "1px dashed #3a3a3a" }} />}
+                    {kids > 0 ? (
+                      <button onClick={() => toggleNode(cat.id)} aria-label="باز/بسته" style={{ width: 24, height: 24, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", border: "1px solid #333", background: "#1a1a1a", color: "#d4af37", borderRadius: "6px", cursor: "pointer" }}>
+                        <ChevronRight size={14} style={{ transform: collapsed.has(cat.id) ? "none" : "rotate(-90deg)", transition: "transform .15s" }} />
+                      </button>
+                    ) : (
+                      <span style={{ width: 24, flexShrink: 0, display: "inline-flex", justifyContent: "center", color: "#444" }} />
+                    )}
+
+                    {img
+                      ? <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center", flexShrink: 0, border: "1px solid #2a2a2a" }} />
+                      : <div style={{ width: 40, height: 40, borderRadius: "8px", backgroundColor: "#1f1f1f", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#444", fontSize: "11px" }}>{depth > 0 ? <CornerDownRight size={14} /> : "—"}</div>}
+
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "2px" }}>{c.name}</h3>
-                      <p style={{ color: "#666", fontSize: "11px", direction: "ltr" }}>{c.slug}</p>
-                      {c.parent_name && (
-                        <p style={{ color: "#d4af37", fontSize: "11px", margin: "4px 0 0" }}>
-                          زیرمجموعه «{c.parent_name}»
-                        </p>
-                      )}
-                      {c.description && <p style={{ color: "#888", fontSize: "12px", marginTop: "6px" }}>{c.description}</p>}
-                      <p style={{ color: "#d4af37", fontSize: "12px", marginTop: "8px" }}>{c._count.products} محصول</p>
+                      <p style={{ color: "#fff", fontSize: "14px", fontWeight: depth === 0 ? 700 : 500, margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        {cat.name}
+                        {depth > 0 && <span style={{ color: "#d4af37", fontSize: "10px", border: "1px solid rgba(212,175,55,0.35)", borderRadius: "10px", padding: "1px 7px" }}>سطح {depth + 1}</span>}
+                      </p>
+                      <p style={{ color: "#666", fontSize: "11px", margin: "3px 0 0", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ direction: "ltr" }}>/{cat.slug}</span>
+                        <span>{cat._count.products.toLocaleString("fa-IR")} محصول</span>
+                        {kids > 0 && <span>{kids.toLocaleString("fa-IR")} زیردسته</span>}
+                      </p>
                     </div>
-                    <div style={{ display: "flex", gap: "6px", flexShrink: 0, marginRight: "10px" }}>
-                      <button onClick={() => openEdit(c)} style={{ backgroundColor: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", color: "#d4af37", borderRadius: "6px", padding: "5px 8px", cursor: "pointer" }}><Pencil size={13}/></button>
-                      <button onClick={() => setDeleteId(c.id)} style={{ backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: "6px", padding: "5px 8px", cursor: "pointer" }}><Trash2 size={13}/></button>
+
+                    <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+                      {btn("rgba(34,197,94,0.1)", "rgba(34,197,94,0.35)", "#4ade80", "افزودن زیردسته", () => openCreateChild(cat), <><FolderPlus size={13} /> زیردسته</>)}
+                      {btn("rgba(212,175,55,0.1)", "rgba(212,175,55,0.3)", "#d4af37", "ویرایش", () => openEdit(cat), <Pencil size={13} />)}
+                      {btn("rgba(239,68,68,0.1)", "rgba(239,68,68,0.3)", "#ef4444", "حذف", () => setDeleteId(cat.id), <Trash2 size={13} />)}
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
         </div>
 
         {showModal && (
@@ -180,13 +258,15 @@ export default function AdminCategoriesPage() {
                     دسته‌بندی مادر <span style={{ color: "#555" }}>— خالی یعنی دسته اصلی</span>
                   </label>
                   <select value={form.parent_id} onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))} style={{ ...inp, cursor: "pointer" }}>
-                    <option value="">بدون دسته مادر (سطح اول)</option>
-                    {parentOptions.map(c => (
-                      <option key={c.id} value={c.id}>{c.parent_name ? `${c.parent_name} ← ${c.name}` : c.name}</option>
+                    <option value="">— بدون دسته مادر (سطح اول) —</option>
+                    {parentOptions.map(r => (
+                      <option key={r.cat.id} value={r.cat.id}>
+                        {"　".repeat(r.depth) + (r.depth > 0 ? "└ " : "")}{r.cat.name}
+                      </option>
                     ))}
                   </select>
                   <p style={{ color: "#555", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.8 }}>
-                    در صفحه محصولات، زیردسته‌ها زیر دسته مادرشان به‌صورت درختی نمایش داده می‌شوند و با انتخاب دسته مادر، محصولات همه زیردسته‌ها هم نمایش داده می‌شود.
+                    هر زیردسته خودش می‌تواند زیردسته داشته باشد (بدون محدودیت سطح). در صفحه محصولات، زیردسته‌ها زیر هم درختی نمایش داده می‌شوند و با انتخاب دسته مادر، محصولات همه زیردسته‌ها هم نمایش داده می‌شود.
                   </p>
                 </div>
 
@@ -207,7 +287,12 @@ export default function AdminCategoriesPage() {
             <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "12px", padding: "24px", maxWidth: "320px", textAlign: "center" }}>
               <Trash2 size={28} color="#ef4444" style={{ margin: "0 auto 12px" }} />
               <p style={{ color: "#fff", marginBottom: "8px" }}>حذف دسته‌بندی؟</p>
-              <p style={{ color: "#888", fontSize: "12px", marginBottom: "20px" }}>محصولات مرتبط بدون دسته‌بندی می‌مانند</p>
+              <p style={{ color: "#888", fontSize: "12px", marginBottom: "20px", lineHeight: 1.8 }}>
+                محصولات مرتبط بدون دسته‌بندی می‌مانند.
+                {categories.find(c => c.id === deleteId)?.child_count
+                  ? " زیردسته‌های این دسته یک سطح بالاتر منتقل می‌شوند و حذف نمی‌شوند."
+                  : ""}
+              </p>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button onClick={() => handleDelete(deleteId)} style={{ flex: 1, backgroundColor: "#ef4444", color: "#fff", border: "none", borderRadius: "6px", padding: "10px", cursor: "pointer", fontFamily: "inherit" }}>حذف</button>
                 <button onClick={() => setDeleteId(null)} style={{ flex: 1, backgroundColor: "transparent", color: "#888", border: "1px solid #333", borderRadius: "6px", padding: "10px", cursor: "pointer", fontFamily: "inherit" }}>انصراف</button>
