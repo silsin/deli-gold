@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins, ChevronDown, Tags, FolderTree } from "lucide-react";
 import PageLayout from "../components/PageLayout";
@@ -161,11 +161,8 @@ function ProductsInner() {
   const [liked, setLiked]           = useState<Set<string>>(new Set());
   const [addedId, setAddedId]       = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
-  const [catOpen, setCatOpen]     = useState(false);
-  const [catQuery, setCatQuery]   = useState("");
   const [drawerQuery, setDrawerQuery] = useState("");
   const [expanded, setExpanded]   = useState<Set<string>>(new Set());
-  const catRef = useRef<HTMLDivElement | null>(null);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage]             = useState(1);
   const { add, items } = useCart();
@@ -219,20 +216,13 @@ function ProductsInner() {
     fetch("/api/admin/settings").then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });
   }, []);
 
-  // Close the category dropdown on outside click / Escape
+  // Close the tree on Escape (drawer is dismissible with the X / backdrop too)
   useEffect(() => {
-    if (!catOpen) return;
-    const onDown = (e: MouseEvent) => {
-      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setCatOpen(false); };
-    document.addEventListener("mousedown", onDown);
+    if (!showFilter) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowFilter(false); };
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [catOpen]);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showFilter]);
 
   /** Type-ahead over the catalog — keeps 100+ categories navigable. */
   function matchCats(list: Category[], q: string): Category[] {
@@ -242,7 +232,6 @@ function ProductsInner() {
       c.name.toLowerCase().includes(needle) || (c.slug || "").toLowerCase().includes(needle)
     );
   }
-  const shownCats = matchCats(categories, catQuery);
   const drawerCats = matchCats(categories, drawerQuery);
   const TABS_VISIBLE_MAX = 8;
 
@@ -353,27 +342,24 @@ function ProductsInner() {
         </div>
       </div>
 
-      {/* Category picker — a searchable dropdown; quick tabs only for small catalogs */}
+      {/* Category bar: quick tabs for a small catalog, otherwise a drawer trigger */}
       <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }}>
         <div
           className="cat-bar"
           style={{ maxWidth: 1280, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}
         >
-          <div ref={catRef} className="cat-picker" style={{ position: "relative" }}>
+          {/* One category UI only — the tree lives in the filter drawer */}
+          {categories.length > 0 && categories.length > TABS_VISIBLE_MAX && (
             <button
               type="button"
-              onClick={() => { setCatOpen(o => !o); setCatQuery(""); }}
-              aria-haspopup="listbox"
-              aria-expanded={catOpen}
-              className="cat-picker-btn"
+              onClick={() => setShowFilter(true)}
+              className="cat-filter-trigger"
               style={{
-                display: "flex", alignItems: "center", gap: 10, border: "1px solid #e0e0e0",
+                display: "flex", alignItems: "center", gap: 8, border: "1px solid #e0e0e0",
                 borderRadius: "10px", padding: "9px 14px", background: "#fff", fontSize: 13,
                 color: "#333", cursor: "pointer", fontFamily: "inherit", minWidth: 230,
-                justifyContent: "space-between", transition: "border-color .15s",
+                justifyContent: "space-between",
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#e0e0e0"; }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                 <Tags size={14} color="#c8a12a" />
@@ -381,97 +367,9 @@ function ProductsInner() {
                   {activeCatName}
                 </span>
               </span>
-              <ChevronDown
-                size={15}
-                color="#999"
-                style={{ transform: catOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}
-              />
+              <ChevronDown size={15} color="#999" style={{ transform: "rotate(90deg)", flexShrink: 0 }} />
             </button>
-
-            {catOpen && (
-              <div
-                className="cat-picker-panel"
-                style={{
-                  position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 320,
-                  width: 300, maxWidth: "calc(100vw - 32px)", background: "#fff",
-                  border: "1px solid #e8e8e8", borderRadius: 12, overflow: "hidden",
-                  boxShadow: "0 14px 36px rgba(0,0,0,.13)",
-                }}
-              >
-                {categories.length > 6 && (
-                  <div style={{ padding: 8, borderBottom: "1px solid #f2f2f2", position: "relative" }}>
-                    <Search size={13} style={{ position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)", color: "#bbb" }} />
-                    <input
-                      autoFocus
-                      value={catQuery}
-                      onChange={e => setCatQuery(e.target.value)}
-                      placeholder="جستجوی دسته‌بندی…"
-                      style={{
-                        width: "100%", boxSizing: "border-box", border: "1px solid #eee", borderRadius: 8,
-                        padding: "8px 28px 8px 10px", fontSize: 12.5, outline: "none",
-                        fontFamily: "inherit", color: "#333", background: "#fafafa",
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div style={{ maxHeight: 300, overflowY: "auto", padding: 6 }}>
-                  <button
-                    onClick={() => pickCat("", () => setCatOpen(false))}
-                    className="cat-option"
-                    style={catOptionStyle(selectedCat === "")}
-                  >
-                    <FolderTree size={13} style={{ flexShrink: 0 }} />
-                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>همه محصولات</span>
-                    {selectedCat === "" && <Check size={14} />}
-                  </button>
-
-                  {catQuery.trim() ? (
-                    // Searching flattens the tree but keeps the parent as a hint
-                    shownCats.map(c => {
-                      const isActive = selectedCat === c.id || selectedCat === c.slug;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => pickCat(c.id, () => setCatOpen(false))}
-                          className="cat-option"
-                          style={catOptionStyle(isActive)}
-                        >
-                          <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {c.name}
-                            {c.parent_name && <span style={{ color: "#bbb", fontSize: 11 }}> · {c.parent_name}</span>}
-                          </span>
-                          {isActive && <Check size={14} style={{ flexShrink: 0 }} />}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <CategoryTree
-                      nodes={rootCats}
-                      childMap={childMap}
-                      counts={catCounts}
-                      expanded={expanded}
-                      selected={selectedCat}
-                      onSelect={id => pickCat(id, () => setCatOpen(false))}
-                      onToggle={toggleCat}
-                    />
-                  )}
-
-                  {shownCats.length === 0 && !catQuery.trim() && (
-                    <p style={{ color: "#aaa", fontSize: 12, textAlign: "center", padding: "16px 8px", margin: 0 }}>
-                      دسته‌بندی یافت نشد
-                    </p>
-                  )}
-                </div>
-
-                {catQuery.trim() && (
-                  <p style={{ margin: 0, padding: "7px 12px", borderTop: "1px solid #f2f2f2", fontSize: 11, color: "#999" }}>
-                    {shownCats.length.toLocaleString("fa-IR")} از {categories.length.toLocaleString("fa-IR")} دسته‌بندی
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Quick tabs stay only while the catalog is small enough to scan */}
           {categories.length > 0 && categories.length <= TABS_VISIBLE_MAX && (
@@ -528,7 +426,7 @@ function ProductsInner() {
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#ddd"; (e.currentTarget as HTMLElement).style.color = "#555"; }}>
               <SlidersHorizontal size={14} />
-              فیلتر کردن محصولات ({pagination.total} محصول)
+              {selectedCat ? `دسته: ${activeCatName}` : "فیلتر دسته‌بندی"} ({pagination.total.toLocaleString("fa-IR")} محصول)
             </button>
           </div>
 
@@ -788,9 +686,7 @@ function ProductsInner() {
           .prod-grid{grid-template-columns:repeat(2,1fr)!important}
           .products-body{padding:16px 12px !important;}
           .cat-bar{padding:10px 12px !important;}
-          .cat-picker{width:100% !important;}
-          .cat-picker-btn{width:100% !important;min-width:0 !important;}
-          .cat-picker-panel{right:0 !important;left:0 !important;width:auto !important;max-width:none !important;}
+          .cat-filter-trigger{width:100% !important;min-width:0 !important;}
           .cat-tabs{width:100% !important;}
         }
         @media(max-width:480px){
