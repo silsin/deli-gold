@@ -1,6 +1,6 @@
 ﻿"use client";
 import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
-import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins, ChevronDown, Tags, FolderTree } from "lucide-react";
+import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins, FolderTree } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -342,62 +342,37 @@ function ProductsInner() {
         </div>
       </div>
 
-      {/* Category bar: quick tabs for a small catalog, otherwise a drawer trigger */}
-      <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }}>
-        <div
-          className="cat-bar"
-          style={{ maxWidth: 1280, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}
-        >
-          {/* One category UI only — the tree lives in the filter drawer */}
-          {categories.length > 0 && categories.length > TABS_VISIBLE_MAX && (
-            <button
-              type="button"
-              onClick={() => setShowFilter(true)}
-              className="cat-filter-trigger"
-              style={{
-                display: "flex", alignItems: "center", gap: 8, border: "1px solid #e0e0e0",
-                borderRadius: "10px", padding: "9px 14px", background: "#fff", fontSize: 13,
-                color: "#333", cursor: "pointer", fontFamily: "inherit", minWidth: 230,
-                justifyContent: "space-between",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                <Tags size={14} color="#c8a12a" />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>
-                  {activeCatName}
-                </span>
-              </span>
-              <ChevronDown size={15} color="#999" style={{ transform: "rotate(90deg)", flexShrink: 0 }} />
-            </button>
-          )}
-
-          {/* Quick tabs stay only while the catalog is small enough to scan */}
-          {categories.length > 0 && categories.length <= TABS_VISIBLE_MAX && (
-            <div className="cat-tabs" style={{ display: "flex", alignItems: "center", gap: 2, overflowX: "auto", scrollbarWidth: "none" }}>
-              <style>{`.cat-tabs::-webkit-scrollbar{display:none}`}</style>
-              {[{ id: "", name: "همه" }, ...categories].map(c => {
-                const isActive = selectedCat === c.id || ("slug" in c && selectedCat === c.slug);
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => { setSelectedCat(c.id); setPage(1); }}
-                    className="cat-tab"
-                    style={{
-                      flexShrink: 0, padding: "8px 14px", border: "none",
-                      background: isActive ? "#fdf8ee" : "transparent",
-                      color: isActive ? "#c8a12a" : "#555", fontSize: 13,
-                      fontWeight: isActive ? 700 : 400, cursor: "pointer", fontFamily: "inherit",
-                      whiteSpace: "nowrap", borderRadius: 8,
-                    }}
-                  >
-                    {c.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+      {/* Quick category tabs — only while the catalog is small enough to scan.
+          Otherwise categories live in the filter drawer as a tree. */}
+      {categories.length > 0 && categories.length <= TABS_VISIBLE_MAX && (
+        <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }}>
+          <div
+            className="cat-bar"
+            style={{ maxWidth: 1280, margin: "0 auto", padding: "10px 16px", display: "flex", alignItems: "center", gap: 2, overflowX: "auto", scrollbarWidth: "none" }}
+          >
+            <style>{`.cat-bar::-webkit-scrollbar{display:none}`}</style>
+            {[{ id: "", name: "همه" }, ...categories].map(c => {
+              const isActive = selectedCat === c.id || ("slug" in c && selectedCat === c.slug);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => { setSelectedCat(c.id); setPage(1); }}
+                  className="cat-tab"
+                  style={{
+                    flexShrink: 0, padding: "8px 14px", border: "none",
+                    background: isActive ? "#fdf8ee" : "transparent",
+                    color: isActive ? "#c8a12a" : "#555", fontSize: 13,
+                    fontWeight: isActive ? 700 : 400, cursor: "pointer", fontFamily: "inherit",
+                    whiteSpace: "nowrap", borderRadius: 8,
+                  }}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
         </div>
       </div>
+      )}
 
       {/* Coin hero banner (plain, gradient-free) — only on the «سکه و آبشده» listing */}
       {coin && (
@@ -686,8 +661,6 @@ function ProductsInner() {
           .prod-grid{grid-template-columns:repeat(2,1fr)!important}
           .products-body{padding:16px 12px !important;}
           .cat-bar{padding:10px 12px !important;}
-          .cat-filter-trigger{width:100% !important;min-width:0 !important;}
-          .cat-tabs{width:100% !important;}
         }
         @media(max-width:480px){
           .prod-grid,.prod-skeleton{grid-template-columns:repeat(2,1fr)!important;gap:10px !important;}
