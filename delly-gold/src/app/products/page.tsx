@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from "react";
 import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins, ChevronDown, Tags, FolderTree } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import ProductVideoPreview from "../components/ProductVideoPreview";
 import { calcFinalPrice } from "@/lib/pricing";
 import { firstMedia } from "@/lib/media";
 
-interface Category { id: string; name: string; slug: string; }
+interface Category { id: string; name: string; slug: string; parent_id?: string | null; parent_name?: string | null; child_count?: number; product_count?: number; }
 interface Product {
   id: string; name: string; slug: string; price: number; weight: number;
   karat: number; stock: number; images: string; videos: string; featured: number;
@@ -39,15 +39,107 @@ function getImg(images: string, i: number) {
 }
 
 /** Row style inside the category dropdown (active state gets the gold accent). */
-function catOptionStyle(active: boolean): React.CSSProperties {
+function catOptionStyle(active: boolean, hasKids = false): React.CSSProperties {
   return {
     width: "100%", display: "flex", alignItems: "center", gap: 8,
     textAlign: "right", padding: "9px 12px", border: "none", cursor: "pointer",
     fontSize: 13, fontFamily: "inherit", background: "none",
-    color: active ? "#c8a12a" : "#555", fontWeight: active ? 700 : 400,
+    color: active ? "#c8a12a" : "#555", fontWeight: active ? 700 : hasKids ? 600 : 400,
     backgroundColor: active ? "#fdf8ee" : "transparent",
     borderRadius: 8, marginBottom: 2,
   };
+}
+
+interface CategoryTreeProps {
+  nodes: Category[];
+  childMap: Map<string, Category[]>;
+  counts: Map<string, number>;
+  expanded: Set<string>;
+  selected: string;
+  onSelect: (id: string) => void;
+  onToggle: (id: string) => void;
+}
+
+/**
+ * «منو و زیرمنو» tree — parents with a chevron, children indented under a
+ * guide line. Recurses so any nesting depth renders correctly.
+ */
+function CategoryTree({ nodes, childMap, counts, expanded, selected, onSelect, onToggle }: CategoryTreeProps) {
+  return (
+    <>
+      {nodes.map(cat => {
+        const kids = childMap.get(cat.id) ?? [];
+        const isOpen = expanded.has(cat.id);
+        const isActive = selected === cat.id || selected === cat.slug;
+        const count = counts.get(cat.id) ?? 0;
+        return (
+          <div key={cat.id}>
+            <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {kids.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => onToggle(cat.id)}
+                  aria-label={isOpen ? `بستن ${cat.name}` : `باز کردن ${cat.name}`}
+                  aria-expanded={isOpen}
+                  className="cat-twisty"
+                  style={{
+                    width: 22, height: 22, flexShrink: 0, display: "inline-flex",
+                    alignItems: "center", justifyContent: "center", border: "none",
+                    background: "none", cursor: "pointer", color: "#bbb", borderRadius: 6,
+                  }}
+                >
+                  <ChevronRight
+                    size={14}
+                    style={{ transform: isOpen ? "rotate(-90deg)" : "none", transition: "transform .15s" }}
+                  />
+                </button>
+              ) : (
+                <span style={{ width: 22, flexShrink: 0 }} />
+              )}
+
+              <button
+                type="button"
+                onClick={() => onSelect(cat.id)}
+                className="cat-option"
+                style={catOptionStyle(isActive, kids.length > 0)}
+              >
+                {kids.length > 0 && <FolderTree size={13} color={isActive ? "#c8a12a" : "#bbb"} style={{ flexShrink: 0 }} />}
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {cat.name}
+                </span>
+                {count > 0 && (
+                  <span style={{ fontSize: 10, color: "#bbb", flexShrink: 0 }}>
+                    {count.toLocaleString("fa-IR")}
+                  </span>
+                )}
+                {isActive && <Check size={14} style={{ flexShrink: 0 }} />}
+              </button>
+            </div>
+
+            {kids.length > 0 && isOpen && (
+              <div
+                className="cat-branch"
+                style={{
+                  marginRight: 21, paddingRight: 6,
+                  borderRight: "1px dashed #e2e2e2",
+                }}
+              >
+                <CategoryTree
+                  nodes={kids}
+                  childMap={childMap}
+                  counts={counts}
+                  expanded={expanded}
+                  selected={selected}
+                  onSelect={onSelect}
+                  onToggle={onToggle}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 function ProductsInner() {
@@ -72,6 +164,7 @@ function ProductsInner() {
   const [catOpen, setCatOpen]     = useState(false);
   const [catQuery, setCatQuery]   = useState("");
   const [drawerQuery, setDrawerQuery] = useState("");
+  const [expanded, setExpanded]   = useState<Set<string>>(new Set());
   const catRef = useRef<HTMLDivElement | null>(null);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage]             = useState(1);
@@ -152,6 +245,75 @@ function ProductsInner() {
   const shownCats = matchCats(categories, catQuery);
   const drawerCats = matchCats(categories, drawerQuery);
   const TABS_VISIBLE_MAX = 8;
+
+  /** Children keyed by parent id — the source for the tree. */
+  const childMap = useMemo(() => {
+    const m = new Map<string, Category[]>();
+    for (const c of categories) {
+      if (!c.parent_id) continue;
+      const arr = m.get(c.parent_id);
+      if (arr) arr.push(c);
+      else m.set(c.parent_id, [c]);
+    }
+    return m;
+  }, [categories]);
+
+  /** Top-level rows; an orphan (missing parent) is promoted to the root. */
+  const rootCats = useMemo(() => {
+    const ids = new Set(categories.map(c => c.id));
+    return categories.filter(c => !c.parent_id || !ids.has(c.parent_id));
+  }, [categories]);
+
+  /** Product count per category, rolled up over its sub-categories. */
+  const catCounts = useMemo(() => {
+    const own = new Map<string, number>();
+    for (const c of categories) own.set(c.id, c.product_count ?? 0);
+    const rolled = new Map(own);
+    // Deepest first so a parent sums the already-rolled children.
+    const depth = (id: string, guard = 0): number => {
+      if (guard > 20) return 0;
+      const c = categories.find(x => x.id === id);
+      if (!c?.parent_id) return 0;
+      return 1 + depth(c.parent_id, guard + 1);
+    };
+    const sorted = [...categories].sort((a, b) => depth(b.id) - depth(a.id));
+    for (const c of sorted) {
+      if (!c.parent_id) continue;
+      rolled.set(c.parent_id, (rolled.get(c.parent_id) ?? 0) + (own.get(c.id) ?? 0));
+    }
+    return rolled;
+  }, [categories]);
+
+  // Open every ancestor of the active category so it stays visible.
+  useEffect(() => {
+    if (!selectedCat || categories.length === 0) return;
+    const byId = new Map(categories.map(c => [c.id, c]));
+    const active = byId.get(selectedCat) ?? categories.find(c => c.slug === selectedCat);
+    if (!active?.parent_id) return;
+    const next = new Set(expanded);
+    let cursor: Category | undefined = active;
+    let guard = 0;
+    while (cursor?.parent_id && guard++ < 20) {
+      next.add(cursor.parent_id);
+      cursor = byId.get(cursor.parent_id);
+    }
+    setExpanded(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCat, categories]);
+
+  const toggleCat = (id: string) =>
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const pickCat = (id: string, close?: () => void) => {
+    setSelectedCat(id);
+    setPage(1);
+    close?.();
+  };
 
   function toggleLike(id: string) {
     setLiked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -255,7 +417,7 @@ function ProductsInner() {
 
                 <div style={{ maxHeight: 300, overflowY: "auto", padding: 6 }}>
                   <button
-                    onClick={() => { setSelectedCat(""); setPage(1); setCatOpen(false); }}
+                    onClick={() => pickCat("", () => setCatOpen(false))}
                     className="cat-option"
                     style={catOptionStyle(selectedCat === "")}
                   >
@@ -264,22 +426,38 @@ function ProductsInner() {
                     {selectedCat === "" && <Check size={14} />}
                   </button>
 
-                  {shownCats.map(c => {
-                    const isActive = selectedCat === c.id || selectedCat === c.slug;
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => { setSelectedCat(c.id); setPage(1); setCatOpen(false); }}
-                        className="cat-option"
-                        style={catOptionStyle(isActive)}
-                      >
-                        <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
-                        {isActive && <Check size={14} />}
-                      </button>
-                    );
-                  })}
+                  {catQuery.trim() ? (
+                    // Searching flattens the tree but keeps the parent as a hint
+                    shownCats.map(c => {
+                      const isActive = selectedCat === c.id || selectedCat === c.slug;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => pickCat(c.id, () => setCatOpen(false))}
+                          className="cat-option"
+                          style={catOptionStyle(isActive)}
+                        >
+                          <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {c.name}
+                            {c.parent_name && <span style={{ color: "#bbb", fontSize: 11 }}> · {c.parent_name}</span>}
+                          </span>
+                          {isActive && <Check size={14} style={{ flexShrink: 0 }} />}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <CategoryTree
+                      nodes={rootCats}
+                      childMap={childMap}
+                      counts={catCounts}
+                      expanded={expanded}
+                      selected={selectedCat}
+                      onSelect={id => pickCat(id, () => setCatOpen(false))}
+                      onToggle={toggleCat}
+                    />
+                  )}
 
-                  {shownCats.length === 0 && (
+                  {shownCats.length === 0 && !catQuery.trim() && (
                     <p style={{ color: "#aaa", fontSize: 12, textAlign: "center", padding: "16px 8px", margin: 0 }}>
                       دسته‌بندی یافت نشد
                     </p>
@@ -560,25 +738,40 @@ function ProductsInner() {
             )}
 
             <div style={{ maxHeight: "calc(100vh - 220px)", overflowY: "auto" }}>
-              <button onClick={() => { setSelectedCat(""); setPage(1); setShowFilter(false); }}
+              <button onClick={() => pickCat("", () => setShowFilter(false))}
                 style={catOptionStyle(selectedCat === "")}>
                 <FolderTree size={13} style={{ flexShrink: 0 }} />
                 <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>همه محصولات</span>
                 {selectedCat === "" && <Check size={14} />}
               </button>
 
-              {drawerCats.map(c => {
-                const isActive = selectedCat === c.id || selectedCat === c.slug;
-                return (
-                  <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); setShowFilter(false); }}
-                    style={catOptionStyle(isActive)}>
-                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
-                    {isActive && <Check size={14} />}
-                  </button>
-                );
-              })}
+              {drawerQuery.trim() ? (
+                drawerCats.map(c => {
+                  const isActive = selectedCat === c.id || selectedCat === c.slug;
+                  return (
+                    <button key={c.id} onClick={() => pickCat(c.id, () => setShowFilter(false))}
+                      style={catOptionStyle(isActive)}>
+                      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {c.name}
+                        {c.parent_name && <span style={{ color: "#bbb", fontSize: 11 }}> · {c.parent_name}</span>}
+                      </span>
+                      {isActive && <Check size={14} />}
+                    </button>
+                  );
+                })
+              ) : (
+                <CategoryTree
+                  nodes={rootCats}
+                  childMap={childMap}
+                  counts={catCounts}
+                  expanded={expanded}
+                  selected={selectedCat}
+                  onSelect={id => pickCat(id, () => setShowFilter(false))}
+                  onToggle={toggleCat}
+                />
+              )}
 
-              {drawerCats.length === 0 && (
+              {drawerCats.length === 0 && !drawerQuery.trim() && (
                 <p style={{ color: "#aaa", fontSize: 12, textAlign: "center", padding: "16px 0" }}>
                   دسته‌بندی یافت نشد
                 </p>

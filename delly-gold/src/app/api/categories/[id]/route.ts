@@ -17,6 +17,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if ("error" in result) return error(result.error, result.status);
     const { id } = await params;
     const data = await req.json();
+
+    // Guard the tree: a category may not be nested under itself or under one
+    // of its own descendants.
+    if (data.parent_id) {
+      if (data.parent_id === id) return error("یک دسته‌بندی نمی‌تواند زیرمجموعه خودش باشد");
+      if (categories.descendantIds(id).includes(data.parent_id)) {
+        return error("انتخاب نامعتبر است — این دسته‌بندی زیرمجموعه همان دسته است");
+      }
+      if (!categories.findById(data.parent_id)) return error("دسته‌بندی مادر یافت نشد");
+    }
     return ok(categories.update(id, data));
   } catch (e) { console.error(e); return serverError(); }
 }

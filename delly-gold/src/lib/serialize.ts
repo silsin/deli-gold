@@ -121,6 +121,9 @@ type CategoryRow = {
   description?: string | null;
   image?: string | null;
   product_count?: number;
+  parent_id?: string | null;
+  parent_name?: string | null;
+  child_count?: number;
 };
 
 export function serializeCategory(row: CategoryRow) {
@@ -133,6 +136,10 @@ export function serializeCategory(row: CategoryRow) {
     image: row.image ?? null,
     product_count: count,
     _count: { products: count },
+    // Tree support: null parent = top-level category
+    parent_id: row.parent_id ?? null,
+    parent_name: row.parent_name ?? null,
+    child_count: row.child_count ?? 0,
   };
 }
 

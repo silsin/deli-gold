@@ -14,10 +14,19 @@ export async function POST(req: NextRequest) {
   try {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
-    const { name, slug, description, image } = await req.json();
+    const { name, slug, description, image, parent_id } = await req.json();
     if (!name?.trim()) return error("نام دسته‌بندی الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (categories.findBySlug(slug)) return error("این اسلاگ قبلاً استفاده شده", 409);
-    return created(categories.create({ name: name.trim(), slug: slug.trim(), description, image }));
+    if (parent_id && !categories.findById(parent_id)) return error("دسته‌بندی مادر یافت نشد");
+    return created(
+      categories.create({
+        name: name.trim(),
+        slug: slug.trim(),
+        description,
+        image,
+        parent_id: parent_id || null,
+      })
+    );
   } catch (e) { console.error(e); return serverError(); }
 }

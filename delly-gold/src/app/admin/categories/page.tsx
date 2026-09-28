@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Plus, Pencil, Trash2, X, Upload } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 
-interface Category { id: string; name: string; slug: string; description: string | null; _count: { products: number }; banner_image?: string; image?: string; }
+interface Category { id: string; name: string; slug: string; description: string | null; _count: { products: number }; banner_image?: string; image?: string; parent_id?: string | null; parent_name?: string | null; child_count?: number; }
 
-const emptyForm = { name: "", slug: "", description: "", banner_image: "" };
+const emptyForm = { name: "", slug: "", description: "", banner_image: "", parent_id: "" };
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -34,7 +34,7 @@ export default function AdminCategoriesPage() {
 
   function openEdit(c: Category) {
     setEditId(c.id);
-    setForm({ name: c.name, slug: c.slug, description: c.description || "", banner_image: c.banner_image || c.image || "" });
+    setForm({ name: c.name, slug: c.slug, description: c.description || "", banner_image: c.banner_image || c.image || "", parent_id: c.parent_id || "" });
     setError(""); setShowModal(true);
   }
 
@@ -72,6 +72,10 @@ export default function AdminCategoriesPage() {
 
   const inp: React.CSSProperties = { width: "100%", backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px", padding: "8px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "inherit" };
 
+  /** Everything except the category being edited (a parent can't be a descendant). */
+  const parentOptions = categories.filter(c => c.id !== editId);
+  const isChild = (c: Category) => !!c.parent_id;
+
   return (
     <AdminGuard>
       <div>
@@ -86,7 +90,17 @@ export default function AdminCategoriesPage() {
           {loading ? <p style={{ color: "#555" }}>در حال بارگذاری...</p>
             : categories.length === 0 ? <p style={{ color: "#555" }}>دسته‌بندی‌ای ثبت نشده</p>
             : categories.map(c => (
-              <div key={c.id} style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: "10px", overflow: "hidden" }}>
+              <div
+                key={c.id}
+                style={{
+                  backgroundColor: "#1a1a1a", border: `1px solid ${isChild(c) ? "rgba(212,175,55,0.25)" : "#2a2a2a"}`,
+                  borderRadius: "10px", overflow: "hidden",
+                  marginRight: isChild(c) ? 18 : 0, position: "relative",
+                }}
+              >
+                {isChild(c) && (
+                  <span style={{ position: "absolute", top: 14, right: -14, width: 10, height: 10, borderRight: "1px solid #444", borderBottom: "1px solid #444", borderBottomRightRadius: 6 }} />
+                )}
                 {/* Image */}
                 {(c.banner_image || c.image) ? (
                   <div style={{ height: "120px", backgroundImage: `url(${c.banner_image || c.image})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
@@ -102,6 +116,11 @@ export default function AdminCategoriesPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "2px" }}>{c.name}</h3>
                       <p style={{ color: "#666", fontSize: "11px", direction: "ltr" }}>{c.slug}</p>
+                      {c.parent_name && (
+                        <p style={{ color: "#d4af37", fontSize: "11px", margin: "4px 0 0" }}>
+                          زیرمجموعه «{c.parent_name}»
+                        </p>
+                      )}
                       {c.description && <p style={{ color: "#888", fontSize: "12px", marginTop: "6px" }}>{c.description}</p>}
                       <p style={{ color: "#d4af37", fontSize: "12px", marginTop: "8px" }}>{c._count.products} محصول</p>
                     </div>
@@ -155,6 +174,21 @@ export default function AdminCategoriesPage() {
                       style={{ ...inp, direction: f.k === "slug" ? "ltr" : "rtl" }} />
                   </div>
                 ))}
+
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "5px" }}>
+                    دسته‌بندی مادر <span style={{ color: "#555" }}>— خالی یعنی دسته اصلی</span>
+                  </label>
+                  <select value={form.parent_id} onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))} style={{ ...inp, cursor: "pointer" }}>
+                    <option value="">بدون دسته مادر (سطح اول)</option>
+                    {parentOptions.map(c => (
+                      <option key={c.id} value={c.id}>{c.parent_name ? `${c.parent_name} ← ${c.name}` : c.name}</option>
+                    ))}
+                  </select>
+                  <p style={{ color: "#555", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.8 }}>
+                    در صفحه محصولات، زیردسته‌ها زیر دسته مادرشان به‌صورت درختی نمایش داده می‌شوند و با انتخاب دسته مادر، محصولات همه زیردسته‌ها هم نمایش داده می‌شود.
+                  </p>
+                </div>
 
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button onClick={handleSave} disabled={saving || uploading}

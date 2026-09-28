@@ -61,6 +61,7 @@ function ensureSchema(db: DatabaseSync) {
   ensureProductVariantsSpecsColumns(db);
   ensureOrderItemExtrasColumns(db);
   ensureProductReviewsTable(db);
+  ensureCategoryParentColumn(db);
   ensurePromoBannersTable(db);
   _schemaReady = true;
 }
@@ -162,6 +163,13 @@ function ensureProductReviewsTable(db: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews(product_id, status);
     CREATE INDEX IF NOT EXISTS idx_product_reviews_status  ON product_reviews(status, created_at);
   `);
+}
+
+/** «دسته‌بندی / زیردسته‌بندی» — added for the category tree; ensure it at runtime too. */
+function ensureCategoryParentColumn(db: DatabaseSync) {
+  ensureColumns(db, "categories", { parent_id: "TEXT" });
+  const exists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='categories'").get();
+  if (exists) db.exec("CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id)");
 }
 
 function ensureOrderShippingColumns(db: DatabaseSync) {
@@ -351,13 +359,30 @@ export const otpCodes = {
 
 export interface Category {
   id: string; name: string; slug: string; description: string | null; image: string | null; created_at: string;
+  /** Parent category id (null = top-level). Drives the tree in filters/menus. */
+  parent_id?: string | null;
+}
+
+export interface CategoryNode extends Category {
+  product_count: number;
+  parent_name: string | null;
+  child_count: number;
 }
 
 export const categories = {
+  /** Roots first, then each parent's children grouped underneath it. */
   list() {
     return getDb().prepare(
-      `SELECT c.*, (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count FROM categories c ORDER BY name ASC`
-    ).all() as (Category & { product_count: number })[];
+      `SELECT c.*,
+              p.name as parent_name,
+              (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count,
+              (SELECT COUNT(*) FROM categories ch WHERE ch.parent_id = c.id) as child_count
+         FROM categories c
+         LEFT JOIN categories p ON p.id = c.parent_id
+        ORDER BY CASE WHEN p.id IS NULL THEN 0 ELSE 1 END,
+                 COALESCE(p.name, c.name) ASC,
+                 c.name ASC`
+    ).all() as CategoryNode[];
   },
   findById(id: string) {
     return getDb().prepare("SELECT * FROM categories WHERE id = ?").get(id) as Category | undefined;
@@ -365,23 +390,43 @@ export const categories = {
   findBySlug(slug: string) {
     return getDb().prepare("SELECT * FROM categories WHERE slug = ?").get(slug) as Category | undefined;
   },
-  create(data: { name: string; slug: string; description?: string; image?: string }) {
+  create(data: { name: string; slug: string; description?: string; image?: string; parent_id?: string | null }) {
     const id = generateId();
-    getDb().prepare("INSERT INTO categories (id, name, slug, description, image) VALUES (?, ?, ?, ?, ?)").run(
-      id, data.name, data.slug, data.description ?? null, data.image ?? null
+    getDb().prepare("INSERT INTO categories (id, name, slug, description, image, parent_id) VALUES (?, ?, ?, ?, ?, ?)").run(
+      id, data.name, data.slug, data.description ?? null, data.image ?? null, data.parent_id ?? null
     );
     return getDb().prepare("SELECT * FROM categories WHERE id = ?").get(id) as Category;
   },
-  update(id: string, data: Partial<{ name: string; slug: string; description: string; image: string }>) {
+  update(id: string, data: Partial<{ name: string; slug: string; description: string; image: string; parent_id: string | null }>) {
     const fields = Object.keys(data).map(k => `${k} = ?`).join(", ");
     getDb().prepare(`UPDATE categories SET ${fields} WHERE id = ?`).run(...Object.values(data), id);
     return getDb().prepare("SELECT * FROM categories WHERE id = ?").get(id) as Category;
+  },
+  /** The category plus every category nested under it (cycle-safe). */
+  descendantIds(id: string): string[] {
+    const db = getDb();
+    const out = new Set<string>([id]);
+    const queue = [id];
+    while (queue.length) {
+      const current = queue.shift()!;
+      const kids = db.prepare("SELECT id FROM categories WHERE parent_id = ?").all(current) as { id: string }[];
+      for (const k of kids) {
+        if (out.has(k.id)) continue;
+        out.add(k.id);
+        queue.push(k.id);
+      }
+    }
+    return [...out];
   },
   countProducts(id: string) {
     return (getDb().prepare("SELECT COUNT(*) as cnt FROM products WHERE category_id = ?").get(id) as { cnt: number }).cnt;
   },
   delete(id: string) {
-    getDb().prepare("DELETE FROM categories WHERE id = ?").run(id);
+    const db = getDb();
+    // Never orphan children — lift them to the deleted node's own level.
+    const cat = db.prepare("SELECT parent_id FROM categories WHERE id = ?").get(id) as { parent_id?: string | null } | undefined;
+    db.prepare("UPDATE categories SET parent_id = ? WHERE parent_id = ?").run(cat?.parent_id ?? null, id);
+    db.prepare("DELETE FROM categories WHERE id = ?").run(id);
   },
 };
 
@@ -418,8 +463,16 @@ export const products = {
       const resolved = db
         .prepare("SELECT id FROM categories WHERE id = ? OR slug = ?")
         .get(categoryId, categoryId) as { id: string } | undefined;
-      conditions.push("p.category_id = ?");
-      params.push(resolved ? resolved.id : categoryId);
+      const rootId = resolved ? resolved.id : categoryId;
+      // Picking a parent shows its own products plus every sub-category's.
+      const ids = categories.descendantIds(rootId);
+      if (ids.length > 1) {
+        conditions.push(`p.category_id IN (${ids.map(() => "?").join(", ")})`);
+        params.push(...ids);
+      } else {
+        conditions.push("p.category_id = ?");
+        params.push(rootId);
+      }
     }
     if (featured !== undefined) { conditions.push("p.featured = ?"); params.push(featured ? 1 : 0); }
     if (express !== undefined) { conditions.push("p.express_shipping = ?"); params.push(express ? 1 : 0); }
