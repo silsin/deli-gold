@@ -54,6 +54,8 @@ interface MarketPayload {
   stale?: boolean;
   staleRates?: string[];
   note?: string;
+  /** The union's own «آخرین بروزرسانی قیمت» stamp (e.g. ۶ مهر ۱۴۰۵ - ۱۲:۵۹:۴۵). */
+  unionUpdatedAt?: string;
 }
 
 interface RowDef {
@@ -598,6 +600,7 @@ export default function RatesBoard() {
           <p style={{ color: "var(--theme-text-muted)", fontSize: 12, margin: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <ArrowLeftRight size={13} />
             منبع نرخ‌ها: {data?.sourceTitle ?? "در حال دریافت…"} · حالت انتخابی: {SOURCE_OPTIONS.find(o => o.id === source)?.label}
+            {data?.unionUpdatedAt ? ` · آخرین بروزرسانی اتحادیه: ${data.unionUpdatedAt}` : ""}
             {data?.note ? ` · ${data.note}` : ""}
             {data?.staleRates && data.staleRates.length > 0 ? ` · ${data.staleRates.length.toLocaleString("fa-IR")} نرخ از آخرین داده دریافتی` : ""}
             {data?.stale ? " · کش قدیمی (منبع در دسترس نبود)" : ""} · به‌روزرسانی خودکار هر ۱ دقیقه

@@ -54,6 +54,42 @@ export interface GoldMarketData {
   staleRates?: string[];
   /** Why the payload came from a different source than requested (e.g. a fallback). */
   note?: string;
+  /** The union's own «آخرین بروزرسانی قیمت» stamp, when the board supplied it. */
+  unionUpdatedAt?: string;
+}
+
+const ESTJT_TV_URL = "https://www.estjt.ir/tv/";
+const ESTJT_PRICE_URL = "https://www.estjt.ir/price/";
+
+/** `data-field` codes used by the union's board at /tv/. */
+const ESTJT_TV_FIELDS: Record<string, keyof GoldRates> = {
+  IRG18: "gold18k",
+  IRG24: "gold24k",
+  IRG17: "mazanehTehran",
+  GOLD: "ounceDollar",
+  IRCOLD: "coinOld",
+  IRCNEW: "coinNew",
+  IRC2: "coinHalf",
+  IRC4: "coinQuarter",
+  IRCGRAM: "coinGram",
+};
+
+/**
+ * `▲ ۱٫۵۹٪` → +1.59, `▼ ۳٫۱۶٪` → -3.16.
+ * The union uses `٫` as a DECIMAL point here (unlike the price cells, where it
+ * is a thousands separator), so only the first separator is kept.
+ */
+function parsePctCell(raw: string): number | null {
+  const text = String(raw ?? "").replace(/\s+/g, " ").trim();
+  const token = text.match(/[۰-۹٠-٩0-9][۰-۹٠-٩0-9.,٫٬]*/);
+  if (!token) return null;
+  const digits = toAscii(token[0]);
+  const decimal = digits.match(/^(\d+)[.,٫٬](\d+)/);
+  const n = decimal
+    ? parseInt(decimal[1], 10) + parseInt(decimal[2], 10) / Math.pow(10, decimal[2].length)
+    : parseInt(digits.replace(/[^0-9]/g, ""), 10);
+  if (!isFinite(n)) return null;
+  return text.includes("▼") || text.includes("↓") ? -n : n;
 }
 
 const ALL_RATE_KEYS: (keyof GoldRates)[] = [
@@ -196,38 +232,98 @@ function parseEstjtHtml(html: string): GoldMarketData | null {
 }
 
 /**
- * estjt is the primary source, so it gets two attempts (a timeout *or* a page
- * without the rate table — a Cloudflare hiccup — both count as a failure).
- * The whole request shares one deadline, so a fallback can still answer.
+ * The union's own board (estjt.ir/tv) — this is the canonical «نرخ اتحادیه».
+ * Same numbers as /price/ but with stable `data-field` keys and their own
+ * «آخرین بروزرسانی قیمت» stamp, which we pass through to the storefront.
+ */
+function parseEstjtTvHtml(html: string): GoldMarketData | null {
+  const rates: GoldRates = {};
+  const changes: Partial<Record<keyof GoldRates, RateChange>> = {};
+
+  const cardRe = /tt-price-card__label">([^<]+)<\/span>\s*<span[^>]*data-field="([A-Z0-9_]+)"[^>]*>\s*([^<]+?)\s*<\/span>\s*<span[^>]*data-field-delta="[A-Z0-9_]+"[^>]*>\s*([^<]+?)\s*<\/span>/gi;
+  for (const m of html.matchAll(cardRe)) {
+    const key = ESTJT_TV_FIELDS[m[2]];
+    if (!key) continue;
+    const value = parsePriceCell(m[3]);
+    if (!value) continue;
+    rates[key] = value;
+    const pct = parsePctCell(m[4]);
+    // The board only publishes a percentage — recover the absolute change.
+    const prev = pct !== null && pct > -100 ? value / (1 + pct / 100) : 0;
+    changes[key] = {
+      amount: prev ? Math.round(value - prev) : 0,
+      percent: pct === null ? 0 : Math.round(pct * 100) / 100,
+      isUp: (pct ?? 0) >= 0,
+    };
+  }
+
+  if (!rates.gold18k) return null;
+
+  // Their own «آخرین بروزرسانی قیمت» stamp — proves how fresh the board is.
+  const stampMatch = html.match(/id="tt-price-date"[^>]*>\s*([^<]{5,60}?)\s*</);
+  const unionUpdatedAt = stampMatch ? stampMatch[1].replace(/\s+/g, " ").trim() : undefined;
+
+  const head = changes.gold18k;
+  const price = rates.gold18k;
+  return {
+    source: "estjt",
+    sourceTitle: "اتحادیه طلا و جواهر تهران — تابلو رسمی (estjt.ir)",
+    price,
+    history: [price],
+    dates: [],
+    open: head?.amount ? price - head.amount : price,
+    high: price,
+    low: price,
+    changeAmount: head?.amount ?? 0,
+    changePercent: String(head?.percent ?? 0),
+    isUp: head?.isUp ?? true,
+    updatedAt: Date.now(),
+    rates,
+    changes,
+    sourceKey: "estjt",
+    unionUpdatedAt,
+  };
+}
+
+/** One HTML fetch with its own timeout slice, never exceeding the route budget. */
+async function fetchHtml(url: string, deadline: number, cap: number): Promise<string | null> {
+  const left = deadline - Date.now();
+  if (left < 1500) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.min(left, cap));
+  const started = Date.now();
+  try {
+    const res = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Primary rate read: the union's board first (it is what customers compare
+ * against), then their price table (which also carries yesterday's average).
+ * Both are Toman; no conversion is applied.
  */
 async function fetchFromEstjt(deadline: number): Promise<GoldMarketData | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const left = deadline - Date.now();
-    if (left < 1500) break;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), Math.min(left, 3500));
-    try {
-      const res = await fetch("https://www.estjt.ir/price/", {
-        cache: "no-store",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: controller.signal,
-      });
-      if (res.ok) {
-        const built = parseEstjtHtml(await res.text());
-        if (built) return built;
-      }
-    } catch {
-      /* fall through to the retry */
-    } finally {
-      clearTimeout(timer);
-    }
-    if (deadline - Date.now() < 1500) break;
-    await new Promise(r => setTimeout(r, 250));
+  const tv = await fetchHtml(ESTJT_TV_URL, deadline, 20_000);
+  if (tv) {
+    const board = parseEstjtTvHtml(tv);
+    if (board) return board;
   }
+  const price = await fetchHtml(ESTJT_PRICE_URL, deadline, Math.max(2000, deadline - Date.now()));
+  if (price) return parseEstjtHtml(price);
   return null;
 }
 
@@ -454,6 +550,7 @@ interface RateSnapshot {
   isUp: boolean;
   rates?: GoldRates;
   changes?: Partial<Record<keyof GoldRates, RateChange>>;
+  unionUpdatedAt?: string;
 }
 
 const SNAPSHOT_KEY = "gold_rates_cache";
@@ -490,6 +587,7 @@ function saveSnapshot(d: GoldMarketData): void {
     isUp: d.isUp,
     rates,
     changes,
+    unionUpdatedAt: d.unionUpdatedAt,
   };
   try {
     setSetting(SNAPSHOT_KEY, JSON.stringify(snapshot));
@@ -516,6 +614,7 @@ function snapshotPayload(snap: RateSnapshot): GoldMarketData {
     rates: snap.rates,
     changes: snap.changes,
     sourceKey: snap.sourceKey === "tgju" ? "tgju" : "estjt",
+    unionUpdatedAt: snap.unionUpdatedAt,
     staleRates: ALL_RATE_KEYS,
   };
 }
@@ -563,6 +662,58 @@ function fallbackPayload(requested: PriceSourceChoice, at: number) {
   };
 }
 
+/**
+ * Fetch a fresh reading and store it. The union's server can take 10-15s at
+ * peak, so this is normally run in the background (see scheduleRefresh).
+ */
+async function refreshChoice(choice: PriceSourceChoice, budgetMs: number): Promise<GoldMarketData | null> {
+  const now = Date.now();
+  const deadline = now + budgetMs;
+  const knownMemoForChoice = knownMemo(loadSnapshot());
+
+  let estjt: GoldMarketData | null = null;
+  let tgju: GoldMarketData | null = null;
+  let fresh: GoldMarketData | null = null;
+
+  if (choice === "tgju") {
+    fresh = await fetchFromTgju(knownMemoForChoice, deadline);
+  } else {
+    estjt = await fetchFromEstjt(deadline);
+    if (choice === "estjt") {
+      fresh = estjt;
+    } else {
+      // auto — TGJU is only consulted when estjt leaves a gap.
+      if (missingRateCount(estjt?.rates) > 0) {
+        tgju = await fetchFromTgju(knownMemoForChoice, deadline);
+      }
+      fresh = mergeSources(estjt, tgju);
+      if (!estjt && tgju) {
+        fresh = { ...tgju, note: "اتحادیه طلا در دسترس نبود — نرخ‌ها از TGJU نمایش داده می‌شود" };
+      }
+    }
+  }
+
+  if (!fresh) return null;
+  const ready = markPartial({ ...fresh, updatedAt: now });
+  caches[choice] = ready;
+  holdUntil[choice] = (ready.staleRates?.length ?? 0) > 0 ? now + STALE_HOLD : 0;
+  saveSnapshot(ready);
+  return ready;
+}
+
+const refreshing: Partial<Record<PriceSourceChoice, boolean>> = {};
+
+/** Kick off a refresh without blocking the shopper — one in flight per source. */
+function scheduleRefresh(choice: PriceSourceChoice): void {
+  if (refreshing[choice]) return;
+  refreshing[choice] = true;
+  void refreshChoice(choice, 25_000)
+    .catch(() => null)
+    .finally(() => {
+      refreshing[choice] = false;
+    });
+}
+
 export async function GET(req: NextRequest) {
   const param = new URL(req.url).searchParams.get("source");
   const requested: PriceSourceChoice = isChoice(param) ? param : storedChoice() ?? "auto";
@@ -579,51 +730,21 @@ export async function GET(req: NextRequest) {
       return ok(respond(hit, requested, true, true));
     }
 
-    const wantEstjt = requested === "auto" || requested === "estjt";
     const known = loadSnapshot();
-    // One budget for the whole request: a slow primary must still leave room
-    // for the fallback (serverless functions are killed at ~10s).
-    const deadline = now + 10_000;
 
-    let estjt: GoldMarketData | null = null;
-    let tgju: GoldMarketData | null = null;
-    let fresh: GoldMarketData | null = null;
-
-    if (requested === "tgju") {
-      fresh = await fetchFromTgju(knownMemo(known), deadline);
-    } else if (wantEstjt) {
-      estjt = await fetchFromEstjt(deadline);
-      if (requested === "estjt") {
-        fresh = estjt;
-      } else {
-        // auto — TGJU is only consulted when estjt leaves a gap, so the
-        // default path stays a single upstream request.
-        const needGapFill = missingRateCount(estjt?.rates) > 0;
-        if (needGapFill) tgju = await fetchFromTgju(knownMemo(known), deadline);
-        fresh = mergeSources(estjt, tgju);
-        if (!estjt && tgju) {
-          fresh = { ...tgju, note: "اتحادیه طلا در دسترس نبود — نرخ‌ها از TGJU نمایش داده می‌شود" };
-        }
-      }
+    // Warm path: answer instantly with the last known rates and refresh in the
+    // background, so a slow union server can never delay the page.
+    if (hit || known) {
+      scheduleRefresh(requested);
+      const base = hit ?? (known ? snapshotPayload(known) : null);
+      if (!base) return ok(fallbackPayload(requested, now));
+      if (!hit) caches[requested] = base;
+      return ok(respond(base, requested, true, true));
     }
 
-    if (fresh) {
-      fresh = markPartial({ ...fresh, updatedAt: now });
-      caches[requested] = fresh;
-      holdUntil[requested] = (fresh.staleRates?.length ?? 0) > 0 ? now + STALE_HOLD : 0;
-      saveSnapshot(fresh);
-      return ok(respond(fresh, requested, false));
-    }
-
-    if (caches[requested]) return ok(respond(caches[requested]!, requested, true, true));
-
-    // Both upstreams are down — serve the last stored reading rather than a
-    // blank board or a hard-coded number.
-    if (known) {
-      const restored = snapshotPayload(known);
-      caches[requested] = restored;
-      return ok(respond(restored, requested, true, true));
-    }
+    // Cold start: nothing stored yet, so we have to wait for a real reading.
+    const cold = await refreshChoice(requested, 25_000);
+    if (cold) return ok(respond(cold, requested, false));
 
     return ok(fallbackPayload(requested, now));
   } catch (e) {
