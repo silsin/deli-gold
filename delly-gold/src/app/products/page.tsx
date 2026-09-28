@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
-import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins } from "lucide-react";
+import { Heart, Search, X, ShoppingCart, Check, SlidersHorizontal, ChevronLeft, ChevronRight, Coins, ChevronDown, Tags, FolderTree } from "lucide-react";
 import PageLayout from "../components/PageLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -38,6 +38,18 @@ function getImg(images: string, i: number) {
   return goldImages[i % goldImages.length];
 }
 
+/** Row style inside the category dropdown (active state gets the gold accent). */
+function catOptionStyle(active: boolean): React.CSSProperties {
+  return {
+    width: "100%", display: "flex", alignItems: "center", gap: 8,
+    textAlign: "right", padding: "9px 12px", border: "none", cursor: "pointer",
+    fontSize: 13, fontFamily: "inherit", background: "none",
+    color: active ? "#c8a12a" : "#555", fontWeight: active ? 700 : 400,
+    backgroundColor: active ? "#fdf8ee" : "transparent",
+    borderRadius: 8, marginBottom: 2,
+  };
+}
+
 function ProductsInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,6 +69,10 @@ function ProductsInner() {
   const [liked, setLiked]           = useState<Set<string>>(new Set());
   const [addedId, setAddedId]       = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
+  const [catOpen, setCatOpen]     = useState(false);
+  const [catQuery, setCatQuery]   = useState("");
+  const [drawerQuery, setDrawerQuery] = useState("");
+  const catRef = useRef<HTMLDivElement | null>(null);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [page, setPage]             = useState(1);
   const { add, items } = useCart();
@@ -110,6 +126,33 @@ function ProductsInner() {
     fetch("/api/admin/settings").then(r => r.json()).then(d => { if (d.success) setSettings(d.data); });
   }, []);
 
+  // Close the category dropdown on outside click / Escape
+  useEffect(() => {
+    if (!catOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setCatOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setCatOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [catOpen]);
+
+  /** Type-ahead over the catalog — keeps 100+ categories navigable. */
+  function matchCats(list: Category[], q: string): Category[] {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return list;
+    return list.filter(c =>
+      c.name.toLowerCase().includes(needle) || (c.slug || "").toLowerCase().includes(needle)
+    );
+  }
+  const shownCats = matchCats(categories, catQuery);
+  const drawerCats = matchCats(categories, drawerQuery);
+  const TABS_VISIBLE_MAX = 8;
+
   function toggleLike(id: string) {
     setLiked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
@@ -148,34 +191,135 @@ function ProductsInner() {
         </div>
       </div>
 
-      {/* Category tabs — like mio-gold's horizontal tab nav */}
+      {/* Category picker — a searchable dropdown; quick tabs only for small catalogs */}
       <div style={{ backgroundColor: "#fff", borderBottom: "1px solid #f0f0f0" }}>
-        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", display: "flex", overflowX: "auto", scrollbarWidth: "none" }}>
-          <style>{`::-webkit-scrollbar{display:none}`}</style>
-          {[{ id: "", name: "همه" }, ...categories].map(c => {
-            const isActive = selectedCat === c.id || ("slug" in c && selectedCat === c.slug);
-            return (
-              <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); }}
+        <div
+          className="cat-bar"
+          style={{ maxWidth: 1280, margin: "0 auto", padding: "12px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}
+        >
+          <div ref={catRef} className="cat-picker" style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => { setCatOpen(o => !o); setCatQuery(""); }}
+              aria-haspopup="listbox"
+              aria-expanded={catOpen}
+              className="cat-picker-btn"
+              style={{
+                display: "flex", alignItems: "center", gap: 10, border: "1px solid #e0e0e0",
+                borderRadius: "10px", padding: "9px 14px", background: "#fff", fontSize: 13,
+                color: "#333", cursor: "pointer", fontFamily: "inherit", minWidth: 230,
+                justifyContent: "space-between", transition: "border-color .15s",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#c8a12a"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#e0e0e0"; }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <Tags size={14} color="#c8a12a" />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>
+                  {activeCatName}
+                </span>
+              </span>
+              <ChevronDown
+                size={15}
+                color="#999"
+                style={{ transform: catOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}
+              />
+            </button>
+
+            {catOpen && (
+              <div
+                className="cat-picker-panel"
                 style={{
-                  flexShrink: 0,
-                  padding: "12px 18px",
-                  border: "none",
-                  backgroundColor: "transparent",
-                  color: isActive ? "#c8a12a" : "#555",
-                  fontSize: "13px",
-                  fontWeight: isActive ? "700" : "400",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  borderBottom: isActive ? "2px solid #c8a12a" : "2px solid transparent",
-                  transition: "color 0.15s, border-color 0.15s",
-                  whiteSpace: "nowrap",
+                  position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 320,
+                  width: 300, maxWidth: "calc(100vw - 32px)", background: "#fff",
+                  border: "1px solid #e8e8e8", borderRadius: 12, overflow: "hidden",
+                  boxShadow: "0 14px 36px rgba(0,0,0,.13)",
                 }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "#c8a12a"; }}
-                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "#555"; }}>
-                {c.name}
-              </button>
-            );
-          })}
+              >
+                {categories.length > 6 && (
+                  <div style={{ padding: 8, borderBottom: "1px solid #f2f2f2", position: "relative" }}>
+                    <Search size={13} style={{ position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)", color: "#bbb" }} />
+                    <input
+                      autoFocus
+                      value={catQuery}
+                      onChange={e => setCatQuery(e.target.value)}
+                      placeholder="جستجوی دسته‌بندی…"
+                      style={{
+                        width: "100%", boxSizing: "border-box", border: "1px solid #eee", borderRadius: 8,
+                        padding: "8px 28px 8px 10px", fontSize: 12.5, outline: "none",
+                        fontFamily: "inherit", color: "#333", background: "#fafafa",
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ maxHeight: 300, overflowY: "auto", padding: 6 }}>
+                  <button
+                    onClick={() => { setSelectedCat(""); setPage(1); setCatOpen(false); }}
+                    className="cat-option"
+                    style={catOptionStyle(selectedCat === "")}
+                  >
+                    <FolderTree size={13} style={{ flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>همه محصولات</span>
+                    {selectedCat === "" && <Check size={14} />}
+                  </button>
+
+                  {shownCats.map(c => {
+                    const isActive = selectedCat === c.id || selectedCat === c.slug;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => { setSelectedCat(c.id); setPage(1); setCatOpen(false); }}
+                        className="cat-option"
+                        style={catOptionStyle(isActive)}
+                      >
+                        <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                        {isActive && <Check size={14} />}
+                      </button>
+                    );
+                  })}
+
+                  {shownCats.length === 0 && (
+                    <p style={{ color: "#aaa", fontSize: 12, textAlign: "center", padding: "16px 8px", margin: 0 }}>
+                      دسته‌بندی یافت نشد
+                    </p>
+                  )}
+                </div>
+
+                {catQuery.trim() && (
+                  <p style={{ margin: 0, padding: "7px 12px", borderTop: "1px solid #f2f2f2", fontSize: 11, color: "#999" }}>
+                    {shownCats.length.toLocaleString("fa-IR")} از {categories.length.toLocaleString("fa-IR")} دسته‌بندی
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Quick tabs stay only while the catalog is small enough to scan */}
+          {categories.length > 0 && categories.length <= TABS_VISIBLE_MAX && (
+            <div className="cat-tabs" style={{ display: "flex", alignItems: "center", gap: 2, overflowX: "auto", scrollbarWidth: "none" }}>
+              <style>{`.cat-tabs::-webkit-scrollbar{display:none}`}</style>
+              {[{ id: "", name: "همه" }, ...categories].map(c => {
+                const isActive = selectedCat === c.id || ("slug" in c && selectedCat === c.slug);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSelectedCat(c.id); setPage(1); }}
+                    className="cat-tab"
+                    style={{
+                      flexShrink: 0, padding: "8px 14px", border: "none",
+                      background: isActive ? "#fdf8ee" : "transparent",
+                      color: isActive ? "#c8a12a" : "#555", fontSize: 13,
+                      fontWeight: isActive ? 700 : 400, cursor: "pointer", fontFamily: "inherit",
+                      whiteSpace: "nowrap", borderRadius: 8,
+                    }}
+                  >
+                    {c.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -395,13 +539,51 @@ function ProductsInner() {
               <h3 style={{ color: "#222", fontSize: 16, fontWeight: 700 }}>فیلتر محصولات</h3>
               <button onClick={() => setShowFilter(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#888" }}><X size={18} /></button>
             </div>
-            <h4 style={{ color: "#c8a12a", fontSize: "13px", fontWeight: "700", marginBottom: "10px" }}>دسته‌بندی</h4>
-            {[{ id: "", name: "همه محصولات" }, ...categories].map(c => (
-              <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); setShowFilter(false); }}
-                style={{ width: "100%", textAlign: "right", padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontFamily: "inherit", color: selectedCat === c.id ? "#c8a12a" : "#555", fontWeight: selectedCat === c.id ? "700" : "400", backgroundColor: selectedCat === c.id ? "#fdf8ee" : "transparent", borderRadius: "6px", borderRight: selectedCat === c.id ? "3px solid #c8a12a" : "3px solid transparent", marginBottom: "2px" }}>
-                {c.name}
+            <h4 style={{ color: "#c8a12a", fontSize: "13px", fontWeight: "700", marginBottom: "10px" }}>
+              دسته‌بندی ({categories.length.toLocaleString("fa-IR")})
+            </h4>
+
+            {categories.length > 6 && (
+              <div style={{ position: "relative", marginBottom: 10 }}>
+                <Search size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#bbb" }} />
+                <input
+                  value={drawerQuery}
+                  onChange={e => setDrawerQuery(e.target.value)}
+                  placeholder="جستجوی دسته‌بندی…"
+                  style={{
+                    width: "100%", boxSizing: "border-box", border: "1px solid #e5e5e5", borderRadius: 8,
+                    padding: "9px 28px 9px 10px", fontSize: 12.5, outline: "none", fontFamily: "inherit",
+                    color: "#333", background: "#fafafa",
+                  }}
+                />
+              </div>
+            )}
+
+            <div style={{ maxHeight: "calc(100vh - 220px)", overflowY: "auto" }}>
+              <button onClick={() => { setSelectedCat(""); setPage(1); setShowFilter(false); }}
+                style={catOptionStyle(selectedCat === "")}>
+                <FolderTree size={13} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>همه محصولات</span>
+                {selectedCat === "" && <Check size={14} />}
               </button>
-            ))}
+
+              {drawerCats.map(c => {
+                const isActive = selectedCat === c.id || selectedCat === c.slug;
+                return (
+                  <button key={c.id} onClick={() => { setSelectedCat(c.id); setPage(1); setShowFilter(false); }}
+                    style={catOptionStyle(isActive)}>
+                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                    {isActive && <Check size={14} />}
+                  </button>
+                );
+              })}
+
+              {drawerCats.length === 0 && (
+                <p style={{ color: "#aaa", fontSize: 12, textAlign: "center", padding: "16px 0" }}>
+                  دسته‌بندی یافت نشد
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -412,6 +594,11 @@ function ProductsInner() {
         @media(max-width:768px){
           .prod-grid{grid-template-columns:repeat(2,1fr)!important}
           .products-body{padding:16px 12px !important;}
+          .cat-bar{padding:10px 12px !important;}
+          .cat-picker{width:100% !important;}
+          .cat-picker-btn{width:100% !important;min-width:0 !important;}
+          .cat-picker-panel{right:0 !important;left:0 !important;width:auto !important;max-width:none !important;}
+          .cat-tabs{width:100% !important;}
         }
         @media(max-width:480px){
           .prod-grid,.prod-skeleton{grid-template-columns:repeat(2,1fr)!important;gap:10px !important;}
