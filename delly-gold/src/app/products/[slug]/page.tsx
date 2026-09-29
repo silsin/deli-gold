@@ -421,7 +421,11 @@ export default function ProductDetailPage() {
   const oos       = availableStock === 0;
   const isMaxed   = inCartQty >= availableStock;
   const perGram   = weight > 0 ? Math.round(pricing.finalPrice / weight) : 0;
-  const goldGram  = weight > 0 ? Math.round(basePrice / weight) : 0;
+  // Per-gram value of the base the price was ACTUALLY built from (live or stored).
+  // Deriving this from the stored `basePrice` made the breakdown disagree with the
+  // total once live pricing was on.
+  const goldGram  = weight > 0 ? Math.round(pricing.basePrice / weight) : 0;
+  const productKarat = product?.karat ?? 18;
   const packName  = giftPack || pps.packs[0];
 
   const handleAdd = useCallback(() => {
@@ -647,7 +651,7 @@ export default function ProductDetailPage() {
               <div className="pd-price-rows">
                 <div className="pd-price-row">
                   <span>ارزش طلا ({weight} گرم{goldGram > 0 ? ` × ${fa(goldGram)}` : ""})</span>
-                  <b>{fa(basePrice)} تومان</b>
+                  <b>{fa(pricing.basePrice)} تومان</b>
                 </div>
                 <div className="pd-price-row">
                   <span>اجرت و سود ({pricing.markupPct}%{pricing.fixedFee > 0 ? ` + ${fa(pricing.fixedFee)} ت/گرم` : ""})</span>
@@ -666,7 +670,9 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* How the price is calculated — always visible, like the reference */}
+            {/* How the price is calculated — always visible, like the reference.
+                Every number here is derived from the SAME pricing result, so the
+                breakdown can never contradict the total. */}
             <div className="pd-formula">
               <b>نحوه محاسبه قیمت</b><br />
               فرمول : (نرخ طلای روز + اجرت + سود + مالیات) × وزن
@@ -674,6 +680,30 @@ export default function ProductDetailPage() {
                 <>
                   <br />
                   نرخ روز طلای ۱۸ عیار: <b>{fa(dayRate)}</b> تومان
+                  {productKarat !== 18 && (
+                    <>
+                      <br />
+                      معادل {fa(productKarat)} عیار: <b>{fa(Math.round(dayRate * (productKarat / 18)))}</b> تومان / گرم
+                    </>
+                  )}
+                </>
+              )}
+              {pricing.isLive ? (
+                <>
+                  <br />
+                  <span className="pd-muted">این محصول از نرخ لحظه‌ای بالا قیمت‌گذاری می‌شود و با تغییر بازار به‌روز می‌شود.</span>
+                </>
+              ) : pricing.isLocked ? (
+                <>
+                  <br />
+                  <span className="pd-muted">این محصول «قیمت ثابت» است و از نرخ روز طلا پیروی نمی‌کند.</span>
+                </>
+              ) : (
+                <>
+                  <br />
+                  <span className="pd-muted">
+                    قیمت این محصول از قیمت پایه ذخیره‌شده محاسبه شده (مبنا: {fa(goldGram)} تومان / گرم) و با نرخ لحظه‌ای بالا تغییر نمی‌کند.
+                  </span>
                 </>
               )}
               <br />
