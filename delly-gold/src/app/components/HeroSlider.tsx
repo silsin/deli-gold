@@ -58,7 +58,13 @@ export default function HeroSlider() {
     };
   }, [paused, cur, slides.length]);
 
-  if (!loaded) return <div style={{ width: "100%", height: "520px", backgroundColor: "#f0ebe0" }} />;
+  // The splash screen holds until the slides arrive (marker), so the hero is
+  // never seen popping in after the page.
+  if (!loaded) return (
+    <span data-dg-pending aria-hidden="true">
+      <span style={{ display: "block", width: "100%", height: "520px", backgroundColor: "#f0ebe0" }} />
+    </span>
+  );
 
   if (loaded && slides.length === 0) {
     return (

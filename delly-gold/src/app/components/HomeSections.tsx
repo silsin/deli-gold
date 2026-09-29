@@ -49,7 +49,9 @@ export default function HomeSections() {
     }).catch(() => setOrder([...DEFAULT_HOME_SECTION_ORDER]));
   }, []);
 
-  if (!order) return null;
+  // Nothing renders until the order is known — the splash screen waits on this
+  // marker so the homepage is never seen assembling itself.
+  if (!order) return <span data-dg-pending aria-hidden="true" />;
 
   return (
     <>

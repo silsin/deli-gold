@@ -3,6 +3,7 @@ import "./globals.css";
 import { CartProvider } from "./components/CartContext";
 import ThemeLoader from "./components/ThemeLoader";
 import GapifyChat from "./components/GapifyChat";
+import SplashScreen from "./components/SplashScreen";
 
 const kavenegarPushAppId = process.env.NEXT_PUBLIC_KAVENEGAR_PUSH_APP_ID;
 
@@ -28,6 +29,7 @@ export default function RootLayout({
         )}
       </head>
       <body>
+        <SplashScreen />
         <ThemeLoader />
         <CartProvider>{children}</CartProvider>
         <GapifyChat />
