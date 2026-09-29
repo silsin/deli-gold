@@ -86,7 +86,7 @@ const CSS = `
 .dg-so-old{color:#dc3545;font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(220,53,69,.08);}
 .dg-so-new{color:#fbbf1f;font-size:15px;font-weight:700;}
 .dg-so-unit{color:#fbb500;font-size:11px;}
-.dg-so-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#8a6d20;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-so-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#8a6d20;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
 .dg-so-nav:hover{background:#ea0;color:#fff;border-color:#ea0;}
 .dg-so-nav-left{left:2px;}
 .dg-so-nav-right{right:2px;}
@@ -98,6 +98,8 @@ const CSS = `
   .dg-so-title{font-size:18px;line-height:40px;margin-bottom:14px;}
   .dg-so-aside-cd{margin-bottom:16px;}
   .dg-so-main{flex:1 1 0;min-width:0;max-width:none;}
+  /* Tablets got no arrows either (they were only enabled at 992px) */
+  .dg-so-nav{display:flex;}
 }
 @media (min-width:992px){
   .dg-so-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
@@ -126,7 +128,12 @@ const CSS = `
   .dg-so-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
   .dg-so-wish{width:26px;height:26px;top:6px;left:6px;}
   .dg-so-cart{gap:4px;padding:9px 4px;font-size:11px;}
-  .dg-so-nav{display:none;}
+  /* Arrows: keep them on mobile (they were hidden here before) — 38px touch
+     target, pulled to the very edge and translucent so they never hide a card. */
+  .dg-so-nav{display:flex;width:38px;height:38px;background:rgba(255,255,255,.92);opacity:.85;}
+  .dg-so-nav-left{left:-4px;}
+  .dg-so-nav-right{right:-4px;}
+  .dg-so-nav:active{opacity:1;}
 }
 @media (max-width:575px){
   /* Title on its own line, countdown + «مشاهده همه» centered below it */

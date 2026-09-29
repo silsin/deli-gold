@@ -73,7 +73,7 @@ const CSS = `
 .dg-ex-price{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:15px 0 0;direction:rtl;font-family:var(--font-price,inherit);}
 .dg-ex-new{color:#0f766e;font-size:15px;font-weight:700;}
 .dg-ex-unit{color:#14b8a6;font-size:11px;}
-.dg-ex-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#0f766e;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-ex-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#0f766e;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
 .dg-ex-nav:hover{background:#0d9488;color:#fff;border-color:#0d9488;}
 .dg-ex-nav-left{left:2px;}
 .dg-ex-nav-right{right:2px;}
@@ -85,6 +85,8 @@ const CSS = `
   .dg-ex-title{font-size:18px;line-height:40px;margin-bottom:14px;}
   .dg-ex-aside-info{margin-bottom:16px;}
   .dg-ex-main{flex:1 1 0;min-width:0;max-width:none;}
+  /* Tablets got no arrows either (they were only enabled at 992px) */
+  .dg-ex-nav{display:flex;}
 }
 @media (min-width:992px){
   .dg-ex-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
@@ -110,7 +112,12 @@ const CSS = `
   .dg-ex-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
   .dg-ex-wish{width:26px;height:26px;top:6px;left:6px;}
   .dg-ex-cart{gap:4px;padding:9px 4px;font-size:11px;}
-  .dg-ex-nav{display:none;}
+  /* Arrows: keep them on mobile (they were hidden here before) — 38px touch
+     target, pulled to the very edge and translucent so they never hide a card. */
+  .dg-ex-nav{display:flex;width:38px;height:38px;background:rgba(255,255,255,.92);opacity:.85;}
+  .dg-ex-nav-left{left:-4px;}
+  .dg-ex-nav-right{right:-4px;}
+  .dg-ex-nav:active{opacity:1;}
 }
 @media (max-width:575px){
   /* Title on its own line, «ارسال فوری» chip + «مشاهده همه» centered below it */

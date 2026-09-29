@@ -76,7 +76,7 @@ const CSS2 = `
 .dg-cn-price{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:15px 0 0;direction:rtl;font-family:var(--font-price,inherit);}
 .dg-cn-new{color:#6d28d9;font-size:15px;font-weight:700;}
 .dg-cn-unit{color:#a78bfa;font-size:11px;}
-.dg-cn-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#6d28d9;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:none;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-cn-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#6d28d9;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
 .dg-cn-nav:hover{background:#c8a12a;color:#fff;border-color:#c8a12a;}
 .dg-cn-nav-left{left:2px;}
 .dg-cn-nav-right{right:2px;}
@@ -84,6 +84,8 @@ const CSS2 = `
 @media (min-width:768px){
   .dg-cn-aside{flex-wrap:nowrap;}
   .dg-cn-title{font-size:18px;}
+  /* Tablets got no arrows either (they were only enabled at 992px) */
+  .dg-cn-nav{display:flex;}
 }
 @media (min-width:992px){
   .dg-cn-card{flex:0 0 calc(20% - 8px);max-width:calc(20% - 8px);}
@@ -108,7 +110,12 @@ const CSS2 = `
   .dg-cn-oos{font-size:10px;padding:2px 7px;top:6px;right:6px;}
   .dg-cn-wish{width:26px;height:26px;top:6px;left:6px;}
   .dg-cn-cart{gap:4px;padding:9px 4px;font-size:11px;}
-  .dg-cn-nav{display:none;}
+  /* Arrows: keep them on mobile (they were hidden here before) — 38px touch
+     target, pulled to the very edge and translucent so they never hide a card. */
+  .dg-cn-nav{display:flex;width:38px;height:38px;background:rgba(255,255,255,.92);opacity:.85;}
+  .dg-cn-nav-left{left:-4px;}
+  .dg-cn-nav-right{right:-4px;}
+  .dg-cn-nav:active{opacity:1;}
 }
 @media (max-width:575px){
   /* Two cards per view instead of three so nothing is squeezed out */
