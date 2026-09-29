@@ -59,6 +59,7 @@ function ensureSchema(db: DatabaseSync) {
   ensureProductLowWageColumn(db);
   ensureProductCoinColumn(db);
   ensureProductVariantsSpecsColumns(db);
+  ensureProductFixedPriceColumn(db);
   ensureOrderItemExtrasColumns(db);
   ensureProductReviewsTable(db);
   ensureCategoryParentColumn(db);
@@ -115,6 +116,11 @@ function ensureProductCoinColumn(db: DatabaseSync) {
     db.exec("ALTER TABLE products ADD COLUMN coin INTEGER NOT NULL DEFAULT 0");
     db.exec("CREATE INDEX IF NOT EXISTS idx_products_coin ON products(coin)");
   }
+}
+
+/** «قیمت ثابت» lock — product keeps its stored base even when live pricing is on. */
+function ensureProductFixedPriceColumn(db: DatabaseSync) {
+  ensureColumns(db, "products", { fixed_price: "INTEGER NOT NULL DEFAULT 0" });
 }
 
 /** Add any missing columns to a table — shared by the runtime schema guards. */
@@ -446,6 +452,8 @@ export interface Product {
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
   ajrat_override: number;
+  /** 1 = «قیمت ثابت» — keeps the stored base even when live pricing is on. */
+  fixed_price: number;
   category_id: string; created_at: string; updated_at: string;
 }
 
@@ -498,8 +506,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, variants, specs, category_id, ajrat_percent, ajrat_fixed, ajrat_override) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.variants ?? "[]", data.specs ?? "[]", data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, variants, specs, category_id, ajrat_percent, ajrat_fixed, ajrat_override, fixed_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.variants ?? "[]", data.specs ?? "[]", data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0, data.fixed_price ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {
@@ -931,6 +939,7 @@ export interface SpecialOfferWithProduct extends SpecialOfferRow {
   ajrat_override: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
+  fixed_price: number;
   published: number;
 }
 
@@ -942,7 +951,7 @@ export const specialOffers = {
     const where = activeOnly ? "WHERE so.active = 1 AND p.published = 1" : "";
     return db.prepare(
       `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images, p.videos,
-              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
+              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.fixed_price, p.published
        FROM special_offers so
        INNER JOIN products p ON p.id = so.product_id
        ${where}
@@ -965,7 +974,7 @@ export const specialOffers = {
     if (!offer) return undefined;
     const withProduct = db.prepare(
       `SELECT so.*, p.name, p.slug, p.price, p.weight, p.karat, p.stock, p.images, p.videos,
-              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.published
+              p.ajrat_override, p.ajrat_percent, p.ajrat_fixed, p.fixed_price, p.published
        FROM special_offers so
        INNER JOIN products p ON p.id = so.product_id
        WHERE so.id = ?`

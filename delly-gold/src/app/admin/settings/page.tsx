@@ -74,6 +74,8 @@ export default function AdminSettingsPage() {
   const [markup, setMarkup] = useState("5");
   const [fixedFee, setFixedFee] = useState("0");
   const [tax, setTax] = useState("0");
+  // «قیمت‌گذاری خودکار» — master switch for live gold-linked pricing.
+  const [livePricing, setLivePricing] = useState(false);
   const [priceSource, setPriceSource] = useState("auto");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -172,6 +174,7 @@ export default function AdminSettingsPage() {
           setMarkup(d.data.gold_markup_percent ?? "5");
           setFixedFee(d.data.gold_fixed_fee ?? "0");
           setTax(d.data.gold_tax_percent ?? "0");
+          setLivePricing(d.data.live_pricing_enabled === "1" || d.data.live_pricing_enabled === "true");
           setPriceSource(
             d.data.gold_price_source === "estjt" || d.data.gold_price_source === "tgju"
               ? d.data.gold_price_source
@@ -242,6 +245,7 @@ export default function AdminSettingsPage() {
         gold_fixed_fee: fixedFee,
         gold_tax_percent: tax,
         gold_price_source: priceSource,
+        live_pricing_enabled: livePricing ? "1" : "0",
       }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
@@ -382,6 +386,8 @@ export default function AdminSettingsPage() {
   }
 
   const basePrice = goldData?.price ?? 0;
+  /** The rate live pricing uses — the poller publishes this same figure. */
+  const liveRate = goldData?.price ?? 0;
   const markupNum = parseFloat(markup) || 0;
   const fixedNum = parseFloat(fixedFee) || 0;
   const taxNum = parseFloat(tax) || 0;
@@ -1115,6 +1121,38 @@ export default function AdminSettingsPage() {
 
       <div style={cardStyle}>
         <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: "600", marginBottom: "20px" }}>تنظیم سود و اجرت</h3>
+
+        {/* ── Master switch: live pricing ── */}
+        <div style={{ marginBottom: "20px", backgroundColor: livePricing ? "rgba(212,175,55,0.07)" : "#121212", border: `1px solid ${livePricing ? "rgba(212,175,55,0.35)" : "#2a2a2a"}`, borderRadius: "10px", padding: "14px" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+            <div onClick={() => setLivePricing(v => !v)}
+              style={{ width: "40px", height: "22px", borderRadius: "11px", backgroundColor: livePricing ? "#d4af37" : "#333", position: "relative", cursor: "pointer", transition: "background-color 0.2s", flexShrink: 0 }}>
+              <div style={{ position: "absolute", top: "3px", left: livePricing ? "21px" : "3px", width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "#fff", transition: "left 0.2s" }} />
+            </div>
+            <div>
+              <p style={{ color: "#fff", fontSize: "13px", fontWeight: "600", margin: 0 }}>قیمت‌گذاری خودکار بر اساس نرخ لحظه‌ای طلا</p>
+              <p style={{ color: "#666", fontSize: "11px", margin: "2px 0 0" }}>
+                {livePricing
+                  ? "✅ روشن — قیمت پایه هر محصول از نرخ روز × وزن × عیار محاسبه و اجرت روی آن اعمال می‌شود"
+                  : "خاموش — قیمت پایه همان مقداری است که در فرم محصول ذخیره شده"}
+              </p>
+            </div>
+          </label>
+          {livePricing && (
+            <div style={{ marginTop: "10px", borderTop: "1px solid #222", paddingTop: "10px" }}>
+              <p style={{ color: "#888", fontSize: "11px", lineHeight: 1.9, margin: 0 }}>
+                نرخ لحظه‌ای مصرف‌شده:{" "}
+                <span style={{ color: "#d4af37", fontWeight: 700 }}>
+                  {liveRate > 0 ? `${liveRate.toLocaleString("fa-IR")} تومان / گرم (۱۸ عیار)` : "در دسترس نیست"}
+                </span>
+                <br />
+                محاسبه: قیمت پایه = نرخ ۱۸ عیار × وزن × (عیار ÷ ۱۸) — سپس اجرت و مالیات روی آن اعمال می‌شود.
+                <br />
+                هر محصولی که در فرم محصول «قیمت ثابت» داشته باشد، از این محاسبه مستثنا می‌ماند.
+              </p>
+            </div>
+          )}
+        </div>
 
         <div style={{ marginBottom: "16px" }}>
           <label style={{ color: "#888", fontSize: "13px", display: "block", marginBottom: "6px" }}>

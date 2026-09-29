@@ -1,7 +1,8 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Plus, Pencil, Trash2, Search, X, Info, Upload, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Info, Upload, Sparkles, Lock } from "lucide-react";
+import { calcFinalPrice } from "@/lib/pricing";
 import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; }
@@ -11,11 +12,13 @@ interface Product {
   express_shipping: number;
   low_wage: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
+  /** 1 = «قیمت ثابت» — exempt from live gold pricing. */
+  fixed_price?: number;
   images: string; videos: string; category: { name: string };
   variants?: { id: string; weight: number; price: number; stock: number }[];
   specs?: { label: string; value: string }[];
 }
-interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; gold_tax_percent?: string; }
+interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; gold_tax_percent?: string; live_pricing_enabled?: string; gold_live_rate?: string; }
 
 /** Weight choices (وزن) — kept as strings while editing the form. */
 interface VariantDraft { id: string; weight: string; price: string; stock: string; }
@@ -29,6 +32,7 @@ const empty = {
   low_wage: false,
   images: [] as string[], videos: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
+  fixed_price: false,
   variants: [] as VariantDraft[], specs: [] as SpecDraft[],
 };
 
@@ -91,6 +95,7 @@ export default function AdminProductsPage() {
       ajrat_override: p.ajrat_override === 1,
       ajrat_percent: p.ajrat_percent !== null ? String(p.ajrat_percent) : "",
       ajrat_fixed:   p.ajrat_fixed   !== null ? String(p.ajrat_fixed)   : "",
+      fixed_price:   p.fixed_price === 1,
       variants: (p.variants ?? []).map(v => ({
         id: v.id, weight: String(v.weight), price: String(v.price), stock: String(v.stock),
       })),
@@ -141,6 +146,7 @@ export default function AdminProductsPage() {
         ajrat_override: form.ajrat_override,
         ajrat_percent: form.ajrat_override && form.ajrat_percent !== "" ? parseFloat(form.ajrat_percent) : null,
         ajrat_fixed:   form.ajrat_override && form.ajrat_fixed   !== "" ? parseFloat(form.ajrat_fixed)   : null,
+        fixed_price:   form.fixed_price,
         variants: form.variants
           .map(v => ({ id: v.id, weight: parseFloat(v.weight), price: parseFloat(v.price), stock: parseInt(v.stock) || 0 }))
           .filter(v => v.weight > 0 && v.price > 0),
@@ -167,17 +173,38 @@ export default function AdminProductsPage() {
 
   function autoSlug(n: string) { return n.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""); }
 
-  const markupPct  = form.ajrat_override && form.ajrat_percent !== "" ? parseFloat(form.ajrat_percent) || 0 : parseFloat(gs.gold_markup_percent) || 0;
-  const fixedFee   = form.ajrat_override && form.ajrat_fixed   !== "" ? parseFloat(form.ajrat_fixed)   || 0 : parseFloat(gs.gold_fixed_fee)     || 0;
-  const basePrice  = parseFloat(form.price) || 0;
-  const wt         = parseFloat(form.weight) || 0;
-  const ajrat      = Math.round(basePrice * (markupPct / 100) + fixedFee * wt);
-  // Tax applies to the اجرت only (same rule as calcFinalPrice in lib/pricing.ts) —
-  // the storefront adds it, so this preview must too or admin would show a
-  // different number than the customer pays.
-  const taxPct     = parseFloat(gs.gold_tax_percent || "") || 0;
-  const tax        = taxPct > 0 ? Math.round(ajrat * (taxPct / 100)) : 0;
-  const finalPrice = basePrice + ajrat + tax;
+  // The preview runs the SHARED pricing function (lib/pricing.ts) on the form
+  // values, so the number the operator sees is exactly what the storefront will
+  // charge — including live gold pricing and the اجرت-only tax.
+  const livePricingOn = gs.live_pricing_enabled === "1" || gs.live_pricing_enabled === "true";
+
+  const wt = parseFloat(form.weight) || 0;
+  const preview = calcFinalPrice(
+    {
+      price: parseFloat(form.price) || 0,
+      weight: wt,
+      karat: parseInt(form.karat) || 18,
+      fixed_price: form.fixed_price ? 1 : 0,
+      ajrat_override: form.ajrat_override ? 1 : 0,
+      ajrat_percent: form.ajrat_override && form.ajrat_percent !== "" ? parseFloat(form.ajrat_percent) : null,
+      ajrat_fixed:   form.ajrat_override && form.ajrat_fixed   !== "" ? parseFloat(form.ajrat_fixed)   : null,
+    },
+    {
+      gold_markup_percent: gs.gold_markup_percent,
+      gold_fixed_fee: gs.gold_fixed_fee,
+      gold_tax_percent: gs.gold_tax_percent,
+      live_pricing_enabled: gs.live_pricing_enabled,
+      // Prefer the rate the poller published; fall back to what this page loaded.
+      gold_live_rate: gs.gold_live_rate || (goldPrice > 0 ? String(goldPrice) : ""),
+    },
+  );
+  const basePrice  = preview.basePrice;
+  const ajrat      = preview.ajrat;
+  const tax        = preview.tax;
+  const taxPct     = preview.taxPct;
+  const markupPct  = preview.markupPct;
+  const finalPrice = preview.finalPrice;
+  const previewIsLive = preview.isLive;
 
   /**
    * The newest 18k gram rate. Cached per page load in `goldPrice`; the first
@@ -278,6 +305,23 @@ export default function AdminProductsPage() {
           <span style={{ color:"#d4af37", fontWeight:"700" }}>{gs.gold_markup_percent}%</span>
           <span style={{ color:"#555" }}>+</span>
           <span style={{ color:"#d4af37", fontWeight:"700" }}>{Number(gs.gold_fixed_fee).toLocaleString("fa-IR")} ت/گرم</span>
+          <span
+            title={livePricingOn
+              ? "قیمت پایه محصولات از نرخ لحظه‌ای طلا محاسبه می‌شود، مگر محصولاتی که قیمت ثابت دارند"
+              : "قیمت پایه هر محصول همان مقداری است که در فرم محصول ذخیره شده است"}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "5px",
+              backgroundColor: livePricingOn ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)",
+              color: livePricingOn ? "#10b981" : "#888",
+              padding: "3px 9px", borderRadius: "20px", fontSize: "11px", whiteSpace: "nowrap",
+              marginRight: "10px",
+            }}
+          >
+            {livePricingOn
+              ? <><Sparkles size={10}/> قیمت‌گذاری خودکار: روشن</>
+              : <><Lock size={10}/> قیمت‌گذاری خودکار: خاموش</>
+            }
+          </span>
           <a href="/admin/settings" style={{ color:"#555", fontSize:"11px", marginRight:"auto", textDecoration:"none" }}>ویرایش ←</a>
         </div>
 
@@ -299,10 +343,17 @@ export default function AdminProductsPage() {
                   <tr><td colSpan={9} style={{ padding:"32px", textAlign:"center", color:"#555" }}>محصولی یافت نشد</td></tr>
                 ) : products.map(p => {
                   const imgs = (() => { try { return JSON.parse(p.images); } catch { return []; } })();
-                  const gM = parseFloat(gs.gold_markup_percent)||0, gF = parseFloat(gs.gold_fixed_fee)||0;
-                  const uP = p.ajrat_override===1 && p.ajrat_percent!==null ? p.ajrat_percent : gM;
-                  const uF = p.ajrat_override===1 && p.ajrat_fixed!==null   ? p.ajrat_fixed   : gF;
-                  const aj = Math.round(p.price*(uP/100)+uF*p.weight);
+                  // Same shared function the storefront uses, so the table shows the
+                  // price the customer really pays (live base + اجرت + tax).
+                  const calc = calcFinalPrice(p, {
+                    gold_markup_percent: gs.gold_markup_percent,
+                    gold_fixed_fee: gs.gold_fixed_fee,
+                    gold_tax_percent: gs.gold_tax_percent,
+                    live_pricing_enabled: gs.live_pricing_enabled,
+                    gold_live_rate: gs.gold_live_rate || (goldPrice > 0 ? String(goldPrice) : ""),
+                  });
+                  const isLive = calc.isLive;
+                  const isLocked = calc.isLocked;
                   return (
                     <tr key={p.id} style={{ borderTop:"1px solid #222" }}>
                       <td style={{ padding:"10px 14px" }}>
@@ -319,12 +370,27 @@ export default function AdminProductsPage() {
                         <p style={{ color:"#555", fontSize:"11px" }}>{p.slug}</p>
                       </td>
                       <td style={{ padding:"10px 14px", color:"#888", fontSize:"12px" }}>{p.category?.name||"—"}</td>
-                      <td style={{ padding:"10px 14px", color:"#aaa", fontSize:"12px", whiteSpace:"nowrap" }}>{p.price.toLocaleString("fa-IR")} ت</td>
+                      <td style={{ padding:"10px 14px", whiteSpace:"nowrap" }}>
+                        <p style={{ color: isLive ? "#10b981" : "#aaa", fontSize:"12px" }}>{calc.basePrice.toLocaleString("fa-IR")} ت</p>
+                        {isLocked ? (
+                          <span title="قیمت ثابت — از نرخ روز طلا پیروی نمی‌کند" style={{ display:"inline-flex", alignItems:"center", gap:"3px", backgroundColor:"rgba(239,68,68,0.15)", color:"#ef4444", padding:"1px 6px", borderRadius:"20px", fontSize:"10px", marginTop:"3px" }}>
+                            <Lock size={9}/> ثابت
+                          </span>
+                        ) : isLive ? (
+                          <span title={`محاسبه‌شده از نرخ لحظه‌ای: ${calc.liveRate.toLocaleString("fa-IR")} ت/گرم`} style={{ display:"inline-flex", alignItems:"center", gap:"3px", backgroundColor:"rgba(16,185,129,0.15)", color:"#10b981", padding:"1px 6px", borderRadius:"20px", fontSize:"10px", marginTop:"3px" }}>
+                            <Sparkles size={9}/> لحظه‌ای
+                          </span>
+                        ) : null}
+                        {isLive && (
+                          <p style={{ color:"#3f5c4a", fontSize:"9px", marginTop:"2px" }}>ذخیره‌شده: {p.price.toLocaleString("fa-IR")}</p>
+                        )}
+                      </td>
                       <td style={{ padding:"10px 14px", whiteSpace:"nowrap" }}>
                         <span style={{ color: p.ajrat_override===1?"#f59e0b":"#888", fontSize:"11px" }}>{p.ajrat_override===1?"اختصاصی":"جهانی"}</span>
-                        <p style={{ color:"#d4af37", fontSize:"11px" }}>+{aj.toLocaleString("fa-IR")}</p>
+                        <p style={{ color:"#d4af37", fontSize:"11px" }}>+{calc.ajrat.toLocaleString("fa-IR")}</p>
+                        {calc.tax > 0 && <p style={{ color:"#7c6bd6", fontSize:"10px" }}>مالیات +{calc.tax.toLocaleString("fa-IR")}</p>}
                       </td>
-                      <td style={{ padding:"10px 14px", color:"#d4af37", fontSize:"13px", fontWeight:"700", whiteSpace:"nowrap" }}>{(p.price+aj).toLocaleString("fa-IR")} ت</td>
+                      <td style={{ padding:"10px 14px", color:"#d4af37", fontSize:"13px", fontWeight:"700", whiteSpace:"nowrap" }}>{calc.finalPrice.toLocaleString("fa-IR")} ت</td>
                       <td style={{ padding:"10px 14px" }}>
                         <span style={{ color: p.stock>0?"#10b981":"#ef4444", fontSize:"13px", fontWeight:"600" }}>{p.stock}</span>
                       </td>
@@ -470,6 +536,24 @@ export default function AdminProductsPage() {
                   {goldNote && (
                     <p style={{ color: "#5d8a5d", fontSize: "10px", marginTop: "5px" }}>{goldNote}</p>
                   )}
+                  {/* «قیمت ثابت» — exempt this product from live gold pricing */}
+                  <div style={{ marginTop: "10px", backgroundColor: form.fixed_price ? "rgba(239,68,68,0.07)" : "#121212", border: `1px solid ${form.fixed_price ? "rgba(239,68,68,0.3)" : "#2a2a2a"}`, borderRadius: "8px", padding: "10px 12px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                      <div onClick={()=>setForm(f=>({...f,fixed_price:!f.fixed_price}))}
+                        style={{ width:"34px", height:"19px", borderRadius:"10px", backgroundColor:form.fixed_price?"#ef4444":"#333", position:"relative", cursor:"pointer", transition:"background-color 0.2s", flexShrink:0 }}>
+                        <div style={{ position:"absolute", top:"2.5px", left:form.fixed_price?"18px":"2.5px", width:"14px", height:"14px", borderRadius:"50%", backgroundColor:"#fff", transition:"left 0.2s" }}/>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                        <Lock size={12} color={form.fixed_price ? "#ef4444" : "#888"} />
+                        <p style={{ color: "#fff", fontSize: "13px", fontWeight: "600", margin: 0 }}>قیمت ثابت</p>
+                      </div>
+                    </label>
+                    <p style={{ color: "#666", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.8 }}>
+                      {form.fixed_price
+                        ? "🔒 این محصول همیشه با همین قیمت پایه فروخته می‌شود و از نرخ روز طلا تبعیت نمی‌کند — مناسب کالاهای با قیمت توافقی یا تخفیف‌دار."
+                        : "این محصول از نرخ لحظه‌ای طلا تبعیت می‌کند (در صورت روشن بودن «قیمت‌گذاری خودکار» در تنظیمات). برای استثنا کردن، این کلید را روشن کنید."}
+                    </p>
+                  </div>
                 </div>
                 <div style={{ backgroundColor:"#121212", border:"1px solid #2a2a2a", borderRadius:"8px", padding:"12px 14px", marginBottom:"12px" }}>
                   <label style={{ display:"flex", alignItems:"center", gap:"8px", cursor:"pointer", marginBottom: form.ajrat_override?"12px":"0" }}>
@@ -571,17 +655,27 @@ export default function AdminProductsPage() {
                     <p style={{ color:"#888", fontSize:"11px", marginBottom:"8px", fontWeight:"600" }}>پیش‌نمایش قیمت</p>
                     <div style={{ display:"grid", gridTemplateColumns:`repeat(${tax>0?4:3},1fr)`, gap:"6px" }}>
                       {[
-                        { l:"قیمت پایه", v:basePrice },
-                        { l:`اجرت (${markupPct}%)`, v:ajrat },
-                        ...(tax>0?[{ l:`مالیات (${taxPct}%)`, v:tax }]:[]),
+                        { l: previewIsLive ? "قیمت پایه (لحظه‌ای)" : "قیمت پایه", v: basePrice, live: previewIsLive },
+                        { l:`اجرت (${markupPct}%)`, v: ajrat },
+                        ...(tax>0?[{ l:`مالیات (${taxPct}%)`, v: tax }]:[]),
                         { l:"قیمت نهایی", v:finalPrice, h:true },
                       ].map(it=>(
-                        <div key={it.l} style={{ backgroundColor:it.h?"rgba(212,175,55,0.12)":"#121212", border:`1px solid ${it.h?"rgba(212,175,55,0.3)":"#222"}`, borderRadius:"6px", padding:"8px 10px", textAlign:"center" }}>
+                        <div key={it.l} style={{ backgroundColor:it.h?"rgba(212,175,55,0.12)":it.live?"rgba(16,185,129,0.08)":"#121212", border:`1px solid ${it.h?"rgba(212,175,55,0.3)":it.live?"rgba(16,185,129,0.35)":"#222"}`, borderRadius:"6px", padding:"8px 10px", textAlign:"center" }}>
                           <p style={{ color:"#666", fontSize:"9px", marginBottom:"3px" }}>{it.l}</p>
-                          <p style={{ color:it.h?"#d4af37":"#fff", fontSize:"12px", fontWeight:"700" }}>{it.v.toLocaleString("fa-IR")}<span style={{ color:"#555", fontSize:"9px", marginRight:"2px" }}>ت</span></p>
+                          <p style={{ color:it.h?"#d4af37":it.live?"#10b981":"#fff", fontSize:"12px", fontWeight:"700" }}>{it.v.toLocaleString("fa-IR")}<span style={{ color:"#555", fontSize:"9px", marginRight:"2px" }}>ت</span></p>
                         </div>
                       ))}
                     </div>
+                    {previewIsLive && (
+                      <p style={{ color:"#10b981", fontSize:"9px", marginTop:"6px", textAlign:"center" }}>
+                        ⚡ قیمت پایه از نرخ لحظه‌ای طلا محاسبه می‌شود — با تغییر نرخ بازار، قیمت این محصول هم به‌روز می‌شود.
+                      </p>
+                    )}
+                    {preview.isLocked && (
+                      <p style={{ color:"#f59e0b", fontSize:"9px", marginTop:"6px", textAlign:"center" }}>
+                        🔒 «قیمت ثابت» — این محصول از نرخ روز طلا پیروی نمی‌کند و با همین قیمت پایه فروخته می‌شود.
+                      </p>
+                    )}
                     {goldPrice>0&&wt>0&&<p style={{ color:"#555", fontSize:"9px", marginTop:"6px", textAlign:"center" }}>طلای ۱۸ع: {goldPrice.toLocaleString("fa-IR")} ت/گرم</p>}
                   </div>
                 )}

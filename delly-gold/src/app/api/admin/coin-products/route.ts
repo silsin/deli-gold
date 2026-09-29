@@ -70,6 +70,9 @@ export async function POST(req: NextRequest) {
       ajrat_override: 1,
       ajrat_percent: profit !== undefined && profit !== "" ? parseFloat(profit) : 0,
       ajrat_fixed: 0,
+      // Coins follow the gold rate by default (their base is derived from it
+      // anyway) — the admin can lock one from the product form if needed.
+      fixed_price: 0,
       variants: "[]",
       specs: "[]",
     });

@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, ajrat_override, ajrat_percent, ajrat_fixed, variants, specs } = body;
+    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, ajrat_override, ajrat_percent, ajrat_fixed, fixed_price, variants, specs } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       ajrat_override: ajrat_override ? 1 : 0,
       ajrat_percent: ajrat_override && ajrat_percent !== undefined ? parseFloat(ajrat_percent) : null,
       ajrat_fixed: ajrat_override && ajrat_fixed !== undefined ? parseFloat(ajrat_fixed) : null,
+      fixed_price: fixed_price ? 1 : 0,
       variants: serializeVariants(normalizeVariants(variants)),
       specs: serializeSpecs(normalizeSpecs(specs)),
     }));

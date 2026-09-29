@@ -65,6 +65,9 @@ export async function GET(req: NextRequest) {
     if (!settings.gold_markup_percent) settings.gold_markup_percent = "5";
     if (!settings.gold_fixed_fee)      settings.gold_fixed_fee = "0";
     if (!settings.gold_tax_percent)    settings.gold_tax_percent = "0";
+    // Live gold-linked pricing is OFF by default — flipping this on changes how
+    // every unlocked product is priced, so it must be an explicit decision.
+    if (settings.live_pricing_enabled !== "0") settings.live_pricing_enabled = "0";
     if (!settings.theme_palette)       settings.theme_palette = "gold-dark";
     if (!settings.font_size_mobile)    settings.font_size_mobile = "14";
     if (!settings.font_size_desktop)   settings.font_size_desktop = "16";
@@ -207,6 +210,9 @@ export async function POST(req: NextRequest) {
       if (key === "gold_price_source") {
         const v = String(value);
         value = v === "estjt" || v === "tgju" || v === "auto" ? v : "auto";
+      }
+      if (key === "live_pricing_enabled") {
+        value = String(value) === "1" ? "1" : "0";
       }
       if (key === PRODUCT_PAGE_SETTING_KEY) {
         // Normalize the gift options / packaging line / FAQ accordion

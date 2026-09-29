@@ -28,11 +28,15 @@ interface Product {
   variants: string; specs: string;
   category_name: string | null; category_slug: string | null;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
+  fixed_price?: number;
 }
 interface Settings {
   gold_markup_percent: string;
   gold_fixed_fee: string;
   gold_tax_percent?: string;
+  /** «قیمت‌گذاری خودکار» master switch + the live 18k rate it uses. */
+  live_pricing_enabled?: string;
+  gold_live_rate?: string;
   product_page_json?: string;
 }
 interface Review { id: string; name: string; rating: number; body: string; createdAt: string; }
@@ -366,6 +370,10 @@ export default function ProductDetailPage() {
   const pricing = useMemo(() => calcFinalPrice({
     price: basePrice,
     weight,
+    // Live pricing derives the base from the live rate × weight × (karat/18);
+    // a product marked «قیمت ثابت» keeps its stored base (see lib/pricing.ts).
+    karat: product?.karat ?? 18,
+    fixed_price: product?.fixed_price ?? 0,
     ajrat_override: product?.ajrat_override ?? 0,
     ajrat_percent: product?.ajrat_percent ?? null,
     ajrat_fixed: product?.ajrat_fixed ?? null,

@@ -164,6 +164,7 @@ type ProductRow = {
   ajrat_override: number;
   ajrat_percent: number | null;
   ajrat_fixed: number | null;
+  fixed_price?: number;
   category_name?: string | null;
   category_slug?: string | null;
 };
@@ -190,6 +191,9 @@ export function serializeProduct(row: ProductRow) {
     ajrat_override: row.ajrat_override,
     ajrat_percent: row.ajrat_percent,
     ajrat_fixed: row.ajrat_fixed,
+    // «قیمت ثابت» lock — when 1 this product keeps its stored base even if the
+    // site-wide live pricing is on (see lib/pricing.ts calcEffectiveBase).
+    fixed_price: row.fixed_price ?? 0,
     category: row.category_name
       ? { name: row.category_name, slug: row.category_slug ?? "" }
       : null,

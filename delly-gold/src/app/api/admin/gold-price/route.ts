@@ -740,6 +740,17 @@ async function refreshChoice(choice: PriceSourceChoice, budgetMs: number): Promi
   caches[choice] = ready;
   holdUntil[choice] = (ready.staleRates?.length ?? 0) > 0 ? now + STALE_HOLD : 0;
   saveSnapshot(ready);
+  // Publish the fresh 18k rate into settings: every storefront component already
+  // reads /api/admin/settings, so live pricing (lib/pricing.ts) gets the newest
+  // rate with no extra request. Toman per gram.
+  if (ready.price > 0) {
+    try {
+      setSetting("gold_live_rate", String(ready.price));
+      setSetting("gold_live_rate_at", new Date(now).toISOString());
+    } catch (e) {
+      console.error("[gold-price] could not persist live rate:", e);
+    }
+  }
   return ready;
 }
 
