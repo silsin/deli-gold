@@ -671,38 +671,37 @@ export default function ProductDetailPage() {
             </div>
 
             {/* How the price is calculated — always visible, like the reference.
-                Every number here is derived from the SAME pricing result, so the
-                breakdown can never contradict the total. */}
+                Exactly ONE rate is shown, and it is always the rate the price was
+                actually built from (live market rate, or the stored basis). */}
             <div className="pd-formula">
               <b>نحوه محاسبه قیمت</b><br />
               فرمول : (نرخ طلای روز + اجرت + سود + مالیات) × وزن
-              {dayRate > 0 && (
-                <>
-                  <br />
-                  نرخ روز طلای ۱۸ عیار: <b>{fa(dayRate)}</b> تومان
-                  {productKarat !== 18 && (
-                    <>
-                      <br />
-                      معادل {fa(productKarat)} عیار: <b>{fa(Math.round(dayRate * (productKarat / 18)))}</b> تومان / گرم
-                    </>
-                  )}
-                </>
-              )}
               {pricing.isLive ? (
                 <>
+                  {dayRate > 0 && (
+                    <>
+                      <br />
+                      نرخ روز طلای ۱۸ عیار: <b>{fa(dayRate)}</b> تومان
+                      {productKarat !== 18 && (
+                        <>
+                          <br />
+                          معادل {fa(productKarat)} عیار: <b>{fa(Math.round(dayRate * (productKarat / 18)))}</b> تومان / گرم
+                        </>
+                      )}
+                    </>
+                  )}
                   <br />
                   <span className="pd-muted">این محصول از نرخ لحظه‌ای بالا قیمت‌گذاری می‌شود و با تغییر بازار به‌روز می‌شود.</span>
-                </>
-              ) : pricing.isLocked ? (
-                <>
-                  <br />
-                  <span className="pd-muted">این محصول «قیمت ثابت» است و از نرخ روز طلا پیروی نمی‌کند.</span>
                 </>
               ) : (
                 <>
                   <br />
+                  مبنای قیمت این محصول: <b>{fa(goldGram)}</b> تومان / گرم
+                  <br />
                   <span className="pd-muted">
-                    قیمت این محصول از قیمت پایه ذخیره‌شده محاسبه شده (مبنا: {fa(goldGram)} تومان / گرم) و با نرخ لحظه‌ای بالا تغییر نمی‌کند.
+                    {pricing.isLocked
+                      ? "این محصول «قیمت ثابت» است و از نرخ روز طلا پیروی نمی‌کند."
+                      : "قیمت از مقدار ذخیره‌شده محاسبه شده و با نرخ بازار تغییر نمی‌کند — برای قیمت‌گذاری خودکار، در «تنظیمات» گزینه «قیمت‌گذاری خودکار» را روشن کنید."}
                   </span>
                 </>
               )}
