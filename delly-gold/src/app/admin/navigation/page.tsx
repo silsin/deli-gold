@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Save, RefreshCw, GripVertical, X, ChevronDown, FolderTree } from "lucide-react";
+import { Plus, Save, RefreshCw, GripVertical, X, ChevronDown, FolderTree, ChevronUp } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 import { GUIDE_PAGE_DEFINITIONS } from "@/lib/guide-pages-settings";
 
@@ -306,6 +306,17 @@ function LinkEditor({
     { value: "coin=true", label: "سکه و آبشده" },
   ];
 
+  /** Shared look for the up/down reorder buttons (disabled state included). */
+  const moveBtnStyle = (disabled: boolean): React.CSSProperties => ({
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: "20px", height: "15px", padding: 0,
+    backgroundColor: disabled ? "transparent" : "rgba(200,161,42,0.1)",
+    border: `1px solid ${disabled ? "#2a2a2a" : "rgba(200,161,42,0.35)"}`,
+    color: disabled ? "#3a3a3a" : "#c8a12a",
+    borderRadius: "4px", cursor: disabled ? "default" : "pointer",
+    fontFamily: "inherit",
+  });
+
   function addLink() {
     onChange([...links, { label: "", href: "/products" }]);
   }
@@ -316,6 +327,26 @@ function LinkEditor({
       const next = { ...prev };
       delete next[i];
       return next;
+    });
+  }
+
+  /**
+   * Move a top-level item one slot up (-1) or down (+1) in the saved list.
+   * `openKids` is keyed by index, so it has to be shifted with the item or the
+   * submenu panels would attach themselves to the wrong rows.
+   */
+  function moveLink(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (i < 0 || j < 0 || i >= links.length || j >= links.length) return;
+    const next = [...links];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+    setOpenKids(prev => {
+      const shifted = { ...prev };
+      // The moved row and its neighbour swap places; drop any stale keys.
+      delete shifted[i];
+      delete shifted[j];
+      return shifted;
     });
   }
   function updateLink(i: number, field: "label" | "href", val: string) {
@@ -342,6 +373,18 @@ function LinkEditor({
     const kids = [...(next[i].children ?? [])];
     kids[j] = { ...kids[j], [field]: val };
     next[i] = { ...next[i], children: kids };
+    onChange(next);
+  }
+
+  /** Move a submenu item up/down inside its own parent. */
+  function moveChild(i: number, j: number, dir: -1 | 1) {
+    const kids = links[i].children ?? [];
+    const k = j + dir;
+    if (k < 0 || j < 0 || j >= kids.length || k >= kids.length) return;
+    const nextKids = [...kids];
+    [nextKids[j], nextKids[k]] = [nextKids[k], nextKids[j]];
+    const next = [...links];
+    next[i] = { ...next[i], children: nextKids };
     onChange(next);
   }
 
@@ -390,6 +433,30 @@ function LinkEditor({
             <div key={i} style={{ backgroundColor: "#141414", border: "1px solid #262626", borderRadius: "10px", padding: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <GripVertical size={14} color="#444" style={{ flexShrink: 0 }} />
+                {/* Reorder: in an RTL list index 0 is the right-most item, so
+                    "up" in the visual column = the next index along. */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 1, flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => moveLink(i, -1)}
+                    disabled={i === 0}
+                    title="یک جایگاه جلوتر (به راست)"
+                    aria-label="انتقال به بالا"
+                    style={moveBtnStyle(i === 0)}
+                  >
+                    <ChevronUp size={12} style={{ transform: "rotate(90deg)" }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveLink(i, 1)}
+                    disabled={i === links.length - 1}
+                    title="یک جایگاه عقب‌تر (به چپ)"
+                    aria-label="انتقال به پایین"
+                    style={moveBtnStyle(i === links.length - 1)}
+                  >
+                    <ChevronDown size={12} style={{ transform: "rotate(90deg)" }} />
+                  </button>
+                </div>
                 <input
                   value={link.label}
                   onChange={e => updateLink(i, "label", e.target.value)}
@@ -440,6 +507,28 @@ function LinkEditor({
                   {kids.map((child, j) => (
                     <div key={j} style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#0d0f12", borderRadius: "8px", padding: "7px 10px", border: "1px dashed #262a30", flexWrap: "wrap" }}>
                       <span style={{ color: "#c8a12a", fontSize: 10, flexShrink: 0 }}>◆</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 1, flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => moveChild(i, j, -1)}
+                          disabled={j === 0}
+                          title="یک جایگاه جلوتر"
+                          aria-label="انتقال زیرمنو به بالا"
+                          style={moveBtnStyle(j === 0)}
+                        >
+                          <ChevronUp size={12} style={{ transform: "rotate(90deg)" }} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveChild(i, j, 1)}
+                          disabled={j === kids.length - 1}
+                          title="یک جایگاه عقب‌تر"
+                          aria-label="انتقال زیرمنو به پایین"
+                          style={moveBtnStyle(j === kids.length - 1)}
+                        >
+                          <ChevronDown size={12} style={{ transform: "rotate(90deg)" }} />
+                        </button>
+                      </div>
                       <input
                         value={child.label}
                         onChange={e => updateChild(i, j, "label", e.target.value)}
@@ -580,7 +669,7 @@ export default function AdminNavigationPage() {
               onChange={setNavLinks}
               allowChildren
               categorySync={{ onRun: syncCategoriesIntoNav, topCount: topLevelCategoryCount, message: syncMsg }}
-              childrenHint="زیرمنوها روی دسکتاپ با هاور (حرکت موس روی آیتم) باز می‌شوند و در موبایل با دکمه‌ی «باز کردن زیرمنو» نمایش داده می‌شوند."
+              childrenHint="زیرمنوها روی دسکتاپ با هاور (حرکت موس روی آیتم) باز می‌شوند و در موبایل با دکمه‌ی «باز کردن زیرمنو» نمایش داده می‌شوند. ترتیب نمایش را با دکمه‌های ↑↓ کنار هر آیتم تغییر دهید و سپس «ذخیره منوی ناوبری» را بزنید."
             />
             {savedNav && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ منوی ناوبری ذخیره شد</div>}
             <button onClick={saveNavLinks} disabled={savingNav}
