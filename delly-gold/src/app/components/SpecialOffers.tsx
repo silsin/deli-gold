@@ -35,6 +35,9 @@ const AUTOPLAY_MS = 3000;
 /** Must match the `gap` on `.dg-so-track`. */
 const CARD_GAP = 10;
 
+/** After a manual arrow press, autoplay stays frozen this long so the user can read the card. */
+const MANUAL_PAUSE_MS = 5000;
+
 /**
  * Styles mirror younesgold.com's «پیشنهاد شگفت انگیز» block 1:1 —
  * `.special-container` (gold gradient panel), the `.countdown` box/colon markup,
@@ -86,7 +89,7 @@ const CSS = `
 .dg-so-old{color:#dc3545;font-size:12px;padding:3px 6px;border-radius:4px;background:rgba(220,53,69,.08);}
 .dg-so-new{color:#fbbf1f;font-size:15px;font-weight:700;}
 .dg-so-unit{color:#fbb500;font-size:11px;}
-.dg-so-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#8a6d20;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-so-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#8a6d20;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:30;transition:all .2s ease;touch-action:manipulation;}
 .dg-so-nav:hover{background:#ea0;color:#fff;border-color:#ea0;}
 .dg-so-nav-left{left:2px;}
 .dg-so-nav-right{right:2px;}
@@ -159,6 +162,8 @@ export default function SpecialOffers() {
   const [expired, setExpired]   = useState(false);
   const scrollRef               = useRef<HTMLDivElement>(null);
   const pausedRef               = useRef(false);
+  /** Timestamp until which autoplay is frozen after a manual arrow press. */
+  const manualHoldRef      = useRef(0);
   const { add } = useCart();
 
   useEffect(() => {
@@ -199,6 +204,7 @@ export default function SpecialOffers() {
     const id = setInterval(() => {
       const el = scrollRef.current;
       if (!el || pausedRef.current) return;
+      if (Date.now() < manualHoldRef.current) return;   // frozen by a manual arrow press
 
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 4) return;                                   // everything already fits
@@ -230,6 +236,8 @@ export default function SpecialOffers() {
   }
 
   function scroll(dir: "left" | "right") {
+    // Freeze autoplay for 5s so the card the user just landed on stays put.
+    manualHoldRef.current = Date.now() + MANUAL_PAUSE_MS;
     scrollRef.current?.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
   }
 

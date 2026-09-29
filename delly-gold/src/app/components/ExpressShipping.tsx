@@ -24,6 +24,9 @@ const AUTOPLAY_MS = 3000;
 /** Must match the `gap` on `.dg-ex-track`. */
 const CARD_GAP = 10;
 
+/** After a manual arrow press, autoplay stays frozen this long so the user can read the card. */
+const MANUAL_PAUSE_MS = 5000;
+
 /**
  * Same card/carousel design as SpecialOffers («پیشنهاد شگفت انگیز») but with a
  * teal/emerald panel instead of the gold gradient, and a delivery badge instead
@@ -73,7 +76,7 @@ const CSS = `
 .dg-ex-price{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:15px 0 0;direction:rtl;font-family:var(--font-price,inherit);}
 .dg-ex-new{color:#0f766e;font-size:15px;font-weight:700;}
 .dg-ex-unit{color:#14b8a6;font-size:11px;}
-.dg-ex-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#0f766e;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-ex-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#0f766e;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:30;transition:all .2s ease;touch-action:manipulation;}
 .dg-ex-nav:hover{background:#0d9488;color:#fff;border-color:#0d9488;}
 .dg-ex-nav-left{left:2px;}
 .dg-ex-nav-right{right:2px;}
@@ -139,6 +142,8 @@ export default function ExpressShipping() {
   const [addedId, setAddedId]   = useState<string | null>(null);
   const scrollRef               = useRef<HTMLDivElement>(null);
   const pausedRef               = useRef(false);
+  /** Timestamp until which autoplay is frozen after a manual arrow press. */
+  const manualHoldRef      = useRef(0);
   const { add } = useCart();
 
   useEffect(() => {
@@ -155,6 +160,7 @@ export default function ExpressShipping() {
     const id = setInterval(() => {
       const el = scrollRef.current;
       if (!el || pausedRef.current) return;
+      if (Date.now() < manualHoldRef.current) return;   // frozen by a manual arrow press
 
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 4) return;                                   // everything already fits
@@ -185,6 +191,8 @@ export default function ExpressShipping() {
   }
 
   function scroll(dir: "left" | "right") {
+    // Freeze autoplay for 5s so the card the user just landed on stays put.
+    manualHoldRef.current = Date.now() + MANUAL_PAUSE_MS;
     scrollRef.current?.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
   }
 

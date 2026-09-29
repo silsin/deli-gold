@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ShoppingCart, Check, ChevronLeft, ChevronRight, BadgePercent } from "lucide-react";
 import Link from "next/link";
@@ -23,6 +23,9 @@ function getImg(images: string): string | null {
 const AUTOPLAY_MS = 3000;
 /** Must match the `gap` on `.dg-lw-track`. */
 const CARD_GAP = 10;
+
+/** After a manual arrow press, autoplay stays frozen this long so the user can read the card. */
+const MANUAL_PAUSE_MS = 5000;
 
 /**
  * «محصولات کم اُجرت» — same card/carousel design as ExpressShipping (and
@@ -76,7 +79,7 @@ const CSS2 = `
 .dg-lw-price{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin:15px 0 0;direction:rtl;font-family:var(--font-price,inherit);}
 .dg-lw-new{color:#6d28d9;font-size:15px;font-weight:700;}
 .dg-lw-unit{color:#a78bfa;font-size:11px;}
-.dg-lw-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#6d28d9;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all .2s ease;}
+.dg-lw-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;padding:0;border-radius:50%;background:#fff;color:#6d28d9;border:1px solid rgba(0,0,0,.06);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:30;transition:all .2s ease;touch-action:manipulation;}
 .dg-lw-nav:hover{background:#7c3aed;color:#fff;border-color:#7c3aed;}
 .dg-lw-nav-left{left:2px;}
 .dg-lw-nav-right{right:2px;}
@@ -142,6 +145,8 @@ export default function LowWageProducts() {
   const [addedId, setAddedId]   = useState<string | null>(null);
   const scrollRef               = useRef<HTMLDivElement>(null);
   const pausedRef               = useRef(false);
+  /** Timestamp until which autoplay is frozen after a manual arrow press. */
+  const manualHoldRef      = useRef(0);
   const { add } = useCart();
 
   useEffect(() => {
@@ -158,6 +163,7 @@ export default function LowWageProducts() {
     const id = setInterval(() => {
       const el = scrollRef.current;
       if (!el || pausedRef.current) return;
+      if (Date.now() < manualHoldRef.current) return;   // frozen by a manual arrow press
 
       const max = el.scrollWidth - el.clientWidth;
       if (max <= 4) return;                                   // everything already fits
@@ -188,6 +194,8 @@ export default function LowWageProducts() {
   }
 
   function scroll(dir: "left" | "right") {
+    // Freeze autoplay for 5s so the card the user just landed on stays put.
+    manualHoldRef.current = Date.now() + MANUAL_PAUSE_MS;
     scrollRef.current?.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
   }
 
