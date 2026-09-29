@@ -52,11 +52,14 @@ export default function InfoBlocks() {
   const [countdown, setCountdown] = useState(60);
   const cRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchPrice = useCallback(async (spinner = false) => {
+  // `force` is set by the refresh button: it asks the server for a NEW reading
+  // (`?refresh=1` waits for the real upstream instead of the 60s cache), while
+  // the automatic 60s poll stays on the fast cached path.
+  const fetchPrice = useCallback(async (spinner = false, force = false) => {
     if (spinner) setRefreshing(true);
     try {
       const [pr, sr] = await Promise.all([
-        fetch("/api/admin/gold-price", { cache: "no-store" }),
+        fetch(`/api/admin/gold-price${force ? "?refresh=1" : ""}`, { cache: "no-store" }),
         fetch("/api/admin/settings"),
       ]);
       const pj = await pr.json(); const sj = await sr.json();
@@ -157,7 +160,7 @@ export default function InfoBlocks() {
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                <button onClick={() => fetchPrice(true)} style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "#c8a12a" : "#bbb", padding: "2px" }}>
+                <button onClick={() => fetchPrice(true, true)} title="دریافت نرخ جدید از اتحادیه" style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "#c8a12a" : "#bbb", padding: "2px" }}>
                   <RefreshCw size={13} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />
                 </button>
                 {!loading && <span style={{ color: "#ccc", fontSize: "9px" }}>{countdown}s</span>}

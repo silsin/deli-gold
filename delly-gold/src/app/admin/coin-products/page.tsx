@@ -57,10 +57,12 @@ export default function AdminCoinProductsPage() {
     setLoading(false);
   }, []);
 
-  const fetchPrice = useCallback(async () => {
+  // `force` is passed by the refresh button so the operator gets a NEW reading
+  // from the union (the default call stays on the fast cached path).
+  const fetchPrice = useCallback(async (force = false) => {
     setPriceLoading(true);
     try {
-      const r = await fetch("/api/admin/gold-price");
+      const r = await fetch(`/api/admin/gold-price${force ? "?refresh=1" : ""}`);
       const d = await r.json();
       if (d.success && d.data.price > 0) setGoldPrice(d.data.price);
     } catch { /* keep last known price */ }
@@ -152,7 +154,7 @@ export default function AdminCoinProductsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ backgroundColor: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 8, padding: "8px 14px", color: "#d4af37", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               قیمت لحظه‌ای طلای ۱۸ عیار: {goldPrice > 0 ? `${fmt(goldPrice)} تومان` : "—"}
-              <button onClick={fetchPrice} title="بروزرسانی قیمت"
+              <button onClick={() => fetchPrice(true)} title="دریافت نرخ جدید از اتحادیه"
                 style={{ background: "none", border: "none", cursor: "pointer", color: "#888", display: "flex", padding: 2 }}>
                 <RefreshCw size={14} className={priceLoading ? "spin" : ""} />
               </button>

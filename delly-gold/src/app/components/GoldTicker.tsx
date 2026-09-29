@@ -25,11 +25,14 @@ export default function GoldTicker() {
   const [calcOpen, setCalcOpen] = useState(false);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetch_ = useCallback(async (spinner = false) => {
+  // `force` is set by the refresh button: it asks the server for a NEW reading
+  // (`?refresh=1` waits for the real upstream instead of the 60s cache), while
+  // the automatic 60s poll stays on the fast cached path.
+  const fetch_ = useCallback(async (spinner = false, force = false) => {
     if (spinner) setRefreshing(true);
     try {
       const [pr, sr] = await Promise.all([
-        fetch("/api/admin/gold-price", { cache: "no-store" }),
+        fetch(`/api/admin/gold-price${force ? "?refresh=1" : ""}`, { cache: "no-store" }),
         fetch("/api/admin/settings"),
       ]);
       const pj = await pr.json();
@@ -169,8 +172,8 @@ export default function GoldTicker() {
         {/* Refresh + countdown */}
         <div style={{ display: "flex", alignItems: "center", gap: "4px", paddingRight: "8px", flexShrink: 0 }}>
           <button
-            onClick={() => fetch_(true)}
-            title="بروزرسانی"
+            onClick={() => fetch_(true, true)}
+            title="دریافت نرخ جدید از اتحادیه"
             style={{ background: "none", border: "none", cursor: "pointer", color: refreshing ? "var(--theme-accent)" : "var(--theme-text-muted)", padding: "2px", display: "flex" }}
           >
             <RefreshCw size={12} style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }} />

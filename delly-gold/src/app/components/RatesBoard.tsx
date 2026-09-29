@@ -221,11 +221,14 @@ export default function RatesBoard() {
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const clock = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchRates = async (spinner = false, src: SourceChoice = source) => {
+  // `force` is set by the refresh button and by the source switcher: it asks the
+  // server for a NEW reading (`?refresh=1` waits for the real upstream instead
+  // of the 60s cache), while the automatic 60s poll stays on the fast path.
+  const fetchRates = async (spinner = false, src: SourceChoice = source, force = false) => {
     if (spinner) setRefreshing(true);
     try {
       const [pr, sr] = await Promise.all([
-        fetch(`/api/admin/gold-price?source=${src}`, { cache: "no-store" }),
+        fetch(`/api/admin/gold-price?source=${src}${force ? "&refresh=1" : ""}`, { cache: "no-store" }),
         fetch("/api/admin/settings", { cache: "no-store" }),
       ]);
       const pj = await pr.json();
@@ -250,7 +253,8 @@ export default function RatesBoard() {
   }, []);
 
   useEffect(() => {
-    fetchRates(true);
+    // First paint of a newly chosen source pulls fresh rates for it.
+    fetchRates(true, source, true);
     timer.current = setInterval(() => fetchRates(), 60_000);
     clock.current = setInterval(() => setCountdown(c => (c <= 1 ? 60 : c - 1)), 1000);
     return () => {
@@ -345,7 +349,7 @@ export default function RatesBoard() {
             </span>
             <button
               type="button"
-              onClick={() => fetchRates(true)}
+              onClick={() => fetchRates(true, source, true)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer",
                 backgroundColor: "rgba(200,161,42,0.18)", color: "#f4d97b",

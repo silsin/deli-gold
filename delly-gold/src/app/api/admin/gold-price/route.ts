@@ -286,12 +286,26 @@ function parseEstjtTvHtml(html: string): GoldMarketData | null {
 }
 
 /** One HTML fetch with its own timeout slice, never exceeding the route budget. */
+/**
+ * How long we let the union answer.
+ *
+ * Measured on 2026-09-28 the union alternates between ~1.5s (fine) and
+ * ~30-40s TTFB (its origin is saturated). A short cap meant every single
+ * fetch was aborted before it replied, so the displayed «نرخ اتحادیه» stayed
+ * frozen on an old snapshot. The upstream is far slower than any shopper's
+ * patience, but NOT slower than a background job, so the generous cap lives
+ * here — while user requests keep being served instantly from the cache.
+ *
+ * 75s is still far below the 300s serverless ceiling.
+ */
+const ESTJT_TV_CAP = 75_000;
+
+/** One fetch with its own cap, never exceeding the caller's budget. */
 async function fetchHtml(url: string, deadline: number, cap: number): Promise<string | null> {
   const left = deadline - Date.now();
   if (left < 1500) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(left, cap));
-  const started = Date.now();
   try {
     const res = await fetch(url, {
       cache: "no-store",
@@ -310,19 +324,35 @@ async function fetchHtml(url: string, deadline: number, cap: number): Promise<st
     clearTimeout(timer);
   }
 }
-
 /**
  * Primary rate read: the union's board first (it is what customers compare
  * against), then their price table (which also carries yesterday's average).
  * Both are Toman; no conversion is applied.
+ *
+ * The board gets the full `ESTJT_TV_CAP`; the price table is only a backup, so
+ * it gets whatever is left of the budget. One retry: when the union is
+ * saturated a second attempt frequently lands in ~2s instead of 40s.
  */
 async function fetchFromEstjt(deadline: number): Promise<GoldMarketData | null> {
-  const tv = await fetchHtml(ESTJT_TV_URL, deadline, 20_000);
-  if (tv) {
-    const board = parseEstjtTvHtml(tv);
-    if (board) return board;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const left = deadline - Date.now();
+    if (left < 3000) return null;
+
+    const tv = await fetchHtml(ESTJT_TV_URL, deadline, Math.min(left, ESTJT_TV_CAP));
+    if (tv) {
+      const board = parseEstjtTvHtml(tv);
+      if (board) return board;
+    }
+
+    // Saturated origin — give it a short breath, then try once more.
+    if (deadline - Date.now() > 3000) {
+      await new Promise(r => setTimeout(r, 400));
+    }
   }
-  const price = await fetchHtml(ESTJT_PRICE_URL, deadline, Math.max(2000, deadline - Date.now()));
+
+  const left = deadline - Date.now();
+  if (left < 2000) return null;
+  const price = await fetchHtml(ESTJT_PRICE_URL, deadline, left);
   if (price) return parseEstjtHtml(price);
   return null;
 }
@@ -663,8 +693,20 @@ function fallbackPayload(requested: PriceSourceChoice, at: number) {
 }
 
 /**
- * Fetch a fresh reading and store it. The union's server can take 10-15s at
- * peak, so this is normally run in the background (see scheduleRefresh).
+ * Budget for a background refresh.
+ *
+ * Must comfortably cover the union's worst case (2 attempts × 75s cap) plus the
+ * TGJU gap-fill, so a saturated origin no longer kills the cycle. Only
+ * background jobs use this — shoppers are always served from the cache.
+ */
+const REFRESH_BUDGET = 190_000;
+
+/**
+ * Fetch a fresh reading and store it.
+ *
+ * The union's server can take 30-40s at peak (and occasionally retries), so this
+ * is normally run in the background (see scheduleRefresh) and by the poller in
+ * `lib/gold-price-poller` — never while a shopper waits.
  */
 async function refreshChoice(choice: PriceSourceChoice, budgetMs: number): Promise<GoldMarketData | null> {
   const now = Date.now();
@@ -703,11 +745,16 @@ async function refreshChoice(choice: PriceSourceChoice, budgetMs: number): Promi
 
 const refreshing: Partial<Record<PriceSourceChoice, boolean>> = {};
 
+/** True while a background refresh for this source is in flight. */
+function isRefreshing(choice: PriceSourceChoice): boolean {
+  return refreshing[choice] === true;
+}
+
 /** Kick off a refresh without blocking the shopper — one in flight per source. */
-function scheduleRefresh(choice: PriceSourceChoice): void {
-  if (refreshing[choice]) return;
+function scheduleRefresh(choice: PriceSourceChoice): Promise<GoldMarketData | null> {
+  if (refreshing[choice]) return Promise.resolve(caches[choice] ?? null);
   refreshing[choice] = true;
-  void refreshChoice(choice, 25_000)
+  return refreshChoice(choice, REFRESH_BUDGET)
     .catch(() => null)
     .finally(() => {
       refreshing[choice] = false;
@@ -715,11 +762,38 @@ function scheduleRefresh(choice: PriceSourceChoice): void {
 }
 
 export async function GET(req: NextRequest) {
-  const param = new URL(req.url).searchParams.get("source");
+  const url = new URL(req.url);
+  const param = url.searchParams.get("source");
   const requested: PriceSourceChoice = isChoice(param) ? param : storedChoice() ?? "auto";
+
+  /**
+   * `?refresh=1` — the shopper explicitly asked for a new price (the refresh
+   * button). The request waits for a real upstream read instead of the cache,
+   * so the number they see is genuinely new. It is rate-limited per source so a
+   * held-down button cannot hammer the union; if a read is already running we
+   * join it rather than starting a second one.
+   */
+  const wantsRefresh =
+    url.searchParams.get("refresh") === "1" || url.searchParams.get("force") === "1";
 
   try {
     const now = Date.now();
+
+    if (wantsRefresh) {
+      if (isRefreshing(requested)) {
+        // Someone (probably the poller) is already pulling — use the cache.
+        const hit = caches[requested];
+        if (hit) return ok(respond(hit, requested, true, true));
+      } else {
+        const fresh = await scheduleRefresh(requested);
+        if (fresh) return ok(respond(fresh, requested, false));
+        const staleHit = caches[requested];
+        if (staleHit) return ok(respond(staleHit, requested, true, true));
+        const known = loadSnapshot();
+        if (known) return ok(respond(snapshotPayload(known), requested, true, true));
+        return ok(fallbackPayload(requested, now));
+      }
+    }
 
     const hit = caches[requested];
     if (hit && now - hit.updatedAt < CACHE_TTL) {
@@ -743,7 +817,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Cold start: nothing stored yet, so we have to wait for a real reading.
-    const cold = await refreshChoice(requested, 25_000);
+    const cold = await scheduleRefresh(requested);
     if (cold) return ok(respond(cold, requested, false));
 
     return ok(fallbackPayload(requested, now));
