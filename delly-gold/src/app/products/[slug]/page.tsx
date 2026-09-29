@@ -312,15 +312,29 @@ export default function ProductDetailPage() {
   const [showBar, setShowBar]     = useState(false);
   const buyRef = useRef<HTMLDivElement>(null);
 
-  // Store settings (اجرت/سود/مالیات + product-page JSON), today's gold rate and auth state.
+  // Store settings (اجرت/سود/مالیات + product-page JSON) and auth state.
   useEffect(() => {
     fetch("/api/admin/settings").then(r => r.json())
       .then(d => { if (d.success) setSettings(d.data); }).catch(() => {});
-    fetch("/api/admin/gold-price").then(r => r.json())
-      .then(d => { if (d.success && d.data.price > 0) setDayRate(d.data.price); }).catch(() => {});
     fetch("/api/auth/me").then(r => r.json())
       .then(d => setLoggedIn(!!d.success)).catch(() => {});
   }, []);
+
+  // Today's gold rate — on mount and every 60s, so the figure the shopper reads
+  // keeps tracking the market while the page stays open (the poller refreshes the
+  // server cache every 5 minutes).
+  const fetchDayRate = useCallback(() => {
+    fetch("/api/admin/gold-price", { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => { if (d.success && d.data.price > 0) setDayRate(d.data.price); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchDayRate();
+    const id = setInterval(fetchDayRate, 60_000);
+    return () => clearInterval(id);
+  }, [fetchDayRate]);
 
   // Product, its approved reviews and the two product rails.
   useEffect(() => {
@@ -650,7 +664,11 @@ export default function ProductDetailPage() {
               </div>
               <div className="pd-price-rows">
                 <div className="pd-price-row">
-                  <span>ارزش طلا ({weight} گرم{goldGram > 0 ? ` × ${fa(goldGram)}` : ""})</span>
+                  <span>
+                    {pricing.isLive
+                      ? `ارزش طلا (${weight} گرم${goldGram > 0 ? ` × ${fa(goldGram)}` : ""})`
+                      : `قیمت پایه ذخیره‌شده (${weight} گرم)`}
+                  </span>
                   <b>{fa(pricing.basePrice)} تومان</b>
                 </div>
                 <div className="pd-price-row">
@@ -670,39 +688,38 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* How the price is calculated — always visible, like the reference.
-                Exactly ONE rate is shown, and it is always the rate the price was
-                actually built from (live market rate, or the stored basis). */}
+            {/* How the price is calculated. The market rate is ALWAYS shown and is
+                the LIVE, self-refreshing figure; the price rows above show what this
+                product actually sells for. */}
             <div className="pd-formula">
               <b>نحوه محاسبه قیمت</b><br />
               فرمول : (نرخ طلای روز + اجرت + سود + مالیات) × وزن
-              {pricing.isLive ? (
+              {dayRate > 0 && (
                 <>
-                  {dayRate > 0 && (
+                  <br />
+                  نرخ روز طلای ۱۸ عیار: <b>{fa(dayRate)}</b> تومان
+                  {productKarat !== 18 && (
                     <>
                       <br />
-                      نرخ روز طلای ۱۸ عیار: <b>{fa(dayRate)}</b> تومان
-                      {productKarat !== 18 && (
-                        <>
-                          <br />
-                          معادل {fa(productKarat)} عیار: <b>{fa(Math.round(dayRate * (productKarat / 18)))}</b> تومان / گرم
-                        </>
-                      )}
+                      معادل {fa(productKarat)} عیار: <b>{fa(Math.round(dayRate * (productKarat / 18)))}</b> تومان / گرم
                     </>
                   )}
+                </>
+              )}
+              {pricing.isLive ? (
+                <>
                   <br />
                   <span className="pd-muted">این محصول از نرخ لحظه‌ای بالا قیمت‌گذاری می‌شود و با تغییر بازار به‌روز می‌شود.</span>
+                </>
+              ) : pricing.isLocked ? (
+                <>
+                  <br />
+                  <span className="pd-muted">این محصول «قیمت ثابت» است و از نرخ روز طلا پیروی نمی‌کند.</span>
                 </>
               ) : (
                 <>
                   <br />
-                  مبنای قیمت این محصول: <b>{fa(goldGram)}</b> تومان / گرم
-                  <br />
-                  <span className="pd-muted">
-                    {pricing.isLocked
-                      ? "این محصول «قیمت ثابت» است و از نرخ روز طلا پیروی نمی‌کند."
-                      : "قیمت از مقدار ذخیره‌شده محاسبه شده و با نرخ بازار تغییر نمی‌کند — برای قیمت‌گذاری خودکار، در «تنظیمات» گزینه «قیمت‌گذاری خودکار» را روشن کنید."}
-                  </span>
+                  <span className="pd-muted">قیمت این محصول از قیمت پایه ذخیره‌شده محاسبه شده و با نرخ لحظه‌ای بالا تغییر نمی‌کند.</span>
                 </>
               )}
               <br />
