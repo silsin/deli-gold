@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Plus, Pencil, Trash2, Search, X, Info, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Info, Upload, Sparkles } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 
 interface Category { id: string; name: string; }
@@ -15,7 +15,7 @@ interface Product {
   variants?: { id: string; weight: number; price: number; stock: number }[];
   specs?: { label: string; value: string }[];
 }
-interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; }
+interface GlobalSettings { gold_markup_percent: string; gold_fixed_fee: string; gold_tax_percent?: string; }
 
 /** Weight choices (وزن) — kept as strings while editing the form. */
 interface VariantDraft { id: string; weight: string; price: string; stock: string; }
@@ -47,6 +47,8 @@ export default function AdminProductsPage() {
   const [err, setErr]               = useState("");
   const [uploading, setUploading]   = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [priceBusy, setPriceBusy]   = useState(false);
+  const [goldNote, setGoldNote]     = useState("");
   const fileRef                     = useRef<HTMLInputElement>(null);
   const videoRef                    = useRef<HTMLInputElement>(null);
 
@@ -170,7 +172,74 @@ export default function AdminProductsPage() {
   const basePrice  = parseFloat(form.price) || 0;
   const wt         = parseFloat(form.weight) || 0;
   const ajrat      = Math.round(basePrice * (markupPct / 100) + fixedFee * wt);
-  const finalPrice = basePrice + ajrat;
+  // Tax applies to the اجرت only (same rule as calcFinalPrice in lib/pricing.ts) —
+  // the storefront adds it, so this preview must too or admin would show a
+  // different number than the customer pays.
+  const taxPct     = parseFloat(gs.gold_tax_percent || "") || 0;
+  const tax        = taxPct > 0 ? Math.round(ajrat * (taxPct / 100)) : 0;
+  const finalPrice = basePrice + ajrat + tax;
+
+  /**
+   * The newest 18k gram rate. Cached per page load in `goldPrice`; the first
+   * caller of a session re-fetches with `refresh=1` so the number the operator
+   * prices against is genuinely current, not the value the page loaded with.
+   */
+  async function ensureGoldRate(): Promise<number> {
+    if (goldPrice > 0) return goldPrice;
+    const r = await fetch("/api/admin/gold-price?refresh=1");
+    const d = await r.json();
+    if (d?.success && d.data?.price > 0) {
+      setGoldPrice(d.data.price);
+      return d.data.price as number;
+    }
+    return 0;
+  }
+
+  /** Base price for a weight/karat pair at the live rate. */
+  function goldBasePrice(gram: number, weight: number, karat: number): number {
+    return Math.round(gram * weight * (karat / 18));
+  }
+
+  /**
+   * Fill «قیمت پایه» from the live 18k rate: gram × weight × (karat/18).
+   */
+  async function fillFromGold() {
+    const w = parseFloat(form.weight) || 0;
+    const k = parseInt(form.karat) || 18;
+    if (w <= 0) { setErr("برای محاسبه قیمت لحظه‌ای، اول «وزن» را وارد کنید"); return; }
+    setPriceBusy(true);
+    try {
+      const gram = await ensureGoldRate();
+      if (gram <= 0) { setErr("قیمت لحظه‌ای طلا در دسترس نیست — اتصال را بررسی کنید"); return; }
+      setForm(f => ({ ...f, price: String(goldBasePrice(gram, w, k)) }));
+      setGoldNote(`محاسبه‌شده با نرخ ۱۸ عیار: ${gram.toLocaleString("fa-IR")} ت/گرم`);
+      setErr("");
+    } catch {
+      setErr("قیمت لحظه‌ای طلا در دسترس نیست");
+    } finally {
+      setPriceBusy(false);
+    }
+  }
+
+  /** Same one-click fill for one weight-variant row. */
+  async function fillVariantFromGold(i: number) {
+    const v = form.variants[i];
+    const w = parseFloat(v?.weight ?? "") || 0;
+    if (w <= 0) { setErr("برای این وزن، اول مقدار «وزن» را وارد کنید"); return; }
+    setPriceBusy(true);
+    try {
+      const gram = await ensureGoldRate();
+      if (gram <= 0) { setErr("قیمت لحظه‌ای طلا در دسترس نیست"); return; }
+      const price = String(goldBasePrice(gram, w, parseInt(form.karat) || 18));
+      setForm(f => ({ ...f, variants: f.variants.map((x, j) => (j === i ? { ...x, price } : x)) }));
+      setGoldNote(`قیمت تنوع وزنی با نرخ ۱۸ عیار: ${gram.toLocaleString("fa-IR")} ت/گرم`);
+      setErr("");
+    } catch {
+      setErr("قیمت لحظه‌ای طلا در دسترس نیست");
+    } finally {
+      setPriceBusy(false);
+    }
+  }
 
   const inp: React.CSSProperties = {
     width: "100%", backgroundColor: "#121212", border: "1px solid #333",
@@ -377,9 +446,30 @@ export default function AdminProductsPage() {
 
                 {/* ── Pricing ── */}
                 <p style={{ color:"#d4af37", fontSize:"11px", fontWeight:"700", letterSpacing:"1px", marginBottom:"10px" }}>قیمت‌گذاری و اجرت</p>
-                <div style={{ marginBottom:"12px" }}>
-                  <label style={{ color:"#888", fontSize:"12px", display:"block", marginBottom:"4px" }}>قیمت پایه (تومان) *</label>
+                <div style={{ marginBottom: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <label style={{ color: "#888", fontSize: "12px" }}>قیمت پایه (تومان) *</label>
+                    <button
+                      type="button"
+                      onClick={fillFromGold}
+                      disabled={priceBusy}
+                      title="محاسبه قیمت پایه از نرخ لحظه‌ای طلای ۱۸ عیار × وزن"
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: "5px",
+                        backgroundColor: "rgba(212,175,55,0.1)", color: "#d4af37",
+                        border: "1px solid rgba(212,175,55,0.4)", borderRadius: "6px",
+                        padding: "4px 9px", fontSize: "11px", cursor: priceBusy ? "wait" : "pointer",
+                        fontFamily: "inherit", opacity: priceBusy ? 0.6 : 1,
+                      }}
+                    >
+                      <Sparkles size={12} />
+                      {priceBusy ? "در حال دریافت نرخ…" : "قیمت لحظه‌ای طلا"}
+                    </button>
+                  </div>
                   <input type="number" style={{...inp,direction:"ltr"}} value={form.price} onChange={e=>setForm(f=>({...f,price:e.target.value}))} min="0" step="1000"/>
+                  {goldNote && (
+                    <p style={{ color: "#5d8a5d", fontSize: "10px", marginTop: "5px" }}>{goldNote}</p>
+                  )}
                 </div>
                 <div style={{ backgroundColor:"#121212", border:"1px solid #2a2a2a", borderRadius:"8px", padding:"12px 14px", marginBottom:"12px" }}>
                   <label style={{ display:"flex", alignItems:"center", gap:"8px", cursor:"pointer", marginBottom: form.ajrat_override?"12px":"0" }}>
@@ -418,18 +508,25 @@ export default function AdminProductsPage() {
                     <p style={{ color:"#555", fontSize:"10px", margin:0 }}>بدون تنوع، وزن و قیمت اصلی محصول استفاده می‌شود</p>
                   ):(
                     <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
-                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px", gap:"6px" }}>
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px 30px", gap:"6px" }}>
                         <span style={{ color:"#555", fontSize:"9px" }}>وزن (گرم)</span>
                         <span style={{ color:"#555", fontSize:"9px" }}>قیمت پایه (تومان)</span>
                         <span style={{ color:"#555", fontSize:"9px" }}>موجودی</span>
                         <span/>
+                        <span/>
                       </div>
                       {form.variants.map((v,i)=>(
-                        <div key={v.id+i} style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px", gap:"6px", alignItems:"center" }}>
+                        <div key={v.id+i} style={{ display:"grid", gridTemplateColumns:"1fr 1.4fr 1fr 30px 30px", gap:"6px", alignItems:"center" }}>
                           <input style={st} type="number" min="0" step="0.001" value={v.weight} placeholder="0.5"
                             onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, weight:e.target.value }:x) }))}/>
-                          <input style={st} type="number" min="0" step="1000" value={v.price} placeholder="4300000"
-                            onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, price:e.target.value }:x) }))}/>
+                          <div style={{ display:"flex", gap:"4px" }}>
+                            <input style={st} type="number" min="0" step="1000" value={v.price} placeholder="4300000"
+                              onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, price:e.target.value }:x) }))}/>
+                            <button type="button" title="محاسبه از نرخ لحظه‌ای طلا" onClick={()=>fillVariantFromGold(i)}
+                              style={{ backgroundColor:"rgba(212,175,55,0.1)", border:"1px solid rgba(212,175,55,0.4)", color:"#d4af37", borderRadius:"6px", cursor:priceBusy?"wait":"pointer", display:"flex", alignItems:"center", justifyContent:"center", padding:0, flexShrink:0, opacity:priceBusy?0.6:1 }}>
+                              <Sparkles size={12}/>
+                            </button>
+                          </div>
                           <input style={st} type="number" min="0" value={v.stock} placeholder="0"
                             onChange={e=>setForm(f=>({ ...f, variants:f.variants.map((x,j)=>j===i?{ ...x, stock:e.target.value }:x) }))}/>
                           <button type="button" title="حذف" onClick={()=>setForm(f=>({ ...f, variants:f.variants.filter((_,j)=>j!==i) }))}
@@ -472,8 +569,13 @@ export default function AdminProductsPage() {
                 {basePrice>0&&(
                   <div style={{ backgroundColor:"rgba(212,175,55,0.05)", border:"1px solid rgba(212,175,55,0.2)", borderRadius:"8px", padding:"12px 14px", marginBottom:"18px" }}>
                     <p style={{ color:"#888", fontSize:"11px", marginBottom:"8px", fontWeight:"600" }}>پیش‌نمایش قیمت</p>
-                    <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"6px" }}>
-                      {[{l:"قیمت پایه",v:basePrice},{l:`اجرت (${markupPct}%)`,v:ajrat},{l:"قیمت نهایی",v:finalPrice,h:true}].map(it=>(
+                    <div style={{ display:"grid", gridTemplateColumns:`repeat(${tax>0?4:3},1fr)`, gap:"6px" }}>
+                      {[
+                        { l:"قیمت پایه", v:basePrice },
+                        { l:`اجرت (${markupPct}%)`, v:ajrat },
+                        ...(tax>0?[{ l:`مالیات (${taxPct}%)`, v:tax }]:[]),
+                        { l:"قیمت نهایی", v:finalPrice, h:true },
+                      ].map(it=>(
                         <div key={it.l} style={{ backgroundColor:it.h?"rgba(212,175,55,0.12)":"#121212", border:`1px solid ${it.h?"rgba(212,175,55,0.3)":"#222"}`, borderRadius:"6px", padding:"8px 10px", textAlign:"center" }}>
                           <p style={{ color:"#666", fontSize:"9px", marginBottom:"3px" }}>{it.l}</p>
                           <p style={{ color:it.h?"#d4af37":"#fff", fontSize:"12px", fontWeight:"700" }}>{it.v.toLocaleString("fa-IR")}<span style={{ color:"#555", fontSize:"9px", marginRight:"2px" }}>ت</span></p>
