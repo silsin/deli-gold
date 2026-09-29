@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { useEffect, useState } from "react";
-import { Plus, Trash2, Save, RefreshCw, GripVertical, X, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Save, RefreshCw, GripVertical, X, ChevronDown, FolderTree } from "lucide-react";
 import AdminGuard from "../AdminGuard";
 import { GUIDE_PAGE_DEFINITIONS } from "@/lib/guide-pages-settings";
 
@@ -22,7 +22,89 @@ type LinkTargetKind =
   | "guide"
   | "custom";
 
-interface NavLink { label: string; href: string; children?: NavLink[]; }
+interface NavLink { label: string; href: string; children?: NavLink[]; cat?: string; }
+
+interface CategoryNode { id: string; name: string; slug: string; parent_id?: string | null; }
+
+/** The value the products page understands as «this category». */
+function catRef(c: CategoryNode) { return c.slug || c.id; }
+function catHref(c: CategoryNode) { return `/products?category=${encodeURIComponent(catRef(c))}`; }
+
+/**
+ * Turn the flat /api/categories list into one branch per root category:
+ * index 0 is the root, the rest are its descendants (any depth). Cycle-safe,
+ * so a bad parent_id in the DB can never hang the page.
+ */
+function buildCategoryForest(list: CategoryNode[]): CategoryNode[][] {
+  const childrenOf = new Map<string, CategoryNode[]>();
+  for (const c of list) {
+    const key = c.parent_id ?? "";
+    const arr = childrenOf.get(key) ?? [];
+    arr.push(c);
+    childrenOf.set(key, arr);
+  }
+  const forest: CategoryNode[][] = [];
+  const collect = (key: string, path: Set<string>, out: CategoryNode[]) => {
+    for (const k of childrenOf.get(key) ?? []) {
+      if (path.has(k.id)) continue;
+      out.push(k);
+      collect(k.id, new Set(path).add(k.id), out);
+    }
+  };
+  for (const root of childrenOf.get("") ?? []) {
+    const branch = [root];
+    collect(root.id, new Set([root.id]), branch);
+    forest.push(branch);
+  }
+  return forest;
+}
+
+/**
+ * Fold the saved category tree into the ALREADY SAVED nav links.
+ *  - a category that is already in the menu is updated in place (title + submenu)
+ *  - a new category is appended
+ *  - hand-made links (pages, filters, guide pages) are never touched or removed
+ * Matching is by category href / stored `cat` id, so re-running never duplicates.
+ */
+function mergeCategoriesIntoNavLinks(
+  links: NavLink[], categories: CategoryNode[],
+): { links: NavLink[]; added: number; updated: number } {
+  const out: NavLink[] = links.map(l => ({
+    ...l,
+    ...(l.children ? { children: l.children.map(c => ({ ...c })) } : {}),
+  }));
+  let added = 0, updated = 0;
+
+  for (const branch of buildCategoryForest(categories)) {
+    const [root, ...descendants] = branch;
+    const href = catHref(root);
+    let link = out.find(l => l.href === href || (l.cat && l.cat === root.id));
+    if (!link) {
+      out.push({ label: root.name, href, cat: root.id });
+      added++;
+      link = out[out.length - 1];
+    } else {
+      if (link.label !== root.name || link.href !== href) updated++;
+      link.label = root.name;
+      link.href = href;
+      link.cat = root.id;
+    }
+    if (descendants.length === 0) continue;
+
+    const kids = link.children ?? [];
+    for (const d of descendants) {
+      const dh = catHref(d);
+      const kid = kids.find(k => k.href === dh || (k.cat && k.cat === d.id));
+      if (!kid) { kids.push({ label: d.name, href: dh, cat: d.id }); added++; }
+      else {
+        if (kid.label !== d.name || kid.href !== dh) updated++;
+        kid.label = d.name; kid.href = dh; kid.cat = d.id;
+      }
+    }
+    link.children = kids;
+  }
+  return { links: out, added, updated };
+}
 
 const inp: React.CSSProperties = {
   backgroundColor: "#121212", border: "1px solid #333", borderRadius: "6px",
@@ -32,10 +114,13 @@ const inp: React.CSSProperties = {
 
 function LinkEditor({
   title, description, links, onChange, allowChildren = false, childrenHint,
+  categorySync,
 }: {
   title: string; description: string;
   links: NavLink[]; onChange: (links: NavLink[]) => void;
   allowChildren?: boolean; childrenHint?: string;
+  /** Only the main nav row gets the «pull categories in» button. */
+  categorySync?: { onRun: () => void; topCount: number; message: string };
 }) {
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [openKids, setOpenKids] = useState<Record<number, boolean>>({});
@@ -267,6 +352,36 @@ function LinkEditor({
         <p style={{ color: "#666", fontSize: "12px" }}>{description}</p>
       </div>
 
+      {categorySync && (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "14px", paddingBottom: "12px", borderBottom: "1px solid #242424" }}>
+            <button
+              type="button"
+              onClick={categorySync.onRun}
+              disabled={categorySync.topCount === 0}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                backgroundColor: categorySync.topCount === 0 ? "transparent" : "rgba(200,161,42,0.12)",
+                border: `1px solid ${categorySync.topCount === 0 ? "#333" : "rgba(200,161,42,0.45)"}`,
+                color: categorySync.topCount === 0 ? "#666" : "#ffd97a",
+                borderRadius: "8px", padding: "8px 14px", fontSize: "12px",
+                cursor: categorySync.topCount === 0 ? "not-allowed" : "pointer", fontFamily: "inherit",
+              }}
+            >
+              <FolderTree size={14} />
+              افزودن دسته‌بندی‌ها به منو
+            </button>
+            <p style={{ color: "#666", fontSize: "11px", lineHeight: 1.8, margin: 0, flex: "1 1 240px" }}>
+              دسته‌های اصلی و زیردسته‌هایی که در «مدیریت دسته‌بندی‌ها» تعریف کرده‌اید را به همین منوی ذخیره‌شده اضافه می‌کند؛
+              دسته‌های تکراری دوباره ساخته نمی‌شوند و لینک‌های دستی شما دست‌نخورده می‌مانند.
+            </p>
+          </div>
+          {categorySync.message && (
+            <p style={{ color: "#c8a12a", fontSize: "12px", lineHeight: 1.8, marginBottom: "12px" }}>{categorySync.message}</p>
+          )}
+        </>
+      )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "14px" }}>
         {links.map((link, i) => {
           const kids = link.children ?? [];
@@ -281,6 +396,12 @@ function LinkEditor({
                   style={{ ...inp, flex: "0 1 160px", minWidth: 120, padding: "7px 10px", direction: "rtl" }}
                   placeholder="عنوان منو (مثلاً طلا)"
                 />
+                {link.cat && (
+                  <span
+                    title="این آیتم از دسته‌بندی‌ها آمده است"
+                    style={{ fontSize: "10px", color: "#8fd3a0", border: "1px solid rgba(143,211,160,0.35)", backgroundColor: "rgba(143,211,160,0.08)", borderRadius: "20px", padding: "3px 8px", whiteSpace: "nowrap", flexShrink: 0 }}
+                  >از دسته‌بندی</span>
+                )}
                 <TargetPicker
                   value={link.href}
                   onPick={href => updateLink(i, "href", href)}
@@ -373,6 +494,8 @@ function LinkEditor({
 export default function AdminNavigationPage() {
   const [navLinks, setNavLinks]         = useState<NavLink[]>([]);
   const [promoLinks, setPromoLinks]     = useState<NavLink[]>([]);
+  const [categories, setCategories]     = useState<CategoryNode[]>([]);
+  const [syncMsg, setSyncMsg]           = useState("");
   const [loading, setLoading]           = useState(true);
   const [savingNav, setSavingNav]       = useState(false);
   const [savingPromo, setSavingPromo]   = useState(false);
@@ -387,7 +510,35 @@ export default function AdminNavigationPage() {
       }
       setLoading(false);
     });
+    // The saved category tree — used by the «افزودن دسته‌بندی‌ها» button.
+    fetch("/api/categories", { cache: "no-store" }).then(r => r.json()).then(d => {
+      if (d.success && Array.isArray(d.data)) setCategories(d.data);
+    }).catch(() => {});
   }, []);
+
+  /**
+   * Pull the categories defined in «مدیریت دسته‌بندی‌ها» into the menu that is
+   * ALREADY saved here: roots become top items, their subcategories become
+   * submenus. Existing entries are matched and refreshed instead of duplicated,
+   * and hand-made links stay exactly as they are.
+   */
+  function syncCategoriesIntoNav() {
+    const roots = buildCategoryForest(categories).filter(b => b.length > 0);
+    if (roots.length === 0) { setSyncMsg("دسته‌بندی‌ای برای اضافه کردن پیدا نشد."); return; }
+    const res = mergeCategoriesIntoNavLinks(navLinks, categories);
+    setNavLinks(res.links);
+    const subCount = roots.reduce((n, b) => n + (b.length - 1), 0);
+    setSyncMsg(
+      `${roots.length} دسته و ${subCount} زیردسته اعمال شد ` +
+      `(${res.added} مورد جدید، ${res.updated} مورد به‌روزرسانی). ` +
+      `برای نهایی شدن روی سایت، دکمه‌ی «ذخیره منوی ناوبری» را بزنید.`
+    );
+  }
+
+  const topLevelCategoryCount = useMemo(
+    () => buildCategoryForest(categories).filter(b => b.length > 0).length,
+    [categories]
+  );
 
   async function saveNavLinks() {
     setSavingNav(true); setSavedNav(false);
@@ -428,6 +579,7 @@ export default function AdminNavigationPage() {
               links={navLinks}
               onChange={setNavLinks}
               allowChildren
+              categorySync={{ onRun: syncCategoriesIntoNav, topCount: topLevelCategoryCount, message: syncMsg }}
               childrenHint="زیرمنوها روی دسکتاپ با هاور (حرکت موس روی آیتم) باز می‌شوند و در موبایل با دکمه‌ی «باز کردن زیرمنو» نمایش داده می‌شوند."
             />
             {savedNav && <div style={{ backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", padding: "10px 14px", marginBottom: "14px", color: "#10b981", fontSize: "13px" }}>✓ منوی ناوبری ذخیره شد</div>}

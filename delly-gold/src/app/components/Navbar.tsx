@@ -10,11 +10,13 @@ import SocialIconLink from "./SocialIconLink";
 
 interface AuthUser { id: string; name: string; email: string; role: string; }
 
-interface NavLink { label: string; href: string; children?: NavLink[]; }
+interface NavLink { label: string; href: string; children?: NavLink[]; cat?: string; }
 
 /**
  * Keep only real {label, href} entries plus one level of submenus, so a broken
  * admin value can never render an empty item or an empty dropdown.
+ * The admin-only `cat` (source category id) is dropped here — the storefront
+ * only needs label + href.
  */
 function normalizeNavLinks(links: unknown[]): NavLink[] {
   if (!Array.isArray(links)) return [];
