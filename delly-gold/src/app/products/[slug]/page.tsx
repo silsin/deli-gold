@@ -667,7 +667,7 @@ export default function ProductDetailPage() {
                   <span>
                     {pricing.isLive
                       ? `ارزش طلا (${weight} گرم${goldGram > 0 ? ` × ${fa(goldGram)}` : ""})`
-                      : `قیمت پایه ذخیره‌شده (${weight} گرم)`}
+                      : `قیمت پایه  (${weight} گرم)`}
                   </span>
                   <b>{fa(pricing.basePrice)} تومان</b>
                 </div>
