@@ -38,7 +38,7 @@ export default function CategoryShowcase() {
       if (!cat) continue; // category deleted — skip the tile
       tiles.push({
         key: cat.id,
-        href: `/products?category=${cat.id}`,
+        href: it.href || `/products?category=${cat.id}`,
         name: it.title || cat.name,
         image: it.image || cat.banner_image || cat.image || null,
       });

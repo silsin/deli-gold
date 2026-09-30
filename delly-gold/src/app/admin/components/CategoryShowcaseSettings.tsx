@@ -64,6 +64,7 @@ export default function CategoryShowcaseSettings() {
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const uploadingIdx = useRef<number>(-1);
+  const [addSel, setAddSel] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -120,7 +121,18 @@ export default function CategoryShowcaseSettings() {
     });
 
   const addItem = (cat: Category) =>
-    setCfg(prev => (prev && prev.items.length < SHOWCASE_MAX_ITEMS ? { ...prev, items: [...prev.items, { category_id: cat.id, title: "", image: "" }] } : prev));
+    setCfg(prev => (prev && prev.items.length < SHOWCASE_MAX_ITEMS ? { ...prev, items: [...prev.items, { category_id: cat.id, title: "", image: "", href: "" }] } : prev));
+
+  const addAll = () =>
+    setCfg(prev => {
+      if (!prev) return prev;
+      const items = [...prev.items];
+      for (const c of cats) {
+        if (items.length >= SHOWCASE_MAX_ITEMS) break;
+        if (!items.some(i => i.category_id === c.id)) items.push({ category_id: c.id, title: "", image: "", href: "" });
+      }
+      return { ...prev, items };
+    });
 
   const removeItem = (i: number) =>
     setCfg(prev => (prev ? { ...prev, items: prev.items.filter((_, j) => j !== i) } : prev));
@@ -246,6 +258,9 @@ export default function CategoryShowcaseSettings() {
                   <label style={lab}>عنوان کاشی (خالی = نام دسته‌بندی) — پیشوند «مشاهده همه» خودکار اضافه می‌شود</label>
                   <input value={it.title} onChange={e => patchItem(i, { title: e.target.value })}
                     style={{ ...inp, direction: "rtl", marginBottom: "8px" }} placeholder={cat?.name ?? ""} />
+                  <label style={lab}>لینک مقصد (خالی = محصولات همان دسته‌بندی)</label>
+                  <input value={it.href} onChange={e => patchItem(i, { href: e.target.value })}
+                    style={{ ...inp, direction: "ltr", marginBottom: "8px" }} placeholder={`/products?category=${it.category_id}`} />
                   <label style={lab}>URL تصویر (اختیاری — به جای تصویر دسته‌بندی)</label>
                   <input value={it.image} onChange={e => patchItem(i, { image: e.target.value })}
                     style={{ ...inp, direction: "ltr" }} placeholder="/uploads/....jpg" />
@@ -257,30 +272,41 @@ export default function CategoryShowcaseSettings() {
       </div>
 
       {/* ── Add tiles picker ── */}
-      {available.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", margin: "14px 0 4px" }}>
-          <label style={{ color: "#888", fontSize: "12px" }}>افزودن کاشی:</label>
-          <select id="cs-add-cat" style={{ ...inp, width: "auto", minWidth: "180px", direction: "rtl" }} defaultValue="">
-            <option value="" disabled>یک دسته‌بندی انتخاب کنید…</option>
-            {available.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <button type="button" disabled={cfg.items.length >= SHOWCASE_MAX_ITEMS}
-            onClick={() => {
-              const sel = document.getElementById("cs-add-cat") as HTMLSelectElement | null;
-              const cat = available.find(c => c.id === sel?.value);
-              if (cat) { addItem(cat); if (sel) sel.value = ""; }
-            }}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: "6px",
-              backgroundColor: "#222", color: "#d4af37", border: "1px dashed #555", borderRadius: "8px",
-              padding: "9px 14px", fontSize: "12px", fontFamily: "inherit",
-              cursor: cfg.items.length >= SHOWCASE_MAX_ITEMS ? "not-allowed" : "pointer",
-              opacity: cfg.items.length >= SHOWCASE_MAX_ITEMS ? 0.5 : 1,
-            }}>
-            <Plus size={14} /> افزودن
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", margin: "14px 0 4px" }}>
+        <label style={{ color: "#888", fontSize: "12px" }}>افزودن کاشی:</label>
+        {available.length > 0 && (
+          <>
+            <select value={addSel} onChange={e => setAddSel(e.target.value)}
+              style={{ ...inp, width: "auto", minWidth: "180px", maxWidth: "280px", direction: "rtl" }}>
+              <option value="">یک دسته‌بندی انتخاب کنید…</option>
+              {available.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button type="button" disabled={!addSel || cfg.items.length >= SHOWCASE_MAX_ITEMS}
+              onClick={() => {
+                const cat = available.find(c => c.id === addSel);
+                if (cat) { addItem(cat); setAddSel(""); }
+              }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "6px",
+                backgroundColor: "#222", color: "#d4af37", border: "1px dashed #555", borderRadius: "8px",
+                padding: "9px 14px", fontSize: "12px", fontFamily: "inherit",
+                cursor: !addSel || cfg.items.length >= SHOWCASE_MAX_ITEMS ? "not-allowed" : "pointer",
+                opacity: !addSel || cfg.items.length >= SHOWCASE_MAX_ITEMS ? 0.5 : 1,
+              }}>
+              <Plus size={14} /> افزودن
+            </button>
+          </>
+        )}
+        {available.length > 0 && cfg.items.length < SHOWCASE_MAX_ITEMS && (
+          <button type="button" onClick={addAll}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", backgroundColor: "#222", color: "#ccc", border: "1px solid #333", borderRadius: "8px", padding: "9px 14px", fontSize: "12px", fontFamily: "inherit", cursor: "pointer" }}>
+            <Plus size={14} /> افزودن همه دسته‌بندی‌ها
           </button>
-        </div>
-      )}
+        )}
+        {cfg.items.length >= SHOWCASE_MAX_ITEMS && (
+          <span style={{ color: "#666", fontSize: "11px" }}>حداکثر {SHOWCASE_MAX_ITEMS} کاشی مجاز است</span>
+        )}
+      </div>
 
       {/* ── Save ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginTop: "14px" }}>

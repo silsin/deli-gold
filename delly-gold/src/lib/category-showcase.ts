@@ -10,6 +10,7 @@ export interface CategoryShowcaseItem {
   category_id: string; // category shown by this tile
   title: string;       // empty = category name
   image: string;       // empty = category banner image
+  href: string;        // empty = /products?category=<id>
 }
 
 export interface CategoryShowcaseConfig {
@@ -69,6 +70,7 @@ export function parseCategoryShowcase(raw: unknown): CategoryShowcaseConfig {
         category_id: cid,
         title: String(io.title ?? "").trim().slice(0, 60),
         image: String(io.image ?? "").trim().slice(0, 500),
+        href: String(io.href ?? "").trim().slice(0, 300),
       });
       if (items.length >= SHOWCASE_MAX_ITEMS) break;
     }

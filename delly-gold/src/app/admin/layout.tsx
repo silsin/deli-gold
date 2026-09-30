@@ -12,6 +12,7 @@ const navItems = [
   { label: "داشبورد",        href: "/admin",             icon: LayoutDashboard },
   { label: "اسلایدر",        href: "/admin/slides",      icon: Package },
   { label: "بنرهای تبلیغاتی", href: "/admin/promo-banners", icon: Image },
+  { label: "ویترین دسته‌بندی", href: "/admin/category-showcase", icon: LayoutGrid },
   { label: "چیدمان صفحه اصلی", href: "/admin/sections",  icon: LayoutGrid },
   { label: "شگفت انگیزها",   href: "/admin/special-offers", icon: BadgePercent },
   { label: "محصولات",        href: "/admin/products",    icon: Package },
