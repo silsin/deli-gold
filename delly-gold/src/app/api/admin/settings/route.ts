@@ -40,6 +40,12 @@ import {
   parseBudgetBanners,
   serializeBudgetBanners,
 } from "@/lib/budget-banners";
+import {
+  CATEGORY_SHOWCASE_SETTING_KEY,
+  DEFAULT_CATEGORY_SHOWCASE,
+  parseCategoryShowcase,
+  serializeCategoryShowcase,
+} from "@/lib/category-showcase";
 
 // Ensure settings table exists
 function ensureSettingsTable() {
@@ -119,6 +125,9 @@ export async function GET(req: NextRequest) {
     }
     if (!settings[BUDGET_BANNERS_SETTING_KEY]) {
       settings[BUDGET_BANNERS_SETTING_KEY] = JSON.stringify(DEFAULT_BUDGET_BANNERS);
+    }
+    if (!settings[CATEGORY_SHOWCASE_SETTING_KEY]) {
+      settings[CATEGORY_SHOWCASE_SETTING_KEY] = JSON.stringify(DEFAULT_CATEGORY_SHOWCASE);
     }
     const pb = parsePriceBarStyle(settings);
     Object.assign(settings, priceBarStyleToSettings(pb));
@@ -222,6 +231,11 @@ export async function POST(req: NextRequest) {
         // Normalize the budget banner list (add/remove/rename/recolor) —
         // colors become valid hex, counts are capped, garbage falls back.
         value = serializeBudgetBanners(parseBudgetBanners(String(value)));
+      }
+      if (key === CATEGORY_SHOWCASE_SETTING_KEY) {
+        // Normalize the category showcase config (grid size, tile size,
+        // grayscale, ordered tiles) — numbers clamped, garbage falls back.
+        value = serializeCategoryShowcase(parseCategoryShowcase(String(value)));
       }
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))

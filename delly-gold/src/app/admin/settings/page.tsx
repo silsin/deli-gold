@@ -37,6 +37,7 @@ import AboutPageSettings from "@/app/admin/components/AboutPageSettings";
 import ContactPageSettings from "@/app/admin/components/ContactPageSettings";
 import CollabPageSettings from "@/app/admin/components/CollabPageSettings";
 import BudgetBannersSettings from "@/app/admin/components/BudgetBannersSettings";
+import CategoryShowcaseSettings from "@/app/admin/components/CategoryShowcaseSettings";
 import GuidePagesSettings from "@/app/admin/components/GuidePagesSettings";
 import ProductPageSettings from "@/app/admin/components/ProductPageSettings";
 import { SOCIAL_PLATFORMS } from "@/lib/social-platforms";
@@ -656,6 +657,8 @@ export default function AdminSettingsPage() {
       <CollabPageSettings />
 
       <BudgetBannersSettings />
+
+      <CategoryShowcaseSettings />
 
       {/* ── Site Info ── */}
       <div style={{ ...cardStyle, marginBottom: "24px" }}>
