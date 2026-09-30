@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import {
   CATEGORY_SHOWCASE_SETTING_KEY,
   DEFAULT_CATEGORY_SHOWCASE,
@@ -78,7 +78,7 @@ export default function CategoryShowcase() {
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)", pointerEvents: "none" }} />
               <div style={{ position: "absolute", bottom: "16px", right: "14px", left: "14px", display: "flex", justifyContent: "flex-end" }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "rgba(20,20,20,0.88)", color: "#fff", padding: "9px 16px", borderRadius: "30px", fontSize: "12px", fontWeight: "700", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.12)", whiteSpace: "nowrap" }}>
-                  <ArrowLeft size={14} strokeWidth={2.5} />
+                  <ArrowRight size={14} strokeWidth={2.5} />
                   مشاهده همه {tile.name}
                 </span>
               </div>
