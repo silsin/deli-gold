@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
       express_shipping: 0,
       low_wage: 0,
       coin: 1,
+      new_arrival: 0,
       category_id: coinCategoryId(),
       // Profit % is applied on top of the base gold price via the اجرت machinery.
       ajrat_override: 1,

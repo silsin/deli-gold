@@ -11,6 +11,7 @@ interface Product {
   karat: number; stock: number; featured: boolean; published: boolean;
   express_shipping: number;
   low_wage: number;
+  new_arrival?: number;
   ajrat_override: number; ajrat_percent: number | null; ajrat_fixed: number | null;
   /** 1 = «قیمت ثابت» — exempt from live gold pricing. */
   fixed_price?: number;
@@ -30,6 +31,7 @@ const empty = {
   stock: "0", categoryId: "", featured: false, published: true,
   express_shipping: false,
   low_wage: false,
+  new_arrival: false,
   images: [] as string[], videos: [] as string[],
   ajrat_override: false, ajrat_percent: "", ajrat_fixed: "",
   fixed_price: false,
@@ -90,6 +92,7 @@ export default function AdminProductsPage() {
       featured: p.featured, published: p.published,
       express_shipping: p.express_shipping === 1,
       low_wage: p.low_wage === 1,
+      new_arrival: p.new_arrival === 1,
       images: imgs,
       videos: vids,
       ajrat_override: p.ajrat_override === 1,
@@ -500,8 +503,8 @@ export default function AdminProductsPage() {
                       {categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div style={{ display:"flex", gap:"14px", paddingTop:"20px" }}>
-                    {[{k:"featured",l:"ویژه"},{k:"published",l:"منتشر"},{k:"express_shipping",l:"ارسال فوری"},{k:"low_wage",l:"کم اجرت"}].map(t=>(
+                  <div style={{ display:"flex", gap:"14px", paddingTop:"20px", flexWrap:"wrap" }}>
+                    {[{k:"featured",l:"ویژه"},{k:"published",l:"منتشر"},{k:"express_shipping",l:"ارسال فوری"},{k:"low_wage",l:"کم اجرت"},{k:"new_arrival",l:"جدیدترین"}].map(t=>(
                       <label key={t.k} style={{ display:"flex", alignItems:"center", gap:"6px", cursor:"pointer", color:"#ccc", fontSize:"13px" }}>
                         <input type="checkbox" checked={(form as Record<string,unknown>)[t.k] as boolean} onChange={e=>setForm(f=>({...f,[t.k]:e.target.checked}))}/>
                         {t.l}

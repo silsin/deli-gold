@@ -22,6 +22,7 @@ export const HOME_SECTIONS: HomeSectionDef[] = [
   { key: "low_wage",       label: "محصولات کم اجرت" },
   { key: "coin",           label: "سکه و آبشده" },
   { key: "favorites",      label: "محصولات محبوب" },
+  { key: "new_arrival",    label: "جدیدترین محصولات" },
   { key: "showcase",       label: "ویترین دسته‌بندی" },
   { key: "budget",         label: "بنرهای بودجه" },
   { key: "collections",    label: "کالکشن‌ها" },

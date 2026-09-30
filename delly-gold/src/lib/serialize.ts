@@ -159,6 +159,7 @@ type ProductRow = {
   express_shipping?: number;
   low_wage?: number;
   coin?: number;
+  new_arrival?: number;
   variants?: string | null;
   specs?: string | null;
   ajrat_override: number;
@@ -186,6 +187,7 @@ export function serializeProduct(row: ProductRow) {
     express_shipping: row.express_shipping ?? 0,
     low_wage: row.low_wage ?? 0,
     coin: row.coin ?? 0,
+    new_arrival: row.new_arrival ?? 0,
     variants: parseVariants(row.variants),
     specs: parseSpecs(row.specs),
     ajrat_override: row.ajrat_override,

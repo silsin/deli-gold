@@ -9,6 +9,7 @@ import ExpressShipping  from "./ExpressShipping";
 import LowWageProducts  from "./LowWageProducts";
 import CoinProducts     from "./CoinProducts";
 import FavoriteProducts from "./FavoriteProducts";
+import NewProducts      from "./NewProducts";
 import CategoryShowcase from "./CategoryShowcase";
 import BudgetBanners    from "./BudgetBanners";
 import CollectionsGrid  from "./CollectionsGrid";
@@ -29,6 +30,7 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   low_wage:       LowWageProducts,
   coin:           CoinProducts,
   favorites:      FavoriteProducts,
+  new_arrival:    NewProducts,
   showcase:       CategoryShowcase,
   budget:         BudgetBanners,
   collections:    CollectionsGrid,

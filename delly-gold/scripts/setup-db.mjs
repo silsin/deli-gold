@@ -507,6 +507,16 @@ const migrations = [
       CREATE INDEX IF NOT EXISTS idx_product_reviews_status  ON product_reviews(status, created_at);
     `,
   },
+  {
+    // «جدیدترین محصولات» — simple product flag toggled from the product form.
+    // Flagged products render in their own homepage panel (same gold cards as
+    // «پرفروش‌ترین محصولات», newest first) and are browsable at /products?new=true.
+    name: "033_product_new_arrival",
+    sql: `
+      ALTER TABLE products ADD COLUMN new_arrival INTEGER NOT NULL DEFAULT 0;
+      CREATE INDEX IF NOT EXISTS idx_products_new_arrival ON products(new_arrival);
+    `,
+  },
 ];
 
 let appliedCount = 0;

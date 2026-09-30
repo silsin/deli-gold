@@ -58,6 +58,7 @@ function ensureSchema(db: DatabaseSync) {
   ensureProductExpressColumn(db);
   ensureProductLowWageColumn(db);
   ensureProductCoinColumn(db);
+  ensureProductNewArrivalColumn(db);
   ensureProductVariantsSpecsColumns(db);
   ensureProductFixedPriceColumn(db);
   ensureOrderItemExtrasColumns(db);
@@ -115,6 +116,18 @@ function ensureProductCoinColumn(db: DatabaseSync) {
   if (!cols.some(c => c.name === "coin")) {
     db.exec("ALTER TABLE products ADD COLUMN coin INTEGER NOT NULL DEFAULT 0");
     db.exec("CREATE INDEX IF NOT EXISTS idx_products_coin ON products(coin)");
+  }
+}
+
+/** «جدیدترین محصولات» flag — checkbox managed from the product form; the
+ *  homepage section shows flagged products (newest first). */
+function ensureProductNewArrivalColumn(db: DatabaseSync) {
+  const table = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'").get();
+  if (!table) return;
+  const cols = db.prepare("PRAGMA table_info(products)").all() as { name: string }[];
+  if (!cols.some(c => c.name === "new_arrival")) {
+    db.exec("ALTER TABLE products ADD COLUMN new_arrival INTEGER NOT NULL DEFAULT 0");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_products_new_arrival ON products(new_arrival)");
   }
 }
 
@@ -445,6 +458,8 @@ export interface Product {
   express_shipping: number;
   low_wage: number;
   coin: number;
+  /** 1 = نمایش در بخش «جدیدترین محصولات» صفحه اصلی (checkbox محصول فرم). */
+  new_arrival: number;
   /** JSON array of weight/price/stock choices; "[]" = single-weight product. */
   variants: string;
   /** JSON array of {label, value} rows for the «خصوصیات محصولات طلا» table. */
@@ -458,8 +473,8 @@ export interface Product {
 }
 
 export const products = {
-  list(opts: { categoryId?: string; featured?: boolean; express?: boolean; lowWage?: boolean; coin?: boolean; discount?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
-    const { categoryId, featured, express, lowWage, coin, discount, search, limit = 12, offset = 0, adminMode = false } = opts;
+  list(opts: { categoryId?: string; featured?: boolean; express?: boolean; lowWage?: boolean; coin?: boolean; newArrival?: boolean; discount?: boolean; search?: string; limit?: number; offset?: number; adminMode?: boolean } = {}) {
+    const { categoryId, featured, express, lowWage, coin, newArrival, discount, search, limit = 12, offset = 0, adminMode = false } = opts;
     const db = getDb();
     const conditions: string[] = [];
     const params: unknown[] = [];
@@ -486,6 +501,7 @@ export const products = {
     if (express !== undefined) { conditions.push("p.express_shipping = ?"); params.push(express ? 1 : 0); }
     if (lowWage !== undefined) { conditions.push("p.low_wage = ?"); params.push(lowWage ? 1 : 0); }
     if (coin !== undefined) { conditions.push("p.coin = ?"); params.push(coin ? 1 : 0); }
+    if (newArrival !== undefined) { conditions.push("p.new_arrival = ?"); params.push(newArrival ? 1 : 0); }
     if (discount !== undefined) {
       // Same rule the listing uses to draw the red % badge (see products page).
       conditions.push("(p.ajrat_override = 1 AND p.ajrat_percent IS NOT NULL AND p.ajrat_percent < 5)");
@@ -506,8 +522,8 @@ export const products = {
   create(data: Omit<Product, "created_at" | "updated_at">) {
     const id = generateId();
     getDb().prepare(
-      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, variants, specs, category_id, ajrat_percent, ajrat_fixed, ajrat_override, fixed_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.variants ?? "[]", data.specs ?? "[]", data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0, data.fixed_price ?? 0);
+      "INSERT INTO products (id, name, slug, description, price, weight, karat, stock, images, videos, featured, published, express_shipping, low_wage, coin, new_arrival, variants, specs, category_id, ajrat_percent, ajrat_fixed, ajrat_override, fixed_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, data.name, data.slug, data.description ?? null, data.price, data.weight, data.karat, data.stock, data.images, data.videos ?? "[]", data.featured, data.published, data.express_shipping ?? 0, data.low_wage ?? 0, data.coin ?? 0, data.new_arrival ?? 0, data.variants ?? "[]", data.specs ?? "[]", data.category_id, data.ajrat_percent ?? null, data.ajrat_fixed ?? null, data.ajrat_override ?? 0, data.fixed_price ?? 0);
     return products.findById(id)!;
   },
   update(id: string, data: Partial<Omit<Product, "id" | "created_at" | "updated_at">>) {

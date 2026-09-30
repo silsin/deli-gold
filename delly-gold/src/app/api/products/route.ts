@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
       express: searchParams.get("express") === "true" ? true : undefined,
       lowWage: searchParams.get("lowWage") === "true" ? true : undefined,
       coin: searchParams.get("coin") === "true" ? true : undefined,
+      newArrival: searchParams.get("new") === "true" ? true : undefined,
       discount: searchParams.get("discount") === "true" ? true : undefined,
       search: searchParams.get("search") || undefined,
       limit, offset: (page - 1) * limit,
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     const result = requireAdmin(req);
     if ("error" in result) return error(result.error, result.status);
     const body = await req.json();
-    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, ajrat_override, ajrat_percent, ajrat_fixed, fixed_price, variants, specs } = body;
+    const { name, slug, description, price, weight, karat, stock, images, videos, categoryId, featured, published, express_shipping, low_wage, coin, new_arrival, ajrat_override, ajrat_percent, ajrat_fixed, fixed_price, variants, specs } = body;
     if (!name?.trim()) return error("نام محصول الزامی است");
     if (!slug?.trim()) return error("اسلاگ الزامی است");
     if (!price || price <= 0) return error("قیمت نامعتبر است");
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       express_shipping: express_shipping ? 1 : 0,
       low_wage: low_wage ? 1 : 0,
       coin: coin ? 1 : 0,
+      new_arrival: new_arrival ? 1 : 0,
       category_id: categoryId,
       ajrat_override: ajrat_override ? 1 : 0,
       ajrat_percent: ajrat_override && ajrat_percent !== undefined ? parseFloat(ajrat_percent) : null,
