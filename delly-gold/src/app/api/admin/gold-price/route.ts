@@ -22,10 +22,10 @@ export interface RateChange {
 }
 
 /** Which source to read: auto = estjt first with TGJU gap-fill. */
-export type PriceSourceChoice = "auto" | "estjt" | "tgju";
+export type PriceSourceChoice = "auto" | "estjt" | "tgju" | "akbari";
 
 export interface GoldMarketData {
-  source: "estjt" | "tgju" | "fallback";
+  source: "estjt" | "tgju" | "akbari" | "fallback";
   sourceTitle: string;
   price: number;
   history: number[];
@@ -43,8 +43,8 @@ export interface GoldMarketData {
   stale?: boolean;
   fallback?: boolean;
   /** Primary source that produced this payload. */
-  sourceKey?: "estjt" | "tgju";
-  /** Echo of what the caller requested (auto | estjt | tgju). */
+  sourceKey?: "estjt" | "tgju" | "akbari";
+  /** Echo of what the caller requested (auto | estjt | tgju | akbari). */
   requested?: PriceSourceChoice;
   /** True when the chosen source does not cover every rate. */
   partial?: boolean;
@@ -513,10 +513,194 @@ async function fetchFromTgju(
   };
 }
 
+/* ────────────────────  Source 3 — نرخ لحظه‌ای (akbarigold.ir)  ──────────────────── */
+
+/**
+ * akbarigold.ir price list — the shop's own trading system. POST form-encoded
+ * (`browser headers required or the server 403s`) with `{ all, uID, uToken }`;
+ * credentials come from Admin → تنظیمات.
+ *
+ * Units (verified against the shop's own coin prices):
+ *   • type=1 gold rows are **Rial per مثقال (4.608g)** of `ayar` purity →
+ *     18k Toman/gram = price ÷ 10 ÷ 4.608 × (ayar / 750).
+ *   • type=2 coin rows are Rial **per piece**; `rate` = ounce × 1000 (USD).
+ */
+const AKBARI_URL = "https://akbarigold.ir/server/api/prices/list.php";
+const MESGHAL_G = 4.608;
+
+interface AkbariPriceItem {
+  id: number;
+  name: string;
+  type: number;      // 1 = gold (per mesghal), 2 = coin (per piece)
+  ayar: number;      // purity, 0 on some rows (= treat as 750/18k)
+  price: number;     // Rial
+  rate: number;      // ounce × 1000 (gold rows only, else 1)
+  itemWeight: number;
+  isActive: number;
+  sortId: number;
+  lastUpdateTime?: string;
+}
+
+/** uID/uToken from the settings table (Admin → تنظیمات → قیمت لحظه‌ای). */
+function akbariCreds(): { uid: string; token: string } | null {
+  try {
+    const uid = getSetting("akbari_uid")?.trim() ?? "";
+    const token = getSetting("akbari_token")?.trim() ?? "";
+    if (!uid || !token) return null;
+    return { uid, token };
+  } catch {
+    return null;
+  }
+}
+
+/** Normalize an akbari row name for matching (collapses ZWNJ/spaces). */
+function normName(name: string): string {
+  return String(name ?? "").replace(/\u200c/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Best candidate for a coin slot: exact name first, then active, then sortId. */
+function pickCoin(coins: AkbariPriceItem[], exact: string, includes: string[]): AkbariPriceItem | null {
+  const cands = coins.filter(c => {
+    const n = normName(c.name);
+    return n === exact || includes.some(w => n.includes(w));
+  });
+  if (!cands.length) return null;
+  const rank = (c: AkbariPriceItem) =>
+    (normName(c.name) === exact ? 0 : 1) * 1000 + (c.isActive ? 0 : 100) + Math.min(99, c.sortId);
+  return [...cands].sort((a, b) => rank(a) - rank(b))[0];
+}
+
+/**
+ * Map the raw price list onto the nine published rates. Deltas are derived
+ * from the durable snapshot (the upstream payload carries no previous value).
+ */
+function buildAkbariPayload(
+  items: AkbariPriceItem[],
+  prev: RateSnapshot | null
+): GoldMarketData | null {
+  // Primary gold row: an ACTIVE ayar-750 item wins («طلا متفرقه سالم»),
+  // otherwise any active type-1 quote («نقد شنبه» etc. are the same market).
+  const goldRows = items.filter(i => i.type === 1 && i.price > 0);
+  const activeGold = goldRows.filter(i => i.isActive === 1);
+  const primary =
+    activeGold.filter(i => i.ayar === 750).sort((a, b) => a.sortId - b.sortId)[0] ??
+    activeGold.sort((a, b) => a.sortId - b.sortId)[0] ??
+    goldRows.filter(i => i.ayar === 750).sort((a, b) => a.sortId - b.sortId)[0] ??
+    goldRows.sort((a, b) => a.sortId - b.sortId)[0];
+  if (!primary) return null;
+
+  // 18k Toman per gram from the Rial-per-mesghal quote (ayar 0 → 750).
+  const ayar = primary.ayar > 0 ? primary.ayar : 750;
+  // Optional admin gap (Admin → تنظیمات → قیمت لحظه‌ای):
+  //   akbari_gap_percent — scales the mesghal quote (e.g. 8.3 ≈ +8.3%)
+  //   akbari_gap_toman   — ± Toman per gram, folded into the same quote
+  //                        (× 4.608 × 10 rial) so 18k/24k/مظنه stay consistent
+  // Both default to 0 = pass-through. Coins and the ounce are never touched.
+  const gapPct = parseFloat(getSetting("akbari_gap_percent") ?? "") || 0;
+  const gapToman = parseFloat(getSetting("akbari_gap_toman") ?? "") || 0;
+  const adjPrice = primary.price * (1 + gapPct / 100) + gapToman * MESGHAL_G * 10;
+  const gold18k = Math.round((adjPrice / 10 / MESGHAL_G) * (ayar / 750));
+  if (!isFinite(gold18k) || gold18k <= 0) return null;
+
+  const rates: GoldRates = {
+    gold18k,
+    gold24k: Math.round(gold18k * 24 / 18),
+    // مظنه = one mesghal of 700-ayar gold, in Toman.
+    mazanehTehran: Math.round((adjPrice / 10) * (700 / ayar)),
+    // The board's ounce card is in USD; `rate` is the ounce × 1000 (4.3318 → $4331.80).
+    ounceDollar: primary.type === 1 && primary.rate > 0 ? Math.round(primary.rate * 1000) : undefined,
+  };
+
+  // Coins — matched by name; missing keys are reported as `partial`, exactly
+  // like the union board's gaps.
+  const coins = items.filter(i => i.type === 2 && i.price > 0);
+  const coinNew = pickCoin(coins, "سکه تمام", ["تمام"]);
+  const coinOld = pickCoin(coins, "تمام قدیم", ["قدیم"]);
+  const coinHalf = pickCoin(coins, "نیم سکه", ["نیم"]);
+  const coinQuarter = pickCoin(coins, "ربع سکه", ["ربع"]);
+  const coinGram = pickCoin(coins, "سکه گرمی", ["گرمی"]);
+  const toToman = (v?: AkbariPriceItem | null) => (v ? Math.round(v.price / 10) : undefined);
+  // «تمام قدیم» also matches the plain «تمام» word — never let it fill coinNew.
+  rates.coinNew = coinOld && coinNew?.id === coinOld.id ? undefined : toToman(coinNew);
+  rates.coinOld = toToman(coinOld);
+  rates.coinHalf = toToman(coinHalf);
+  rates.coinQuarter = toToman(coinQuarter);
+  rates.coinGram = toToman(coinGram);
+  for (const k of ALL_RATE_KEYS) {
+    if (!rates[k]) delete rates[k];
+  }
+
+  // Delta vs. the previous reading (0 on the first ever read).
+  const changes: Partial<Record<keyof GoldRates, RateChange>> = {};
+  for (const key of ALL_RATE_KEYS) {
+    const value = rates[key];
+    if (!value) continue;
+    const before = prev?.rates?.[key];
+    const amount = before && before !== value ? Math.round(value - before) : 0;
+    const percent = before ? Math.round((amount / before) * 10000) / 100 : 0;
+    changes[key] = { amount, percent, isUp: amount >= 0 };
+  }
+  const head = changes.gold18k ?? { amount: 0, percent: 0, isUp: true };
+  const stamp = items.map(i => i.lastUpdateTime ?? "").filter(Boolean).sort().pop();
+  const prevRate = prev?.rates?.gold18k ?? 0;
+  return {
+    source: "akbari",
+    sourceTitle: "نرخ لحظه‌ای",
+    price: gold18k,
+    history: [gold18k],
+    dates: [],
+    open: prevRate || gold18k,
+    high: Math.max(gold18k, prevRate),
+    low: prevRate ? Math.min(gold18k, prevRate) : gold18k,
+    changeAmount: head.amount,
+    changePercent: String(head.percent),
+    isUp: head.isUp,
+    updatedAt: Date.now(),
+    rates,
+    changes,
+    sourceKey: "akbari",
+    ...(stamp ? { unionUpdatedAt: stamp } : {}),
+  };
+}
+
+/** One POST with its own cap, never exceeding the caller's budget. */
+async function fetchFromAkbari(deadline: number): Promise<GoldMarketData | null> {
+  const creds = akbariCreds();
+  if (!creds) return null;
+  const left = deadline - Date.now();
+  if (left < 2000) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.min(left, 15_000));
+  try {
+    const res = await fetch(AKBARI_URL, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        // The endpoint rejects non-browser requests with 403.
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "application/json,text/plain,*/*",
+        Origin: "https://akbarigold.ir",
+        Referer: "https://akbarigold.ir/",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ all: "true", uID: creds.uid, uToken: creds.token }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json?.state !== true || !Array.isArray(json?.prices)) return null;
+    return buildAkbariPayload(json.prices as AkbariPriceItem[], loadSnapshot());
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 /* ───────────────────────────  Orchestration  ─────────────────────────── */
 
 function isChoice(v: string | null): v is PriceSourceChoice {
-  return v === "auto" || v === "estjt" || v === "tgju";
+  return v === "auto" || v === "estjt" || v === "tgju" || v === "akbari";
 }
 
 /** Site-wide default chosen in Admin → تنظیمات (gold_price_source). */
@@ -572,7 +756,7 @@ function respond(d: GoldMarketData, requested: PriceSourceChoice, cached: boolea
 
 interface RateSnapshot {
   at: number;
-  sourceKey?: "estjt" | "tgju" | "fallback";
+  sourceKey?: "estjt" | "tgju" | "akbari" | "fallback";
   sourceTitle: string;
   price: number;
   changeAmount: number;
@@ -717,7 +901,9 @@ async function refreshChoice(choice: PriceSourceChoice, budgetMs: number): Promi
   let tgju: GoldMarketData | null = null;
   let fresh: GoldMarketData | null = null;
 
-  if (choice === "tgju") {
+  if (choice === "akbari") {
+    fresh = await fetchFromAkbari(deadline);
+  } else if (choice === "tgju") {
     fresh = await fetchFromTgju(knownMemoForChoice, deadline);
   } else {
     estjt = await fetchFromEstjt(deadline);

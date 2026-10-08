@@ -71,6 +71,9 @@ export async function GET(req: NextRequest) {
     if (!settings.gold_markup_percent) settings.gold_markup_percent = "5";
     if (!settings.gold_fixed_fee)      settings.gold_fixed_fee = "0";
     if (!settings.gold_tax_percent)    settings.gold_tax_percent = "0";
+    // «نرخ لحظه‌ای» source gap — 0/0 = pass-through (public: harmless numbers).
+    if (!settings.akbari_gap_percent)  settings.akbari_gap_percent = "0";
+    if (!settings.akbari_gap_toman)    settings.akbari_gap_toman = "0";
     // Live gold-linked pricing is OFF by default — flipping this on changes how
     // every unlocked product is priced, so it must be an explicit decision.
     if (settings.live_pricing_enabled !== "0") settings.live_pricing_enabled = "0";
@@ -160,8 +163,13 @@ export async function GET(req: NextRequest) {
     const isAdmin = user?.role === "ADMIN";
     if (isAdmin) {
       if (!settings.huggingface_api_token) settings.huggingface_api_token = "";
+      // akbarigold.ir API credentials — visible to admins only.
+      if (!settings.akbari_uid)   settings.akbari_uid = "";
+      if (!settings.akbari_token) settings.akbari_token = "";
     } else {
       delete settings.huggingface_api_token;
+      delete settings.akbari_uid;
+      delete settings.akbari_token;
     }
 
     return ok(settings);
@@ -218,7 +226,17 @@ export async function POST(req: NextRequest) {
       }
       if (key === "gold_price_source") {
         const v = String(value);
-        value = v === "estjt" || v === "tgju" || v === "auto" ? v : "auto";
+        value = v === "estjt" || v === "tgju" || v === "akbari" || v === "auto" ? v : "auto";
+      }
+      // Gap for the «نرخ لحظه‌ای» source — numeric with sane bounds so garbage
+      // can never poison the live rate (percent ±100, toman ±10M per gram).
+      if (key === "akbari_gap_percent") {
+        const n = parseFloat(String(value));
+        value = String(Number.isNaN(n) ? 0 : Math.min(100, Math.max(-100, Math.round(n * 100) / 100)));
+      }
+      if (key === "akbari_gap_toman") {
+        const n = parseFloat(String(value));
+        value = String(Number.isNaN(n) ? 0 : Math.min(10_000_000, Math.max(-10_000_000, Math.round(n))));
       }
       if (key === "live_pricing_enabled") {
         value = String(value) === "1" ? "1" : "0";

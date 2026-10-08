@@ -77,6 +77,11 @@ export default function AdminSettingsPage() {
   // «قیمت‌گذاری خودکار» — master switch for live gold-linked pricing.
   const [livePricing, setLivePricing] = useState(false);
   const [priceSource, setPriceSource] = useState("auto");
+  // «نرخ لحظه‌ای» source credentials + optional gap (fourth price source)
+  const [akbariUid, setAkbariUid] = useState("");
+  const [akbariToken, setAkbariToken] = useState("");
+  const [akbariGapPct, setAkbariGapPct] = useState("0");
+  const [akbariGapToman, setAkbariGapToman] = useState("0");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [priceBar, setPriceBar] = useState<PriceBarStyle>(DEFAULT_PRICE_BAR_STYLE);
@@ -176,10 +181,14 @@ export default function AdminSettingsPage() {
           setTax(d.data.gold_tax_percent ?? "0");
           setLivePricing(d.data.live_pricing_enabled === "1" || d.data.live_pricing_enabled === "true");
           setPriceSource(
-            d.data.gold_price_source === "estjt" || d.data.gold_price_source === "tgju"
+            d.data.gold_price_source === "estjt" || d.data.gold_price_source === "tgju" || d.data.gold_price_source === "akbari"
               ? d.data.gold_price_source
               : "auto"
           );
+          setAkbariUid(d.data.akbari_uid ?? "");
+          setAkbariToken(d.data.akbari_token ?? "");
+          setAkbariGapPct(d.data.akbari_gap_percent ?? "0");
+          setAkbariGapToman(d.data.akbari_gap_toman ?? "0");
           setPriceBar(parsePriceBarStyle(d.data));
           const theme = parseThemeSettings(d.data);
           setThemePalette(theme.theme_palette);
@@ -245,6 +254,10 @@ export default function AdminSettingsPage() {
         gold_fixed_fee: fixedFee,
         gold_tax_percent: tax,
         gold_price_source: priceSource,
+        akbari_uid: akbariUid.trim(),
+        akbari_token: akbariToken.trim(),
+        akbari_gap_percent: akbariGapPct.trim() || "0",
+        akbari_gap_toman: akbariGapToman.trim() || "0",
         live_pricing_enabled: livePricing ? "1" : "0",
       }),
     });
@@ -1190,10 +1203,44 @@ export default function AdminSettingsPage() {
             <option value="auto">خودکار — اتحادیه تهران + TGJU (پیشنهادی)</option>
             <option value="estjt">اتحادیه طلا و جواهر تهران (estjt.ir)</option>
             <option value="tgju">شبکه اطلاع‌رسانی طلا و ارز (TGJU)</option>
+            <option value="akbari">نرخ لحظه‌ای</option>
           </select>
           <p style={{ color: "#555", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.9 }}>
             منبع فعلی: {goldData?.sourceTitle ?? "در حال دریافت…"} — در صفحه «تابلو طلا» می‌توانید منبع را جداگانه عوض کنید.
           </p>
+
+          {priceSource === "akbari" && (
+            <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "10px", marginTop: "12px", padding: "12px", backgroundColor: "#121212", border: "1px solid #2a2a2a", borderRadius: "8px" }}>
+              <div>
+                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "4px" }}>uID</label>
+                <input value={akbariUid} onChange={e => setAkbariUid(e.target.value)} placeholder="34"
+                  style={{ ...inp, direction: "ltr" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "4px" }}>uToken</label>
+                <input type="password" value={akbariToken} onChange={e => setAkbariToken(e.target.value)}
+                  placeholder="uToken" autoComplete="off"
+                  style={{ ...inp, direction: "ltr" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "4px" }}>گاپ درصد (%)</label>
+                <input type="number" step="0.01" min="-100" max="100" value={akbariGapPct}
+                  onChange={e => setAkbariGapPct(e.target.value)} placeholder="0"
+                  style={{ ...inp, direction: "ltr" }} />
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: "12px", display: "block", marginBottom: "4px" }}>گاپ ثابت (تومان/گرم)</label>
+                <input type="number" step="1000" value={akbariGapToman}
+                  onChange={e => setAkbariGapToman(e.target.value)} placeholder="0"
+                  style={{ ...inp, direction: "ltr" }} />
+              </div>
+              <p style={{ gridColumn: "1 / -1", color: "#555", fontSize: "11px", margin: 0, lineHeight: 1.9 }}>
+                احراز هویت API لیست قیمت سامانه فروشگاه — نرخ ۱۸ عیار از قیمت مثقال طلا (ریال) محاسبه می‌شود.
+                گاپ فقط روی نرخ‌های طلا (۱۸/۲۴ و مظنه) اعمال می‌شود؛ سکه‌ها و انس دست‌نخورده می‌مانند.
+                ۰ یعنی بدون تغییر — برای هم‌ترازی با تابلوهای بازار، درصدِ اختلاف را اینجا وارد کنید.
+              </p>
+            </div>
+          )}
         </div>
 
         {saved && (

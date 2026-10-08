@@ -26,10 +26,10 @@ declare global {
 }
 
 /** Read the site-wide source choice without importing route internals. */
-function currentChoice(): "auto" | "estjt" | "tgju" {
+function currentChoice(): "auto" | "estjt" | "tgju" | "akbari" {
   try {
     const v = (getSetting("gold_price_source") ?? "").trim();
-    return v === "estjt" || v === "tgju" ? v : "auto";
+    return v === "estjt" || v === "tgju" || v === "akbari" ? v : "auto";
   } catch {
     return "auto";
   }

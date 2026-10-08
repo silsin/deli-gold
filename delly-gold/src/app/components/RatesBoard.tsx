@@ -108,12 +108,13 @@ function toLatinDigits(input: string): string {
     .replace(/(\..*)\./g, "$1");
 }
 
-type SourceChoice = "auto" | "estjt" | "tgju";
+type SourceChoice = "auto" | "estjt" | "tgju" | "akbari";
 
 const SOURCE_OPTIONS: { id: SourceChoice; label: string; hint: string }[] = [
-  { id: "auto",  label: "خودکار",        hint: "اتحادیه + TGJU (تکمیل خودکار)" },
-  { id: "estjt", label: "اتحادیه تهران", hint: "فقط estjt.ir" },
-  { id: "tgju",  label: "TGJU",          hint: "فقط شبکه طلا و ارز" },
+  { id: "auto",    label: "خودکار",        hint: "اتحادیه + TGJU (تکمیل خودکار)" },
+  { id: "estjt",   label: "اتحادیه تهران", hint: "فقط estjt.ir" },
+  { id: "tgju",    label: "TGJU",          hint: "فقط شبکه طلا و ارز" },
+  { id: "akbari",  label: "نرخ لحظه‌ای",     hint: "فقط سامانه فروشگاه" },
 ];
 
 function RateCard({ row, index, value, chg }: { row: RowDef; index: number; value?: number; chg?: RateChange }) {
@@ -248,7 +249,7 @@ export default function RatesBoard() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("dg_price_source");
-      if (saved === "auto" || saved === "estjt" || saved === "tgju") setSource(saved);
+      if (saved === "auto" || saved === "estjt" || saved === "tgju" || saved === "akbari") setSource(saved);
     } catch { /* private mode — stay on auto */ }
   }, []);
 
