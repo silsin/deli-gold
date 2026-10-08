@@ -374,6 +374,21 @@ export default function RatesBoard() {
     } catch { /* private mode — stay on auto */ }
   }, []);
 
+  // Initial load + automatic refresh: first paint pulls a fresh reading for
+  // the active source, then re-polls every 60s and ticks the countdown each
+  // second. Re-arms whenever the operator switches source.
+  useEffect(() => {
+    // First paint of a newly chosen source pulls fresh rates for it.
+    fetchRates(true, source, true);
+    timer.current = setInterval(() => fetchRates(), 60_000);
+    clock.current = setInterval(() => setCountdown(c => (c <= 1 ? 60 : c - 1)), 1000);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+      if (clock.current) clearInterval(clock.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
+
   const pickSource = (c: SourceChoice) => {
     if (c === source) return;
     setSource(c);
