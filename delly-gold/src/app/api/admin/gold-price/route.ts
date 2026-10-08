@@ -927,7 +927,7 @@ function fallbackPayload(requested: PriceSourceChoice, at: number): GoldMarketDa
     fallback: true,
     requested,
     partial: true,
-    updatedAt: new Date(at).toISOString(),
+    updatedAt: at,
   };
 }
 
