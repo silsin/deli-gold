@@ -35,6 +35,21 @@ interface RateChange {
   isUp: boolean;
 }
 
+interface AkbariRawItem {
+  id: number;
+  name: string;
+  type: number;
+  ayar: number;
+  price: number;
+  rate: number;
+  itemWeight: number;
+  isActive: number;
+  allowBuy: number;
+  allowSell: number;
+  sortId: number;
+  lastUpdateTime?: string;
+}
+
 interface MarketPayload {
   source?: string;
   sourceTitle?: string;
@@ -54,6 +69,7 @@ interface MarketPayload {
   stale?: boolean;
   staleRates?: string[];
   note?: string;
+  akbariItems?: AkbariRawItem[];
   /** The union's own «آخرین بروزرسانی قیمت» stamp (e.g. ۶ مهر ۱۴۰۵ - ۱۲:۵۹:۴۵). */
   unionUpdatedAt?: string;
 }
@@ -186,6 +202,60 @@ export function SkeletonGrid({ count }: { count: number }) {
         />
       ))}
     </>
+  );
+}
+
+/**
+ * One raw Akbari row, rendered 1:1 — same name, same Rial price as the
+ * shop's trading system. No conversion, no coin/gold classification.
+ */
+function AkbariRawCard({ item, index }: { item: AkbariRawItem; index: number }) {
+  const accent = item.type === 1 ? "#c8a12a" : "#7c3aed";
+  const active = item.isActive === 1;
+  return (
+    <div
+      style={{
+        backgroundColor: "var(--theme-card)",
+        border: "1px solid var(--theme-border)",
+        borderRadius: 14,
+        padding: 16,
+        display: "block",
+        minWidth: 0,
+        opacity: active ? 1 : 0.55,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+        <span
+          style={{
+            width: 30, height: 30, borderRadius: 10, display: "inline-flex",
+            alignItems: "center", justifyContent: "center", flexShrink: 0,
+            color: accent, backgroundColor: `${accent}14`,
+            border: `1px solid ${accent}33`, fontSize: 12, fontWeight: 800,
+          }}
+        >
+          {(index + 1).toLocaleString("fa-IR")}
+        </span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ color: "var(--theme-text)", fontSize: 14, fontWeight: 700, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {item.name}
+          </p>
+          <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: "2px 0 0" }}>
+            {item.type === 1 ? "طلا" : "سکه"}
+            {item.ayar > 0 ? ` · عیار ${item.ayar.toLocaleString("fa-IR")}` : ""}
+            {!active ? " · غیرفعال" : ""}
+          </p>
+        </div>
+      </div>
+      <p style={{ color: item.price > 0 ? accent : "var(--theme-text-muted)", fontSize: 19, fontWeight: 800, margin: "0 0 2px", direction: "ltr" }}>
+        {item.price > 0 ? faNum(item.price) : "—"}
+      </p>
+      <p style={{ color: "var(--theme-text-muted)", fontSize: 11, margin: 0 }}>ریال</p>
+      {item.lastUpdateTime ? (
+        <p style={{ color: "var(--theme-text-muted)", fontSize: 10, margin: "8px 0 0" }}>
+          {item.lastUpdateTime}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -361,6 +431,11 @@ export default function RatesBoard() {
 
   const valueOf = (r: Rates | undefined, key: keyof Rates) => r?.[key] ?? 0;
   const chgOf = (key: keyof Rates): RateChange | undefined => data?.changes?.[key];
+
+  // Raw «دلی گلد» list — rendered 1:1 (same names, same Rial prices) instead
+  // of the fixed 9-rate grid whenever the akbari source is active.
+  const akbariRaw: AkbariRawItem[] | null =
+    source === "akbari" && data?.akbariItems && data.akbariItems.length > 0 ? data.akbariItems : null;
 
   return (
     <PageLayout>
@@ -558,7 +633,7 @@ export default function RatesBoard() {
           </div>
         )}
 
-        {/* Gold rates */}
+        {!akbariRaw && (
         <div className="rates-sec" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
           <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 10, backgroundColor: "#fdf3dd", color: "#c8a12a" }}>
             <Banknote size={17} />
@@ -566,6 +641,15 @@ export default function RatesBoard() {
           <h2 style={{ color: "var(--theme-text)", fontSize: 18, fontWeight: 800, margin: 0 }}>نرخ طلا</h2>
           <span style={{ flex: 1, height: 1, backgroundColor: "var(--theme-border)" }} />
         </div>
+        )}
+        {akbariRaw ? (
+          <>
+            <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
+              {akbariRaw.map((item, i) => <AkbariRawCard key={item.id} item={item} index={i} />)}
+            </div>
+          </>
+        ) : (
+          <>
         <div className="rates-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 30 }}>
           {loading
             ? <SkeletonGrid count={4} />
@@ -585,6 +669,8 @@ export default function RatesBoard() {
             ? <SkeletonGrid count={5} />
             : COIN_ROWS.map((r, i) => <RateCard key={r.key} row={r} index={i} value={valueOf(data?.rates, r.key)} chg={chgOf(r.key)} />)}
         </div>
+          </>
+        )}
 
 
         {/* Today's summary — only figures the sources actually publish */}

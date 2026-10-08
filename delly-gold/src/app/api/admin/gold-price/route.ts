@@ -42,6 +42,8 @@ export interface GoldMarketData {
   cached?: boolean;
   stale?: boolean;
   fallback?: boolean;
+  /** List price source used in response — the board renders it raw. */
+  akbariItems?: AkbariRawItem[];
   /** Primary source that produced this payload. */
   sourceKey?: "estjt" | "tgju" | "akbari";
   /** Echo of what the caller requested (auto | estjt | tgju | akbari). */
@@ -540,10 +542,32 @@ interface AkbariPriceItem {
   name: string;
   type: number;      // 1 = gold (per mesghal), 2 = coin (per piece)
   ayar: number;      // purity, 0 on some rows (= treat as 750/18k)
-  price: number;     // Rial
+  price: number;     // Rial — shown on the board exactly as received
   rate: number;      // ounce × 1000 (gold rows only, else 1)
   itemWeight: number;
   isActive: number;
+  allowBuy: number;
+  allowSell: number;
+  sortId: number;
+  lastUpdateTime?: string;
+}
+
+/**
+ * Raw row passed through to the board untouched — when «دلی گلد» is the
+ * active source the rates board renders this list 1:1 (same names, same
+ * prices) instead of mapping onto the fixed 9-rate grid.
+ */
+export interface AkbariRawItem {
+  id: number;
+  name: string;
+  type: number;
+  ayar: number;
+  price: number;
+  rate: number;
+  itemWeight: number;
+  isActive: number;
+  allowBuy: number;
+  allowSell: number;
   sortId: number;
   lastUpdateTime?: string;
 }
@@ -650,6 +674,24 @@ function buildAkbariPayload(
   const head = changes.gold18k ?? { amount: 0, percent: 0, isUp: true };
   const stamp = items.map(i => i.lastUpdateTime ?? "").filter(Boolean).sort().pop();
   const prevRate = prev?.rates?.gold18k ?? 0;
+  // Raw rows, passed through untouched — the board renders this 1:1
+  // (same names, same Rial prices) when «دلی گلد» is the active source.
+  const akbariItems: AkbariRawItem[] = [...items]
+    .sort((a, b) => a.sortId - b.sortId)
+    .map(i => ({
+      id: i.id,
+      name: i.name,
+      type: i.type,
+      ayar: i.ayar,
+      price: i.price,
+      rate: i.rate,
+      itemWeight: i.itemWeight,
+      isActive: i.isActive,
+      allowBuy: i.allowBuy ?? 0,
+      allowSell: i.allowSell ?? 0,
+      sortId: i.sortId,
+      ...(i.lastUpdateTime ? { lastUpdateTime: i.lastUpdateTime } : {}),
+    }));
   return {
     source: "akbari",
     sourceTitle: "دلی گلد",
@@ -665,6 +707,7 @@ function buildAkbariPayload(
     updatedAt: Date.now(),
     rates,
     changes,
+    akbariItems,
     sourceKey: "akbari",
     ...(stamp ? { unionUpdatedAt: stamp } : {}),
   };
@@ -799,6 +842,7 @@ interface RateSnapshot {
   isUp: boolean;
   rates?: GoldRates;
   changes?: Partial<Record<keyof GoldRates, RateChange>>;
+  akbariItems?: AkbariRawItem[];
   unionUpdatedAt?: string;
 }
 
@@ -836,6 +880,7 @@ function saveSnapshot(d: GoldMarketData): void {
     isUp: d.isUp,
     rates,
     changes,
+    ...(d.akbariItems ? { akbariItems: d.akbariItems } : {}),
     unionUpdatedAt: d.unionUpdatedAt,
   };
   try {
@@ -863,6 +908,7 @@ function snapshotPayload(snap: RateSnapshot): GoldMarketData {
     updatedAt: snap.at,
     rates: snap.rates,
     changes: snap.changes,
+    ...(snap.akbariItems ? { akbariItems: snap.akbariItems } : {}),
     sourceKey: key,
     unionUpdatedAt: snap.unionUpdatedAt,
     staleRates: ALL_RATE_KEYS,
