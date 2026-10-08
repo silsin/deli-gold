@@ -1203,7 +1203,7 @@ export default function AdminSettingsPage() {
             <option value="auto">خودکار — اتحادیه تهران + TGJU (پیشنهادی)</option>
             <option value="estjt">اتحادیه طلا و جواهر تهران (estjt.ir)</option>
             <option value="tgju">شبکه اطلاع‌رسانی طلا و ارز (TGJU)</option>
-            <option value="akbari">نرخ لحظه‌ای</option>
+            <option value="akbari">دلی گلد</option>
           </select>
           <p style={{ color: "#555", fontSize: "11px", margin: "6px 0 0", lineHeight: 1.9 }}>
             منبع فعلی: {goldData?.sourceTitle ?? "در حال دریافت…"} — در صفحه «تابلو طلا» می‌توانید منبع را جداگانه عوض کنید.

@@ -645,7 +645,7 @@ function buildAkbariPayload(
   const prevRate = prev?.rates?.gold18k ?? 0;
   return {
     source: "akbari",
-    sourceTitle: "نرخ لحظه‌ای",
+    sourceTitle: "دلی گلد",
     price: gold18k,
     history: [gold18k],
     dates: [],

@@ -47,7 +47,7 @@ interface MarketPayload {
   isUp: boolean;
   rates?: Rates;
   changes?: Partial<Record<keyof Rates, RateChange>>;
-  sourceKey?: "estjt" | "tgju" | "fallback";
+  sourceKey?: "estjt" | "tgju" | "akbari" | "fallback";
   requested?: string;
   partial?: boolean;
   merged?: boolean;
@@ -114,7 +114,7 @@ const SOURCE_OPTIONS: { id: SourceChoice; label: string; hint: string }[] = [
   { id: "auto",    label: "خودکار",        hint: "اتحادیه + TGJU (تکمیل خودکار)" },
   { id: "estjt",   label: "اتحادیه تهران", hint: "فقط estjt.ir" },
   { id: "tgju",    label: "TGJU",          hint: "فقط شبکه طلا و ارز" },
-  { id: "akbari",  label: "نرخ لحظه‌ای",     hint: "فقط سامانه فروشگاه" },
+  { id: "akbari",  label: "دلی گلد",     hint: "فقط سامانه فروشگاه" },
 ];
 
 function RateCard({ row, index, value, chg }: { row: RowDef; index: number; value?: number; chg?: RateChange }) {
