@@ -900,7 +900,7 @@ function attachDiag(d: GoldMarketData, requested: PriceSourceChoice): GoldMarket
 }
 
 /** Same as fallbackPayload() but carries the «دلی گلد» failure reason. */
-function fallbackWithDiag(requested: PriceSourceChoice, at: number) {
+function fallbackWithDiag(requested: PriceSourceChoice, at: number): GoldMarketData {
   const base = { ...fallbackPayload(requested, at) };
   if (requested === "akbari" && akbariDiag) {
     return { ...base, note: `دلی گلد: ${akbariDiag}` };
@@ -908,7 +908,7 @@ function fallbackWithDiag(requested: PriceSourceChoice, at: number) {
   return base;
 }
 
-function fallbackPayload(requested: PriceSourceChoice, at: number) {
+function fallbackPayload(requested: PriceSourceChoice, at: number): GoldMarketData {
   const price = 23865400;
   return {
     source: "fallback",
