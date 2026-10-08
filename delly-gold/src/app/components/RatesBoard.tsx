@@ -245,6 +245,57 @@ export default function RatesBoard() {
     }
   };
 
+  // Default price source — read from the server (Admin → تنظیمات → «منبع نرخ طلا»,
+  // key `gold_price_source`). The operator's own browser preference
+  // (`localStorage`) is a per-visit override, not the source of truth.
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const r = await fetch("/api/settings/gold-price-source", { cache: "no-store" });
+        const j = await r.json();
+        if (cancelled) return;
+        if (!j.success || !j.data?.source) return;
+        const serverSource: SourceChoice = j.data.source;
+        // Visitor's local override wins over the server default.
+        const saved = localStorage.getItem("dg_price_source");
+        if (saved === "auto" || saved === "estjt" || saved === "tgju" || saved === "akbari") {
+          setSource(saved);
+        } else {
+          setSource(serverSource);
+        }
+      } catch {
+        /* keep the default */
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Server-side default may change (admin saves a new value). Keep the board in sync
+  // unless the visitor is actively overriding it via the picker.
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      try {
+        const r = await fetch("/api/settings/gold-price-source", { cache: "no-store" });
+        const j = await r.json();
+        if (!j.success || !j.data?.source) return;
+        const serverSource: SourceChoice = j.data.source;
+        const saved = localStorage.getItem("dg_price_source");
+        const override =
+          saved === "auto" || saved === "estjt" || saved === "tgju" || saved === "akbari";
+        if (!override || saved === serverSource) {
+          setSource((prev) => (override && prev !== serverSource ? prev : serverSource));
+        }
+      } catch {
+        /* keep last */
+      }
+    }, 60_000);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
+
   // Restore the operator's saved source choice (if any).
   useEffect(() => {
     try {
@@ -252,18 +303,6 @@ export default function RatesBoard() {
       if (saved === "auto" || saved === "estjt" || saved === "tgju" || saved === "akbari") setSource(saved);
     } catch { /* private mode — stay on auto */ }
   }, []);
-
-  useEffect(() => {
-    // First paint of a newly chosen source pulls fresh rates for it.
-    fetchRates(true, source, true);
-    timer.current = setInterval(() => fetchRates(), 60_000);
-    clock.current = setInterval(() => setCountdown(c => (c <= 1 ? 60 : c - 1)), 1000);
-    return () => {
-      if (timer.current) clearInterval(timer.current);
-      if (clock.current) clearInterval(clock.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source]);
 
   const pickSource = (c: SourceChoice) => {
     if (c === source) return;
