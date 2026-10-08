@@ -104,6 +104,13 @@ const holdUntil: Partial<Record<PriceSourceChoice, number>> = {};
 const CACHE_TTL = 60 * 1000;
 const STALE_HOLD = 3 * 60 * 1000;
 
+/**
+ * Last «دلی گلد» failure reason (short Persian sentence, token NEVER logged).
+ * Attached as `note` on stale/fallback akbari responses so the board footer
+ * shows exactly why the source is down, and printed to server logs.
+ */
+let akbariDiag: string | null = null;
+
 const p2e: Record<string, string> = {
   "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
   "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
@@ -666,9 +673,16 @@ function buildAkbariPayload(
 /** One POST with its own cap, never exceeding the caller's budget. */
 async function fetchFromAkbari(deadline: number): Promise<GoldMarketData | null> {
   const creds = akbariCreds();
-  if (!creds) return null;
+  if (!creds) {
+    akbariDiag = "uID یا uToken در تنظیمات ثبت نشده است (Admin ← تنظیمات ← قیمت‌گذاری).";
+    console.error("[gold-price] akbari skipped: credentials not set");
+    return null;
+  }
   const left = deadline - Date.now();
-  if (left < 2000) return null;
+  if (left < 2000) {
+    akbariDiag = "مهلت درخواست تمام شد؛ دوباره تلاش کنید.";
+    return null;
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Math.min(left, 15_000));
   try {
@@ -687,11 +701,32 @@ async function fetchFromAkbari(deadline: number): Promise<GoldMarketData | null>
       body: new URLSearchParams({ all: "true", uID: creds.uid, uToken: creds.token }),
       signal: controller.signal,
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (json?.state !== true || !Array.isArray(json?.prices)) return null;
+    if (!res.ok) {
+      akbariDiag = `خطای شبکه از سامانه قیمت: HTTP ${res.status} (احتمال مسدودی IP یا فیلتر سرور).`;
+      console.error(`[gold-price] akbari HTTP ${res.status}`);
+      return null;
+    }
+    let json: { state?: boolean; prices?: AkbariPriceItem[] };
+    try {
+      json = await res.json();
+    } catch {
+      akbariDiag = "پاسخ سامانه قیمت JSON معتبر نبود.";
+      console.error("[gold-price] akbari returned non-JSON");
+      return null;
+    }
+    if (json?.state !== true || !Array.isArray(json?.prices)) {
+      akbariDiag = "سامانه قیمت خطا برگرداند (احتمال نامعتبر بودن uToken).";
+      console.error("[gold-price] akbari state!=true (token likely invalid)");
+      return null;
+    }
+    akbariDiag = null;
     return buildAkbariPayload(json.prices as AkbariPriceItem[], loadSnapshot());
-  } catch {
+  } catch (e) {
+    const aborted = e instanceof Error && e.name === "AbortError";
+    akbariDiag = aborted
+      ? "سامانه قیمت در ۱۵ ثانیه پاسخ نداد (تایم‌اوت)."
+      : "ارتباط با سامانه قیمت برقرار نشد (DNS/اتصال خروجی سرور).";
+    console.error(`[gold-price] akbari fetch failed${aborted ? " (timeout)" : ""}`);
     return null;
   } finally {
     clearTimeout(timer);
@@ -812,8 +847,9 @@ function saveSnapshot(d: GoldMarketData): void {
 
 /** Rebuild a payload from the stored snapshot (flagged as stale). */
 function snapshotPayload(snap: RateSnapshot): GoldMarketData {
+  const key = snap.sourceKey === "tgju" ? "tgju" : snap.sourceKey === "akbari" ? "akbari" : "estjt";
   return {
-    source: snap.sourceKey === "tgju" ? "tgju" : "estjt",
+    source: key,
     sourceTitle: `${snap.sourceTitle} — آخرین داده ذخیره‌شده`,
     price: snap.price,
     history: [snap.price],
@@ -827,7 +863,7 @@ function snapshotPayload(snap: RateSnapshot): GoldMarketData {
     updatedAt: snap.at,
     rates: snap.rates,
     changes: snap.changes,
-    sourceKey: snap.sourceKey === "tgju" ? "tgju" : "estjt",
+    sourceKey: key,
     unionUpdatedAt: snap.unionUpdatedAt,
     staleRates: ALL_RATE_KEYS,
   };
@@ -851,6 +887,25 @@ function knownMemo(
     };
   }
   return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * When the «دلی گلد» source produced nothing this cycle, attach the exact
+ * failure reason recorded by fetchFromAkbari so the board footer (which
+ * renders `note`) tells the operator what to fix. Other sources untouched.
+ */
+function attachDiag(d: GoldMarketData, requested: PriceSourceChoice): GoldMarketData {
+  if (requested !== "akbari" || !akbariDiag) return d;
+  return { ...d, note: `دلی گلد: ${akbariDiag}` };
+}
+
+/** Same as fallbackPayload() but carries the «دلی گلد» failure reason. */
+function fallbackWithDiag(requested: PriceSourceChoice, at: number) {
+  const base = { ...fallbackPayload(requested, at) };
+  if (requested === "akbari" && akbariDiag) {
+    return { ...base, note: `دلی گلد: ${akbariDiag}` };
+  }
+  return base;
 }
 
 function fallbackPayload(requested: PriceSourceChoice, at: number) {
@@ -985,10 +1040,10 @@ export async function GET(req: NextRequest) {
         const fresh = await scheduleRefresh(requested);
         if (fresh) return ok(respond(fresh, requested, false));
         const staleHit = caches[requested];
-        if (staleHit) return ok(respond(staleHit, requested, true, true));
+        if (staleHit) return ok(respond(attachDiag(staleHit, requested), requested, true, true));
         const known = loadSnapshot();
-        if (known) return ok(respond(snapshotPayload(known), requested, true, true));
-        return ok(fallbackPayload(requested, now));
+        if (known) return ok(respond(attachDiag(snapshotPayload(known), requested), requested, true, true));
+        return ok(respond(fallbackWithDiag(requested, now), requested, false));
       }
     }
 
